@@ -8,8 +8,18 @@ import {
   Plus, Palette, Settings2, GripVertical, ExternalLink, Globe,
   CheckCircle,
 } from "lucide-react";
-import { BlockRenderer } from "@/components/website-builder/BlockRenderer";
-import { BlockSettings, ThemeSettings } from "@/components/website-builder/BlockSettings";
+
+// Lazy-load BlockRenderer — it contains canvas/DOM-heavy code that breaks SSR
+import { lazy, Suspense } from "react";
+const BlockRenderer = lazy(() =>
+  import("@/components/website-builder/BlockRenderer").then((m) => ({ default: m.BlockRenderer }))
+);
+const BlockSettings = lazy(() =>
+  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.BlockSettings }))
+);
+const ThemeSettings = lazy(() =>
+  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.ThemeSettings }))
+);
 import type { Block, BlockType, WebsiteTheme } from "@/lib/website-blocks";
 import { BLOCK_META, DEFAULT_THEME, createBlock } from "@/lib/website-blocks";
 import { toast } from "sonner";
@@ -18,8 +28,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/websites/$id/edit")({
   head: () => ({ meta: [{ title: "Website Builder — Cardify" }] }),
-  component: WebsiteBuilder,
+  component: WebsiteBuilderPage,
 });
+
+// Client-only wrapper — prevents SSR for drag-drop and canvas code
+function WebsiteBuilderPage() {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+  if (!isClient) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+      <WebsiteBuilder />
+    </Suspense>
+  );
+}
 
 type Viewport = "desktop" | "tablet" | "mobile";
 type PanelTab = "blocks" | "theme";

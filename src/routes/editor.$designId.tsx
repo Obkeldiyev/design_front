@@ -2,10 +2,18 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DesignAPI } from "@/lib/api/resources";
 import { useEditorStore } from "@/store/editor";
-import { FabricCanvas } from "@/components/editor/FabricCanvas";
-import { LayersPanel } from "@/components/editor/LayersPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+
+// Lazy-load editor components so they are NEVER rendered server-side
+// Fabric.js requires window/document — SSR will crash without this
+const FabricCanvas = lazy(() =>
+  import("@/components/editor/FabricCanvas").then((m) => ({ default: m.FabricCanvas }))
+);
+const LayersPanel = lazy(() =>
+  import("@/components/editor/LayersPanel").then((m) => ({ default: m.LayersPanel }))
+);
 import {
   ArrowLeft,
   Type,
@@ -25,7 +33,6 @@ import {
   Plus,
   Save,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import type * as fabric from "fabric";
 import {
   addCircle,
@@ -58,8 +65,36 @@ import {
 
 export const Route = createFileRoute("/editor/$designId")({
   head: () => ({ meta: [{ title: "Editor — Cardify" }] }),
-  component: Editor,
+  component: EditorPage,
 });
+
+// Client-only wrapper — prevents SSR for the entire editor
+// (Fabric.js, drag-and-drop, and canvas all require browser APIs)
+function EditorPage() {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+
+  if (!isClient) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-sm">Loading editor…</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    }>
+      <Editor />
+    </Suspense>
+  );
+}
 
 function Editor() {
   const { designId } = Route.useParams();
