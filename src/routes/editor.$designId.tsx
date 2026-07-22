@@ -131,10 +131,10 @@ function Editor() {
     refetchOnMount: true,
   });
 
-  // Clear stale doc immediately when designId changes so the canvas
-  // doesn't flash the previous design while the new one loads
+  // Clear stale doc and reset sync tracker when designId changes
   useEffect(() => {
     resetDoc();
+    lastSyncedDesignId.current = null; // ← allow reload when same design reopened
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designId]);
 
@@ -563,11 +563,17 @@ function Editor() {
           ref={canvasScrollRef}
           style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
         >
-          {/* margin: auto centers horizontally when content fits.
-              When canvas is wider than container, scroll appears on right side
-              because content starts at left=0. User can scroll to see full canvas. */}
-          <div style={{ padding: "40px 0", lineHeight: 0, textAlign: "center" }}>
-            <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
+          <div style={{
+            padding: "40px",
+            boxSizing: "border-box",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            minHeight: "100%",
+          }}>
+            <div style={{ flexShrink: 0 }}>
+              <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
+            </div>
           </div>
         </div>
 

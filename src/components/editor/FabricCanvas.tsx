@@ -105,14 +105,13 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
   return (
     <div style={{
-      display: "inline-block",  // allows text-align:center in parent to work
       width: scaledW,
       height: scaledH,
-      verticalAlign: "top",
       lineHeight: 0,
       borderRadius: 6,
       overflow: "hidden",
       boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
+      flexShrink: 0,
     }}>
       <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>

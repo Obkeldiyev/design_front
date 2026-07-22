@@ -36,16 +36,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
   setDoc: (doc) => {
-    let zoom = 0.6; // safe default
-    if (typeof window !== "undefined") {
+    let zoom = 0.6;
+    if (typeof window !== "undefined" && window.innerWidth > 0) {
       const w = doc?.canvas?.width  ?? 1050;
       const h = doc?.canvas?.height ?? 600;
-      // editor left=256, right=288, padding=80, header=56
       const availW = window.innerWidth  - 256 - 288 - 80;
       const availH = window.innerHeight - 56  - 80;
-      if (availW > 0 && availH > 0) {
-        zoom = Math.min(availW / w, availH / h, 0.95);
-        zoom = Math.max(0.2, parseFloat(zoom.toFixed(2)));
+      if (availW > 50 && availH > 50) {
+        const zw = availW / w;
+        const zh = availH / h;
+        zoom = parseFloat(Math.max(0.2, Math.min(zw, zh, 0.95)).toFixed(2));
       }
     }
     set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved", zoom });
