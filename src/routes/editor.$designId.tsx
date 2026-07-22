@@ -141,15 +141,14 @@ function Editor() {
     if (query.data) {
       setTitle(query.data.title);
       setDoc(query.data.data);
+      // Editor is a top-level route (no app sidebar).
+      // Left panel = w-64 (256px), right panel = w-72 (288px), padding = 80px
       const w = query.data.data?.canvas?.width ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      // Available center area = screen minus left sidebar (w-64=256) + right panel (w-72=288) + scroll/padding (80)
-      // Use innerWidth fallback of 1024 for safety
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-      const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+      const vh = typeof window !== "undefined" ? window.innerHeight : 800;
       const availW = Math.max(200, vw - 256 - 288 - 80);
-      const availH = Math.max(200, vh - 56 - 80); // 56px header
-      // Always fit — never exceed 1.0 (no upscaling) but always shrink to fit
+      const availH = Math.max(200, vh - 56 - 80); // 56 = header height
       const fitZoom = Math.min(availW / w, availH / h, 1);
       setZoom(Math.max(0.2, parseFloat(fitZoom.toFixed(2))));
     }
@@ -301,10 +300,8 @@ function Editor() {
       if (ctrl && e.key === "0") {
         e.preventDefault();
         if (doc) {
-          const vw = window.innerWidth;
-          const vh = window.innerHeight;
-          const availW = Math.max(200, vw - 256 - 288 - 80);
-          const availH = Math.max(200, vh - 56 - 80);
+          const availW = Math.max(200, window.innerWidth - 256 - 288 - 80);
+          const availH = Math.max(200, window.innerHeight - 56 - 80);
           setZoom(Math.max(0.2, parseFloat(Math.min(availW / doc.canvas.width, availH / doc.canvas.height, 1).toFixed(2))));
         }
         return;
@@ -560,8 +557,8 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas */}
-        <div className="flex-1 overflow-hidden min-w-0">
+        {/* Canvas — takes all remaining space between left toolbar and right panel */}
+        <div className="flex-1 min-w-0 overflow-hidden h-full">
           <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
         </div>
 

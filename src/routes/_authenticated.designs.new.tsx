@@ -69,7 +69,9 @@ function NewDesign() {
   // ── Step 1: Pick template ─────────────────────────────────────────────────
   if (step === "pick") {
     return (
-      <div className="flex flex-col h-screen overflow-hidden bg-background">
+      <div className="flex flex-col h-full min-h-screen bg-background overflow-hidden"
+        style={{ height: "100vh" }}
+      >
         <div className="flex items-center justify-between border-b border-border bg-card px-6 py-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Link to="/designs" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
