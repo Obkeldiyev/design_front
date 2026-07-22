@@ -51,6 +51,7 @@ import {
   downloadDataUrl,
   duplicateSelected,
   exportJPG,
+  exportPDF,
   exportPNG,
   exportSVG,
   sendBackward,
@@ -140,13 +141,13 @@ function Editor() {
     if (query.data) {
       setTitle(query.data.title);
       setDoc(query.data.data);
-      // Auto-fit zoom: subtract left panel (256px) + right panel (288px) + scrollbar/padding (80px)
+      // Auto-fit zoom: left panel w-64 (256px) + right panel w-72 (288px) + padding (80px)
       const w = query.data.data?.canvas?.width ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      const availW = Math.max(300, window.innerWidth - 256 - 288 - 80);
-      const availH = Math.max(200, window.innerHeight - 56 - 80); // 56 = header, 80 = padding
+      const availW = Math.max(200, window.innerWidth - 256 - 288 - 80);
+      const availH = Math.max(200, window.innerHeight - 56 - 80);
       const fitZoom = Math.min(availW / w, availH / h, 1);
-      setZoom(Math.max(0.25, parseFloat(fitZoom.toFixed(2))));
+      setZoom(Math.max(0.2, parseFloat(fitZoom.toFixed(2))));
     }
   }, [query.data, setDoc, setZoom]);
 
@@ -355,15 +356,28 @@ function Editor() {
     }
   };
 
-  const handleExport = (format: "png" | "jpg" | "svg") => {
+  const handleExport = (format: "png" | "jpg" | "svg" | "pdf") => {
     const c = canvasRef.current;
     if (!c) return;
+    if (format === "pdf") {
+      if (!doc) return;
+      // Save current page state first
+      const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON(["id", "meta"]);
+      const updatedPages = doc.pages.map((p) =>
+        p.id === activePageId ? { ...p, fabric: json as Record<string, unknown> } : p,
+      );
+      toast.promise(
+        exportPDF(updatedPages, doc.canvas.width, doc.canvas.height, title),
+        { loading: "Generating PDF…", success: "PDF downloaded", error: "PDF export failed" },
+      );
+      return;
+    }
     if (format === "svg") {
       const blob = new Blob([exportSVG(c)], { type: "image/svg+xml" });
       downloadDataUrl(URL.createObjectURL(blob), `${title || "design"}.svg`);
       return;
     }
-    const url = exportPNG(c, format === "png" ? 2 : 2);
+    const url = exportPNG(c, 2);
     downloadDataUrl(url, `${title || "design"}.${format}`);
   };
 
@@ -430,6 +444,7 @@ function Editor() {
               <DropdownMenuItem onClick={() => handleExport("png")}>PNG (2x)</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport("jpg")}>JPG (2x)</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport("svg")}>SVG</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>PDF (all pages)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

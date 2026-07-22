@@ -62,18 +62,13 @@ export function FabricCanvas({
   }, []);
 
   // ── 2. Apply background + dimensions whenever they change ─────────────────
-  // This effect does NOT touch the objects on the canvas at all.
+  // NOTE: We do NOT call setDimensions here — zoom effect (#4) owns that
+  // so the canvas element always stays at width*zoom × height*zoom.
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
-
-    // Dimensions
-    try {
-      c.setDimensions({ width: doc.canvas.width, height: doc.canvas.height });
-    } catch (_) {}
-
     applyBackground(c, containerRef.current, doc.canvas.background || "");
-  }, [doc, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
+  }, [doc, doc?.canvas.background]);
 
   // ── 2b. Clear canvas when doc is reset (navigating to a different design) ──
   useEffect(() => {
@@ -144,12 +139,19 @@ export function FabricCanvas({
   }, [activePageId]);
 
   // ── 4. Zoom ───────────────────────────────────────────────────────────────
+  // IMPORTANT: Fabric's setZoom() scales the rendering but does NOT resize
+  // the canvas element. We must resize the element to width*zoom / height*zoom
+  // otherwise the canvas is clipped (objects appear cut off on the left/right).
   useEffect(() => {
     const c = fabricRef.current;
-    if (!c) return;
+    if (!c || !doc) return;
+    const w = doc.canvas.width;
+    const h = doc.canvas.height;
+    // Resize the canvas element to match the zoomed dimensions
+    c.setDimensions({ width: w * zoom, height: h * zoom });
     c.setZoom(zoom);
     c.requestRenderAll();
-  }, [zoom]);
+  }, [zoom, doc?.canvas.width, doc?.canvas.height]);
 
   if (!doc) return null;
 
@@ -157,21 +159,18 @@ export function FabricCanvas({
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    // overflow-auto so the user can scroll when canvas is larger than viewport.
-    // min-w/min-h ensure the inner div can grow beyond the flex parent size.
-    // We center using auto margins on the inner div rather than grid place-items-center
-    // so that centering degrades gracefully to scroll when the canvas is too wide.
     <div
       ref={wrapperRef}
       className="h-full w-full overflow-auto bg-muted/40"
       style={{ display: "flex", alignItems: "flex-start", justifyContent: "center" }}
     >
-      {/* Padding wrapper — gives breathing room around the canvas */}
-      <div style={{ padding: "40px", display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: scaledW + 80, minHeight: scaledH + 80 }}>
+      {/* Outer padding gives breathing room. min dimensions ensure scrollability. */}
+      <div style={{ padding: "40px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", minWidth: scaledW + 80, minHeight: scaledH + 80 }}>
+        {/* This div just provides the shadow/ring visual — Fabric sizes the canvas inside */}
         <div
           ref={containerRef}
-          className="rounded-md shadow-2xl ring-1 ring-border flex-shrink-0"
-          style={{ width: scaledW, height: scaledH }}
+          className="rounded-md shadow-2xl ring-1 ring-border overflow-hidden flex-shrink-0"
+          style={{ lineHeight: 0 }}
         >
           <canvas ref={canvasElRef} />
         </div>

@@ -255,3 +255,86 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
   a.click();
   a.remove();
 }
+
+/**
+ * Export all pages of a CanvasDoc as a multi-page PDF.
+ * Each page becomes one PDF page sized to the canvas dimensions (in mm).
+ *
+ * Uses jsPDF which is a pure-JS library — no server needed.
+ * Install if not present: npm install jspdf
+ */
+export async function exportPDF(
+  pages: Array<{ fabric: Record<string, unknown> }>,
+  canvasWidth: number,
+  canvasHeight: number,
+  title: string,
+  multiplier = 2,
+): Promise<void> {
+  // Dynamically import jsPDF to keep initial bundle small
+  const { jsPDF } = await import("jspdf");
+
+  // Convert px to mm at 96 DPI  (1px = 0.2646mm)
+  const pxToMm = (px: number) => px * 0.2646;
+  const wMm = pxToMm(canvasWidth);
+  const hMm = pxToMm(canvasHeight);
+
+  const pdf = new jsPDF({
+    orientation: wMm > hMm ? "landscape" : "portrait",
+    unit: "mm",
+    format: [wMm, hMm],
+  });
+
+  // We need an off-screen fabric canvas to render each page
+  const { Canvas: FabricCanvasClass, FabricObject } = await import("fabric");
+
+  // Ensure custom props are registered in this dynamic import context
+  if (!(FabricObject.customProperties as string[]).includes("id")) {
+    (FabricObject.customProperties as string[]).push("id", "name");
+  }
+
+  const el = document.createElement("canvas");
+  el.width = canvasWidth;
+  el.height = canvasHeight;
+  const offscreen = new FabricCanvasClass(el, {
+    width: canvasWidth,
+    height: canvasHeight,
+    backgroundColor: "#ffffff",
+    enableRetinaScaling: false,
+  });
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const json = page.fabric as Record<string, unknown>;
+
+    // Clear and load page
+    await new Promise<void>((resolve) => {
+      offscreen.clear();
+      if (!json || !Array.isArray(json.objects) || (json.objects as any[]).length === 0) {
+        offscreen.requestRenderAll();
+        resolve();
+        return;
+      }
+      const result = offscreen.loadFromJSON(json);
+      const finish = () => { offscreen.requestRenderAll(); resolve(); };
+      if (result && typeof (result as any).then === "function") {
+        (result as any).then(finish).catch(finish);
+      } else {
+        finish();
+      }
+    });
+
+    // Give canvas a tick to paint
+    await new Promise((r) => setTimeout(r, 50));
+
+    const dataUrl = offscreen.toDataURL({ format: "jpeg", quality: 0.95, multiplier });
+
+    if (i > 0) {
+      pdf.addPage([wMm, hMm], wMm > hMm ? "landscape" : "portrait");
+    }
+    pdf.addImage(dataUrl, "JPEG", 0, 0, wMm, hMm);
+  }
+
+  try { offscreen.dispose(); } catch (_) {}
+
+  pdf.save(`${title || "design"}.pdf`);
+}
