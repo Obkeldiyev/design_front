@@ -104,6 +104,7 @@ function Editor() {
   const navigate = useNavigate();
   const canvasRef = useRef<fabricTypes.Canvas | null>(null);
   const [canvasInstance, setCanvasInstance] = useState<fabricTypes.Canvas | null>(null);
+  const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null); // for CSS bg
   const [title, setTitle] = useState("");
@@ -306,6 +307,21 @@ function Editor() {
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, doc, markDirty, setZoom, canvasInstance]);
+
+  // Center the scroll area whenever zoom or doc changes
+  useEffect(() => {
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    // Two rAF frames to ensure DOM has fully updated with new canvas size
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (el.scrollWidth > el.clientWidth) {
+        el.scrollLeft = Math.round((el.scrollWidth - el.clientWidth) / 2);
+      }
+      if (el.scrollHeight > el.clientHeight) {
+        el.scrollTop = Math.round((el.scrollHeight - el.clientHeight) / 2);
+      }
+    }));
+  }, [zoom, doc?.canvas.width, doc?.canvas.height]);
 
   useEffect(() => {
     if (saveStatus !== "dirty") return;
@@ -552,8 +568,9 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas area — scrollable, canvas centered via margin: auto */}
+        {/* Canvas area — scroll container, FabricCanvas sizes itself via minWidth/minHeight */}
         <div
+          ref={canvasScrollRef}
           style={{
             flex: 1,
             minWidth: 0,

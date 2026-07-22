@@ -101,23 +101,18 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
 
-  // Correct centering pattern for overflow:auto containers:
-  // - Outer div: full scroll area, display:flex, min-width/height ensures scroll space
-  // - Canvas box: margin:auto centers it when smaller; scroll appears when larger
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
+        // DO NOT set width/height — let minWidth/minHeight drive the size
+        // This prevents the "width:100% then overflow left" bug
+        minWidth: scaledW + 80,
+        minHeight: scaledH + 80,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        // These ensure the flex container is at least as large as the canvas
-        // so the canvas never gets clipped — scroll kicks in instead
-        minWidth: scaledW + 80,
-        minHeight: scaledH + 80,
-        boxSizing: "border-box",
         padding: 40,
+        boxSizing: "border-box",
       }}
     >
       <div
