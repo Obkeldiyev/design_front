@@ -153,6 +153,22 @@ export function FabricCanvas({
     c.requestRenderAll();
   }, [zoom, doc?.canvas.width, doc?.canvas.height]);
 
+  // Auto-scroll wrapper to center the canvas horizontally whenever zoom/size changes
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper || !doc) return;
+    // Small delay so DOM has updated dimensions
+    const t = setTimeout(() => {
+      const scrollW = wrapper.scrollWidth;
+      const clientW = wrapper.clientWidth;
+      if (scrollW > clientW) {
+        wrapper.scrollLeft = Math.round((scrollW - clientW) / 2);
+      }
+      wrapper.scrollTop = 0;
+    }, 30);
+    return () => clearTimeout(t);
+  }, [zoom, doc?.canvas.width, doc?.canvas.height]);
+
   if (!doc) return null;
 
   const scaledW = doc.canvas.width * zoom;
@@ -162,11 +178,20 @@ export function FabricCanvas({
     <div
       ref={wrapperRef}
       className="h-full w-full overflow-auto bg-muted/40"
-      style={{ display: "flex", alignItems: "flex-start", justifyContent: "center" }}
     >
-      {/* Outer padding gives breathing room. min dimensions ensure scrollability. */}
-      <div style={{ padding: "40px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", minWidth: scaledW + 80, minHeight: scaledH + 80 }}>
-        {/* This div just provides the shadow/ring visual — Fabric sizes the canvas inside */}
+      {/* centering wrapper — wide enough to always show full canvas + padding */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          minWidth: scaledW + 80,
+          minHeight: scaledH + 80,
+          padding: "40px",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* shadow/ring visual — Fabric controls the canvas element size inside */}
         <div
           ref={containerRef}
           className="rounded-md shadow-2xl ring-1 ring-border overflow-hidden flex-shrink-0"
