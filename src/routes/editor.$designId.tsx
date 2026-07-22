@@ -4,7 +4,8 @@ import { DesignAPI } from "@/lib/api/resources";
 import { useEditorStore } from "@/store/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
+import { flushSync } from "react-dom";
 
 // Lazy-load editor components so they are NEVER rendered server-side
 // Fabric.js requires window/document — SSR will crash without this
@@ -140,16 +141,17 @@ function Editor() {
   useEffect(() => {
     if (query.data) {
       setTitle(query.data.title);
-      // Calculate zoom BEFORE setDoc so FabricCanvas gets the right zoom on first render
       const w = query.data.data?.canvas?.width  ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      if (typeof window !== "undefined") {
-        // Left panel=256, right panel=288, padding=80
-        const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
-        const availH = Math.max(200, window.innerHeight - 56  - 80);
-        const fz = Math.min(availW / w, availH / h, 0.95); // max 0.95 so there's always padding
-        setZoom(Math.max(0.2, parseFloat(fz.toFixed(2))));
-      }
+      // flushSync ensures zoom is committed BEFORE setDoc triggers canvas mount
+      flushSync(() => {
+        if (typeof window !== "undefined") {
+          const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
+          const availH = Math.max(200, window.innerHeight - 56  - 80);
+          const fz = Math.min(availW / w, availH / h, 0.95);
+          setZoom(Math.max(0.2, parseFloat(fz.toFixed(2))));
+        }
+      });
       setDoc(query.data.data);
     }
   }, [query.data, setDoc, setZoom]);
@@ -444,7 +446,7 @@ function Editor() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
         {/* Left toolbar */}
         <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0">
           <div>
@@ -550,29 +552,16 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas — scroll container. Canvas is always top-left, scrollable if needed. */}
+        {/* Canvas area — scrollable, canvas centered via margin: auto */}
         <div
           style={{
             flex: 1,
             minWidth: 0,
-            height: "100%",
             overflow: "auto",
             background: "#0f0f1a",
           }}
         >
-          {/* Inner centering wrapper */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "100%",
-              padding: "40px",
-              boxSizing: "border-box",
-            }}
-          >
-            <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
-          </div>
+          <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
         </div>
 
         {/* Right layers panel */}

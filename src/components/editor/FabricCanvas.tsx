@@ -101,24 +101,39 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
 
-  // ── Render ───────────────────────────────────────────────────────────────
-  // The canvas element is sized to scaledW × scaledH by Fabric.
-  // We wrap it in a div that is EXACTLY scaledW × scaledH.
-  // The PARENT (in editor.$designId.tsx) is `overflow: auto` and centers this.
+  // Correct centering pattern for overflow:auto containers:
+  // - Outer div: full scroll area, display:flex, min-width/height ensures scroll space
+  // - Canvas box: margin:auto centers it when smaller; scroll appears when larger
   return (
     <div
       style={{
-        width: scaledW,
-        height: scaledH,
-        flexShrink: 0,
-        borderRadius: 6,
-        overflow: "hidden",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)",
-        outline: "1px solid rgba(128,128,128,0.15)",
-        lineHeight: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        // These ensure the flex container is at least as large as the canvas
+        // so the canvas never gets clipped — scroll kicks in instead
+        minWidth: scaledW + 80,
+        minHeight: scaledH + 80,
+        boxSizing: "border-box",
+        padding: 40,
       }}
     >
-      <canvas ref={canvasElRef} style={{ display: "block" }} />
+      <div
+        style={{
+          width: scaledW,
+          height: scaledH,
+          flexShrink: 0,
+          borderRadius: 6,
+          overflow: "hidden",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+          outline: "1px solid rgba(128,128,128,0.15)",
+          lineHeight: 0,
+        }}
+      >
+        <canvas ref={canvasElRef} style={{ display: "block" }} />
+      </div>
     </div>
   );
 }
