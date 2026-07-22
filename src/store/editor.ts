@@ -28,7 +28,7 @@ type EditorState = {
 export const useEditorStore = create<EditorState>((set, get) => ({
   doc: null,
   activePageId: null,
-  zoom: 1,
+  zoom: 0.6,
   saveStatus: "saved",
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
