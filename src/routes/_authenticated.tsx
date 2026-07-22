@@ -71,7 +71,7 @@ function AuthenticatedLayout() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <AppSidebar />
-      <main className="flex-1 min-w-0 overflow-auto flex flex-col">
+      <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
         <Outlet />
       </main>
     </div>

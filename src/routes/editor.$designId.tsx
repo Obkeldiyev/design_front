@@ -299,19 +299,34 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, doc, markDirty, setZoom, canvasInstance]);
 
-  // Center scroll after zoom/doc changes
+  // Center scroll after zoom/doc changes — fire multiple times to ensure DOM is ready
   useEffect(() => {
     const el = canvasScrollRef.current;
     if (!el) return;
     const center = () => {
+      if (!el) return;
       const excess = el.scrollWidth - el.clientWidth;
-      if (excess > 0) el.scrollLeft = Math.round(excess / 2);
+      el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
     };
-    // Run immediately and again after layout settles
     center();
-    const t = setTimeout(center, 100);
-    return () => clearTimeout(t);
-  }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.id]);
+    const t1 = setTimeout(center, 50);
+    const t2 = setTimeout(center, 200);
+    const t3 = setTimeout(center, 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [zoom, doc?.canvas.width, doc?.canvas.height, activePageId]);
+
+  // Also center when canvas first mounts
+  useEffect(() => {
+    if (!canvasInstance) return;
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    const center = () => {
+      const excess = el.scrollWidth - el.clientWidth;
+      el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
+    };
+    setTimeout(center, 100);
+    setTimeout(center, 400);
+  }, [canvasInstance]);
 
   useEffect(() => {
     if (saveStatus !== "dirty") return;
@@ -569,11 +584,12 @@ function Editor() {
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            minHeight: "100%",
+            /* minWidth must be at least the scaled canvas width + padding
+               so the scroll container knows how wide the content is */
+            minWidth: doc ? doc.canvas.width * zoom + 80 : "100%",
+            minHeight: doc ? doc.canvas.height * zoom + 80 : "100%",
           }}>
-            <div style={{ flexShrink: 0 }}>
-              <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
-            </div>
+            <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>
 
