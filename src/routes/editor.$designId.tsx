@@ -584,11 +584,21 @@ function Editor() {
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            /* minWidth must be at least the scaled canvas width + padding
-               so the scroll container knows how wide the content is */
             minWidth: doc ? doc.canvas.width * zoom + 80 : "100%",
             minHeight: doc ? doc.canvas.height * zoom + 80 : "100%",
           }}>
+            {/* DEBUG — remove after fixing */}
+            {doc && (
+              <div style={{
+                position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)",
+                background: "rgba(255,0,0,0.9)", color: "white", padding: "4px 12px",
+                borderRadius: 4, fontSize: 12, zIndex: 9999, pointerEvents: "none",
+                fontFamily: "monospace"
+              }}>
+                zoom={zoom.toFixed(2)} canvasW={doc.canvas.width} scaledW={Math.round(doc.canvas.width*zoom)}
+                innerW={typeof window!=="undefined"?window.innerWidth:0}
+              </div>
+            )}
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>
