@@ -36,21 +36,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
   setDoc: (doc) => {
-    // Auto-calculate fit zoom when loading a new doc
-    let zoom = get().zoom;
+    let zoom = 0.6; // safe default
     if (typeof window !== "undefined") {
-      const w = doc.canvas?.width  ?? 1050;
-      const h = doc.canvas?.height ?? 600;
-      const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
-      const availH = Math.max(200, window.innerHeight - 56  - 80);
-      zoom = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.95)).toFixed(2));
+      const w = doc?.canvas?.width  ?? 1050;
+      const h = doc?.canvas?.height ?? 600;
+      // editor left=256, right=288, padding=80, header=56
+      const availW = window.innerWidth  - 256 - 288 - 80;
+      const availH = window.innerHeight - 56  - 80;
+      if (availW > 0 && availH > 0) {
+        zoom = Math.min(availW / w, availH / h, 0.95);
+        zoom = Math.max(0.2, parseFloat(zoom.toFixed(2)));
+      }
     }
-    set({
-      doc,
-      activePageId: doc.pages[0]?.id ?? null,
-      saveStatus: "saved",
-      zoom,
-    });
+    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved", zoom });
   },
   setActivePage: (id) => set({ activePageId: id }),
   addPage: () => {

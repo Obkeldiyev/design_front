@@ -562,18 +562,11 @@ function Editor() {
         <div
           ref={canvasScrollRef}
           style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
-          onScroll={() => {}} /* keep as controlled scroll target */
         >
-          <div id="canvas-centering-wrapper" style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "center",
-            padding: "40px",
-            boxSizing: "border-box",
-            /* CRITICAL: minWidth ensures the wrapper is never narrower than the canvas.
-               This means overflow goes RIGHT (shows scrollbar) not LEFT (clips content). */
-            minWidth: "max-content",
-          }}>
+          {/* margin: auto centers horizontally when content fits.
+              When canvas is wider than container, scroll appears on right side
+              because content starts at left=0. User can scroll to see full canvas. */}
+          <div style={{ padding: "40px 0", lineHeight: 0, textAlign: "center" }}>
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>

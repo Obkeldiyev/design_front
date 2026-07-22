@@ -97,7 +97,6 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   }, [activePageId]);
 
   if (!doc) {
-    // Keep canvas mounted (Fabric needs the DOM element) but invisible
     return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
   }
 
@@ -105,9 +104,16 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    <div style={{ width: scaledW, height: scaledH, flexShrink: 0, lineHeight: 0,
-      borderRadius: 6, overflow: "hidden",
-      boxShadow: "0 4px 32px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)" }}>
+    <div style={{
+      display: "inline-block",  // allows text-align:center in parent to work
+      width: scaledW,
+      height: scaledH,
+      verticalAlign: "top",
+      lineHeight: 0,
+      borderRadius: 6,
+      overflow: "hidden",
+      boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
+    }}>
       <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
