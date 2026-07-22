@@ -96,7 +96,10 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePageId]);
 
-  if (!doc) return null;
+  if (!doc) {
+    // Keep canvas mounted (Fabric needs the DOM element) but invisible
+    return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
+  }
 
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;

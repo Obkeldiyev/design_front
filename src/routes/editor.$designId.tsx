@@ -4,7 +4,7 @@ import { DesignAPI } from "@/lib/api/resources";
 import { useEditorStore } from "@/store/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 
 // Lazy-load editor components so they are NEVER rendered server-side
 // Fabric.js requires window/document — SSR will crash without this
@@ -138,27 +138,14 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designId]);
 
-  // Reset zoom to fit on every design load — runs synchronously before paint
-  useLayoutEffect(() => {
-    if (!query.data) return;
-    const w = query.data.data?.canvas?.width  ?? 1050;
-    const h = query.data.data?.canvas?.height ?? 600;
-    const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
-    const availH = Math.max(200, window.innerHeight - 56  - 80);
-    const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.95)).toFixed(2));
-    // Mutate Zustand store directly — bypasses React batching
-    useEditorStore.setState({ zoom: fz });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query.data?.id]);
-
-  // Sync data into store once per design
+  // Load design data into store
   const lastSyncedDesignId = useRef<string | null>(null);
   useEffect(() => {
-    if (query.data && lastSyncedDesignId.current !== query.data.id) {
-      lastSyncedDesignId.current = query.data.id;
-      setTitle(query.data.title);
-      setDoc(query.data.data);
-    }
+    if (!query.data) return;
+    if (lastSyncedDesignId.current === query.data.id) return;
+    lastSyncedDesignId.current = query.data.id;
+    setTitle(query.data.title);
+    setDoc(query.data.data); // setDoc now auto-calculates correct zoom
   }, [query.data, setDoc]);
 
   const save = useMutation({
@@ -312,20 +299,19 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, doc, markDirty, setZoom, canvasInstance]);
 
-  // Center the scroll area whenever zoom or doc changes
+  // Center scroll after zoom/doc changes
   useEffect(() => {
     const el = canvasScrollRef.current;
     if (!el) return;
-    // Two rAF frames to ensure DOM has fully updated with new canvas size
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (el.scrollWidth > el.clientWidth) {
-        el.scrollLeft = Math.round((el.scrollWidth - el.clientWidth) / 2);
-      }
-      if (el.scrollHeight > el.clientHeight) {
-        el.scrollTop = Math.round((el.scrollHeight - el.clientHeight) / 2);
-      }
-    }));
-  }, [zoom, doc?.canvas.width, doc?.canvas.height]);
+    const center = () => {
+      const excess = el.scrollWidth - el.clientWidth;
+      if (excess > 0) el.scrollLeft = Math.round(excess / 2);
+    };
+    // Run immediately and again after layout settles
+    center();
+    const t = setTimeout(center, 100);
+    return () => clearTimeout(t);
+  }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.id]);
 
   useEffect(() => {
     if (saveStatus !== "dirty") return;
@@ -575,25 +561,21 @@ function Editor() {
         {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a", position: "relative" }}
+          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
+          onScroll={() => {}} /* keep as controlled scroll target */
         >
-          {doc && (
-            <div style={{
-              // Always sized to at least the viewport so centering works
-              minWidth: "100%",
-              minHeight: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 40,
-              boxSizing: "border-box",
-            }}>
-              <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
-            </div>
-          )}
-          {!doc && (
+          <div id="canvas-centering-wrapper" style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            padding: "40px",
+            boxSizing: "border-box",
+            /* CRITICAL: minWidth ensures the wrapper is never narrower than the canvas.
+               This means overflow goes RIGHT (shows scrollbar) not LEFT (clips content). */
+            minWidth: "max-content",
+          }}>
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
-          )}
+          </div>
         </div>
 
         {/* Right layers panel */}
