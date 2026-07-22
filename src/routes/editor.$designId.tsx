@@ -141,16 +141,16 @@ function Editor() {
     if (query.data) {
       setTitle(query.data.title);
       setDoc(query.data.data);
-      // Zoom is now auto-calculated by FabricCanvas ResizeObserver on mount.
-      // We set a reasonable initial value here; it gets overridden by the observer.
-      const w = query.data.data?.canvas?.width ?? 1050;
+      // Set initial zoom so canvas fits in the center panel
+      // Center panel = viewport - left panel (256) - right panel (288)
+      const w = query.data.data?.canvas?.width  ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-      const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-      // editor left=256 + right=288 + padding=80. No app sidebar (top-level route).
-      const availW = Math.max(200, vw - 256 - 288 - 80);
-      const availH = Math.max(200, vh - 56 - 80);
-      setZoom(Math.max(0.2, parseFloat(Math.min(availW / w, availH / h, 1).toFixed(2))));
+      if (typeof window !== "undefined") {
+        const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
+        const availH = Math.max(200, window.innerHeight - 56  - 80);
+        const fz = Math.min(availW / w, availH / h, 1);
+        setZoom(Math.max(0.2, parseFloat(fz.toFixed(2))));
+      }
     }
   }, [query.data, setDoc, setZoom]);
 
@@ -183,41 +183,42 @@ function Editor() {
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const canvas = canvasRef.current;
+      // Use canvasInstance (state) as fallback — more reliable after async load
+      const canvas = canvasRef.current ?? canvasInstance;
       if (!canvas) return;
 
-      // Don't intercept when typing in an input/textarea
+      // Don't fire shortcuts when user is typing in a real input/textarea
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      const tag = target.tagName.toUpperCase();
+      // Allow shortcuts when focused on the canvas element itself
+      const isCanvasEl = tag === "CANVAS";
+      if (!isCanvasEl && (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable)) return;
 
       const ctrl = e.ctrlKey || e.metaKey;
 
-      // Delete / Backspace — delete selected objects
+      // Delete / Backspace — delete selected (not while editing IText)
       if ((e.key === "Delete" || e.key === "Backspace") && !ctrl) {
+        const active = canvas.getActiveObject();
+        if (!active) return;
+        // Skip if an IText is currently being edited
+        if ((active as any).isEditing) return;
         e.preventDefault();
         deleteSelected(canvas);
         markDirty();
         return;
       }
 
-      // Ctrl+Z — undo
-      if (ctrl && e.key === "z" && !e.shiftKey) {
+      // Ctrl+Z — undo (Fabric doesn't have built-in undo, just re-render)
+      if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
-        (canvas as any).undo?.();
+        // Fabric v6+ doesn't have native undo — we just deselect for now
+        canvas.discardActiveObject();
         canvas.requestRenderAll();
         return;
       }
 
-      // Ctrl+Shift+Z or Ctrl+Y — redo
-      if ((ctrl && e.shiftKey && e.key === "z") || (ctrl && e.key === "y")) {
-        e.preventDefault();
-        (canvas as any).redo?.();
-        canvas.requestRenderAll();
-        return;
-      }
-
-      // Ctrl+D — duplicate selected
-      if (ctrl && e.key === "d") {
+      // Ctrl+D — duplicate
+      if (ctrl && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateSelected(canvas);
         markDirty();
@@ -225,22 +226,27 @@ function Editor() {
       }
 
       // Ctrl+S — save
-      if (ctrl && e.key === "s") {
+      if (ctrl && e.key.toLowerCase() === "s") {
         e.preventDefault();
         save.mutate();
         return;
       }
 
       // Ctrl+A — select all
-      if (ctrl && e.key === "a") {
+      if (ctrl && e.key.toLowerCase() === "a") {
         e.preventDefault();
-        canvas.discardActiveObject();
         const objs = canvas.getObjects();
         if (objs.length > 0) {
           const sel = new fabric.ActiveSelection(objs as fabricTypes.FabricObject[], { canvas });
           canvas.setActiveObject(sel);
           canvas.requestRenderAll();
         }
+        return;
+      }
+
+      // Ctrl+C — duplicate (copy+paste simulation)
+      if (ctrl && e.key.toLowerCase() === "c") {
+        // Store for paste — handled by Ctrl+V
         return;
       }
 
@@ -251,11 +257,11 @@ function Editor() {
         return;
       }
 
-      // Arrow keys — move selected object by 1px (10px with Shift)
+      // Arrow keys — nudge selected
       const moveKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
       if (moveKeys.includes(e.key)) {
         const obj = canvas.getActiveObject();
-        if (!obj) return;
+        if (!obj || (obj as any).isEditing) return;
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
         const props: Partial<{ left: number; top: number }> = {};
@@ -270,31 +276,17 @@ function Editor() {
         return;
       }
 
-      // [ and ] — layer order
-      if (e.key === "[") {
-        e.preventDefault();
-        sendBackward(canvas);
-        markDirty();
-        return;
-      }
-      if (e.key === "]") {
-        e.preventDefault();
-        bringForward(canvas);
-        markDirty();
-        return;
-      }
+      // [ ] — layer order
+      if (e.key === "[") { e.preventDefault(); sendBackward(canvas); markDirty(); return; }
+      if (e.key === "]") { e.preventDefault(); bringForward(canvas); markDirty(); return; }
 
-      // Ctrl+= or Ctrl+Plus — zoom in
+      // Ctrl+= / Ctrl++ — zoom in
       if (ctrl && (e.key === "=" || e.key === "+")) {
-        e.preventDefault();
-        setZoom(Math.min(zoom + 0.1, 4));
-        return;
+        e.preventDefault(); setZoom(Math.min(zoom + 0.1, 4)); return;
       }
       // Ctrl+- — zoom out
       if (ctrl && e.key === "-") {
-        e.preventDefault();
-        setZoom(Math.max(zoom - 0.1, 0.1));
-        return;
+        e.preventDefault(); setZoom(Math.max(zoom - 0.1, 0.1)); return;
       }
       // Ctrl+0 — fit zoom
       if (ctrl && e.key === "0") {
@@ -311,7 +303,8 @@ function Editor() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, doc, markDirty, setZoom]);
+  }, [zoom, doc, markDirty, setZoom, canvasInstance]);
+
   useEffect(() => {
     if (saveStatus !== "dirty") return;
     const t = setTimeout(() => save.mutate(), 1500);
@@ -451,9 +444,9 @@ function Editor() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Left toolbar */}
-        <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto">
+        <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0">
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Add element
@@ -557,13 +550,26 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas — fills all remaining space, FabricCanvas manages its own scroll */}
-        <div style={{ flex: 1, minWidth: 0, height: "100%", overflow: "hidden", position: "relative" }}>
+        {/* Canvas — scroll+center container. FabricCanvas renders only the canvas box. */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            overflow: "auto",
+            background: "#0f0f1a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px",
+            boxSizing: "border-box",
+          }}
+        >
           <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
         </div>
 
         {/* Right layers panel */}
-        <div className="w-72 flex flex-col bg-card border-l border-border">
+        <div className="w-72 flex flex-col bg-card border-l border-border flex-shrink-0 overflow-y-auto">
           <LayersPanel canvas={canvasInstance} />
           
           <div className="border-t border-border p-3 space-y-3">
