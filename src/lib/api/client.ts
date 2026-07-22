@@ -1,7 +1,19 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-export const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:9000";
+// In production (deployed), API_URL is /api — relative to current origin.
+// In dev (localhost), use the env var or fall back to localhost:9000.
+// This runtime check ensures it works whether VITE_API_URL is set or not.
+function resolveApiUrl(): string {
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (envUrl) return envUrl;
+  // If running in a browser and NOT on localhost, assume /api
+  if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+    return "/api";
+  }
+  return "http://localhost:9000";
+}
+
+export const API_URL = resolveApiUrl();
 
 const TOKEN_KEY = "cardify_access_token";
 const REFRESH_KEY = "cardify_refresh_token";

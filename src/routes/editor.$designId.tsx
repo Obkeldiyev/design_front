@@ -33,7 +33,8 @@ import {
   Plus,
   Save,
 } from "lucide-react";
-import type * as fabric from "fabric";
+import type * as fabricTypes from "fabric";
+import * as fabric from "fabric";
 import {
   addCircle,
   addEllipse,
@@ -99,8 +100,8 @@ function EditorPage() {
 function Editor() {
   const { designId } = Route.useParams();
   const navigate = useNavigate();
-  const canvasRef = useRef<fabric.Canvas | null>(null);
-  const [canvasInstance, setCanvasInstance] = useState<fabric.Canvas | null>(null);
+  const canvasRef = useRef<fabricTypes.Canvas | null>(null);
+  const [canvasInstance, setCanvasInstance] = useState<fabricTypes.Canvas | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null); // for CSS bg
   const [title, setTitle] = useState("");
@@ -176,7 +177,140 @@ function Editor() {
     },
   });
 
-  // Autosave on dirty (debounced)
+  // ── Keyboard shortcuts ───────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      // Don't intercept when typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Delete / Backspace — delete selected objects
+      if ((e.key === "Delete" || e.key === "Backspace") && !ctrl) {
+        e.preventDefault();
+        deleteSelected(canvas);
+        markDirty();
+        return;
+      }
+
+      // Ctrl+Z — undo
+      if (ctrl && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        (canvas as any).undo?.();
+        canvas.requestRenderAll();
+        return;
+      }
+
+      // Ctrl+Shift+Z or Ctrl+Y — redo
+      if ((ctrl && e.shiftKey && e.key === "z") || (ctrl && e.key === "y")) {
+        e.preventDefault();
+        (canvas as any).redo?.();
+        canvas.requestRenderAll();
+        return;
+      }
+
+      // Ctrl+D — duplicate selected
+      if (ctrl && e.key === "d") {
+        e.preventDefault();
+        duplicateSelected(canvas);
+        markDirty();
+        return;
+      }
+
+      // Ctrl+S — save
+      if (ctrl && e.key === "s") {
+        e.preventDefault();
+        save.mutate();
+        return;
+      }
+
+      // Ctrl+A — select all
+      if (ctrl && e.key === "a") {
+        e.preventDefault();
+        canvas.discardActiveObject();
+        const objs = canvas.getObjects();
+        if (objs.length > 0) {
+          const sel = new fabric.ActiveSelection(objs as fabricTypes.FabricObject[], { canvas });
+          canvas.setActiveObject(sel);
+          canvas.requestRenderAll();
+        }
+        return;
+      }
+
+      // Escape — deselect
+      if (e.key === "Escape") {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+        return;
+      }
+
+      // Arrow keys — move selected object by 1px (10px with Shift)
+      const moveKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+      if (moveKeys.includes(e.key)) {
+        const obj = canvas.getActiveObject();
+        if (!obj) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const props: Partial<{ left: number; top: number }> = {};
+        if (e.key === "ArrowLeft")  props.left  = (obj.left  ?? 0) - step;
+        if (e.key === "ArrowRight") props.left  = (obj.left  ?? 0) + step;
+        if (e.key === "ArrowUp")    props.top   = (obj.top   ?? 0) - step;
+        if (e.key === "ArrowDown")  props.top   = (obj.top   ?? 0) + step;
+        obj.set(props);
+        obj.setCoords();
+        canvas.requestRenderAll();
+        markDirty();
+        return;
+      }
+
+      // [ and ] — layer order
+      if (e.key === "[") {
+        e.preventDefault();
+        sendBackward(canvas);
+        markDirty();
+        return;
+      }
+      if (e.key === "]") {
+        e.preventDefault();
+        bringForward(canvas);
+        markDirty();
+        return;
+      }
+
+      // Ctrl+= or Ctrl+Plus — zoom in
+      if (ctrl && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        setZoom(Math.min(zoom + 0.1, 4));
+        return;
+      }
+      // Ctrl+- — zoom out
+      if (ctrl && e.key === "-") {
+        e.preventDefault();
+        setZoom(Math.max(zoom - 0.1, 0.1));
+        return;
+      }
+      // Ctrl+0 — fit zoom
+      if (ctrl && e.key === "0") {
+        e.preventDefault();
+        if (doc) {
+          const w = doc.canvas.width;
+          const h = doc.canvas.height;
+          const availW = Math.max(400, window.innerWidth - 64 - 288 - 100);
+          const availH = Math.max(300, window.innerHeight - 56 - 100);
+          setZoom(Math.max(0.25, parseFloat(Math.min(availW / w, availH / h, 1).toFixed(2))));
+        }
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom, doc, markDirty, setZoom]);
   useEffect(() => {
     if (saveStatus !== "dirty") return;
     const t = setTimeout(() => save.mutate(), 1500);
