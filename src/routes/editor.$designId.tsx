@@ -141,16 +141,16 @@ function Editor() {
     if (query.data) {
       setTitle(query.data.title);
       setDoc(query.data.data);
-      // Editor is a top-level route (no app sidebar).
-      // Left panel = w-64 (256px), right panel = w-72 (288px), padding = 80px
+      // Zoom is now auto-calculated by FabricCanvas ResizeObserver on mount.
+      // We set a reasonable initial value here; it gets overridden by the observer.
       const w = query.data.data?.canvas?.width ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
       const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
       const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+      // editor left=256 + right=288 + padding=80. No app sidebar (top-level route).
       const availW = Math.max(200, vw - 256 - 288 - 80);
-      const availH = Math.max(200, vh - 56 - 80); // 56 = header height
-      const fitZoom = Math.min(availW / w, availH / h, 1);
-      setZoom(Math.max(0.2, parseFloat(fitZoom.toFixed(2))));
+      const availH = Math.max(200, vh - 56 - 80);
+      setZoom(Math.max(0.2, parseFloat(Math.min(availW / w, availH / h, 1).toFixed(2))));
     }
   }, [query.data, setDoc, setZoom]);
 
@@ -451,7 +451,7 @@ function Editor() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         {/* Left toolbar */}
         <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto">
           <div>
@@ -557,8 +557,8 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas — takes all remaining space between left toolbar and right panel */}
-        <div className="flex-1 min-w-0 overflow-hidden h-full">
+        {/* Canvas — fills all remaining space, FabricCanvas manages its own scroll */}
+        <div style={{ flex: 1, minWidth: 0, height: "100%", overflow: "hidden", position: "relative" }}>
           <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
         </div>
 
