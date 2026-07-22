@@ -7,4 +7,10 @@ export default defineConfig({
   nitro: {
     preset: "node-server",
   },
+  vite: {
+    server: {
+      allowedHosts: ["card24.uz", "www.card24.uz", "localhost"],
+      host: "0.0.0.0",
+    },
+  },
 });

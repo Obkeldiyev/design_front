@@ -260,10 +260,12 @@ export const BLOCK_TEMPLATES: Record<BlockType, Partial<Block>> = {
   },
 };
 
+import { generateId } from "@/lib/uuid";
+
 export function createBlock(type: BlockType): Block {
   const template = BLOCK_TEMPLATES[type];
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     type,
     order: 0,
     content: { ...(template.content || {}) },

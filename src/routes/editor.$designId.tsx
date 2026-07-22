@@ -142,10 +142,11 @@ function Editor() {
       // Auto-fit zoom so the full canvas is visible in the ~800px wide center panel
       const w = query.data.data?.canvas?.width ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      const panelW = window.innerWidth - 64 - 288 - 80; // approx: left toolbar + right panel + padding
-      const panelH = window.innerHeight - 56 - 80;       // approx: header + padding
-      const fitZoom = Math.min(panelW / w, panelH / h, 1); // never zoom in beyond 100%
-      setZoom(Math.max(0.2, Math.round(fitZoom * 10) / 10)); // round to 1 decimal, min 20%
+      // Use actual viewport minus editor chrome — more reliable than estimating
+      const availW = Math.max(400, window.innerWidth - 64 - 288 - 100);
+      const availH = Math.max(300, window.innerHeight - 56 - 100);
+      const fitZoom = Math.min(availW / w, availH / h, 1);
+      setZoom(Math.max(0.25, parseFloat(fitZoom.toFixed(2))));
     }
   }, [query.data, setDoc, setZoom]);
 

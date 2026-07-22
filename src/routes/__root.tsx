@@ -91,7 +91,10 @@ function RootShell({ children }: { children: ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `// Remove browser extension injected attributes that break hydration
-try{(function(){const attrs=['data-new-gr-c-s-check-loaded','data-gr-ext-installed'];const el=document && document.body?document.body:document.documentElement;attrs.forEach(a=>{try{if(el&&el.hasAttribute&&el.hasAttribute(a))el.removeAttribute(a)}catch(e){}});})();}catch(e){}`,
+try{(function(){const attrs=['data-new-gr-c-s-check-loaded','data-gr-ext-installed'];const el=document && document.body?document.body:document.documentElement;attrs.forEach(a=>{try{if(el&&el.hasAttribute&&el.hasAttribute(a))el.removeAttribute(a)}catch(e){}});})();}catch(e){}
+
+// Polyfill crypto.randomUUID for HTTP (non-secure) contexts
+try{if(typeof crypto!=='undefined'&&!crypto.randomUUID){crypto.randomUUID=function(){return([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,function(c){return(c^(crypto.getRandomValues(new Uint8Array(1))[0]&(15>>(c/4)))).toString(16)});};}}catch(e){}`,
           }}
         />
       </head>

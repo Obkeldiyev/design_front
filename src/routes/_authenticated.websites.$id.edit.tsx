@@ -22,6 +22,7 @@ const ThemeSettings = lazy(() =>
 );
 import type { Block, BlockType, WebsiteTheme } from "@/lib/website-blocks";
 import { BLOCK_META, DEFAULT_THEME, createBlock } from "@/lib/website-blocks";
+import { generateId } from "@/lib/uuid";
 import { toast } from "sonner";
 import { WebsiteAPI } from "@/lib/api/resources";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -166,7 +167,7 @@ function WebsiteBuilder() {
       if (idx === -1) return prev;
       const newBlock: Block = {
         ...prev[idx],
-        id: crypto.randomUUID(),
+        id: generateId(),
         content: { ...prev[idx].content },
         order: idx + 1,
       };

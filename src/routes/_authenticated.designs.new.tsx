@@ -13,6 +13,7 @@ import { ArrowLeft, Check, Sparkles, FileText } from "lucide-react";
 import type { CanvasDoc, DesignType } from "@/lib/api/types";
 import { CARD_TEMPLATES, TEMPLATE_CATEGORIES } from "@/lib/card-templates";
 import { TemplatePreview } from "@/components/editor/TemplatePreview";
+import { generateId } from "@/lib/uuid";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/designs/new")({
@@ -53,7 +54,7 @@ function NewDesign() {
         doc = JSON.parse(JSON.stringify(selectedTemplate.doc));
       } else {
         const p = SIZE_PRESETS.find((x) => x.id === preset) ?? SIZE_PRESETS[0];
-        doc = { version: 1, canvas: { width: p.w, height: p.h, background: "#ffffff" }, pages: [{ id: crypto.randomUUID(), name: "Front", fabric: { version: "6.0.0", objects: [] } }] };
+        doc = { version: 1, canvas: { width: p.w, height: p.h, background: "#ffffff" }, pages: [{ id: generateId(), name: "Front", fabric: { version: "6.0.0", objects: [] } }] };
       }
       return DesignAPI.create({ title, slug: slugify(title || "untitled-design"), type, businessId: businessId ?? null, data: doc } as Parameters<typeof DesignAPI.create>[0]);
     },
@@ -98,6 +99,23 @@ function NewDesign() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+            {/* Start blank — always first */}
+            <button
+              onClick={() => { setSelectedTemplateId(null); setStep("configure"); }}
+              className="group rounded-xl border-2 border-dashed border-border hover:border-primary/60 hover:shadow-lg transition-all text-left overflow-hidden bg-muted/30 hover:bg-primary/5"
+            >
+              <div className="aspect-[7/4] w-full flex flex-col items-center justify-center gap-3 text-muted-foreground group-hover:text-primary transition-colors">
+                <FileText className="h-10 w-10" />
+                <span className="text-sm font-semibold">{t("designs.start_blank")}</span>
+                <span className="text-xs opacity-60">{t("designs.blank_desc")}</span>
+              </div>
+              <div className="p-3 bg-card border-t border-border">
+                <p className="text-sm font-semibold">{t("designs.blank_canvas")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">1050 × 600</p>
+              </div>
+            </button>
+
             {filteredTemplates.map((template) => {
               const isSelected = selectedTemplateId === template.id;
               return (

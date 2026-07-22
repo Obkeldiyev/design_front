@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { CanvasDoc } from "@/lib/api/types";
+import { generateId } from "@/lib/uuid";
 
 export type SaveStatus = "saved" | "saving" | "dirty" | "error";
 
@@ -41,8 +42,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   addPage: () => {
     const doc = get().doc;
     if (!doc) return;
+    const uuid = generateId();
     const newPage = {
-      id: crypto.randomUUID(),
+      id: uuid,
       name: `Page ${doc.pages.length + 1}`,
       fabric: { version: "7", objects: [] },
     };
