@@ -73,7 +73,7 @@ export function FabricCanvas({
     } catch (_) {}
 
     applyBackground(c, containerRef.current, doc.canvas.background || "");
-  }, [doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
+  }, [doc, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
   // ── 2b. Clear canvas when doc is reset (navigating to a different design) ──
   useEffect(() => {
@@ -157,13 +157,24 @@ export function FabricCanvas({
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    <div ref={wrapperRef} className="grid h-full w-full place-items-center overflow-auto bg-muted/40 p-10">
-      <div
-        ref={containerRef}
-        className="rounded-md shadow-2xl ring-1 ring-border"
-        style={{ width: scaledW, height: scaledH }}
-      >
-        <canvas ref={canvasElRef} />
+    // overflow-auto so the user can scroll when canvas is larger than viewport.
+    // min-w/min-h ensure the inner div can grow beyond the flex parent size.
+    // We center using auto margins on the inner div rather than grid place-items-center
+    // so that centering degrades gracefully to scroll when the canvas is too wide.
+    <div
+      ref={wrapperRef}
+      className="h-full w-full overflow-auto bg-muted/40"
+      style={{ display: "flex", alignItems: "flex-start", justifyContent: "center" }}
+    >
+      {/* Padding wrapper — gives breathing room around the canvas */}
+      <div style={{ padding: "40px", display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: scaledW + 80, minHeight: scaledH + 80 }}>
+        <div
+          ref={containerRef}
+          className="rounded-md shadow-2xl ring-1 ring-border flex-shrink-0"
+          style={{ width: scaledW, height: scaledH }}
+        >
+          <canvas ref={canvasElRef} />
+        </div>
       </div>
     </div>
   );

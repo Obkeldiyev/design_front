@@ -140,12 +140,11 @@ function Editor() {
     if (query.data) {
       setTitle(query.data.title);
       setDoc(query.data.data);
-      // Auto-fit zoom so the full canvas is visible in the ~800px wide center panel
+      // Auto-fit zoom: subtract left panel (256px) + right panel (288px) + scrollbar/padding (80px)
       const w = query.data.data?.canvas?.width ?? 1050;
       const h = query.data.data?.canvas?.height ?? 600;
-      // Use actual viewport minus editor chrome — more reliable than estimating
-      const availW = Math.max(400, window.innerWidth - 64 - 288 - 100);
-      const availH = Math.max(300, window.innerHeight - 56 - 100);
+      const availW = Math.max(300, window.innerWidth - 256 - 288 - 80);
+      const availH = Math.max(200, window.innerHeight - 56 - 80); // 56 = header, 80 = padding
       const fitZoom = Math.min(availW / w, availH / h, 1);
       setZoom(Math.max(0.25, parseFloat(fitZoom.toFixed(2))));
     }
@@ -299,8 +298,8 @@ function Editor() {
         if (doc) {
           const w = doc.canvas.width;
           const h = doc.canvas.height;
-          const availW = Math.max(400, window.innerWidth - 64 - 288 - 100);
-          const availH = Math.max(300, window.innerHeight - 56 - 100);
+          const availW = Math.max(300, window.innerWidth - 256 - 288 - 80);
+          const availH = Math.max(200, window.innerHeight - 56 - 80);
           setZoom(Math.max(0.25, parseFloat(Math.min(availW / w, availH / h, 1).toFixed(2))));
         }
         return;
@@ -543,7 +542,7 @@ function Editor() {
         </aside>
 
         {/* Canvas */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-w-0">
           <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
         </div>
 
