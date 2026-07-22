@@ -5,7 +5,6 @@ import { useEditorStore } from "@/store/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
-import { flushSync } from "react-dom";
 
 // Lazy-load editor components so they are NEVER rendered server-side
 // Fabric.js requires window/document — SSR will crash without this
@@ -139,23 +138,28 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designId]);
 
+  // Reset zoom to fit on every design load — runs synchronously before paint
+  useLayoutEffect(() => {
+    if (!query.data) return;
+    const w = query.data.data?.canvas?.width  ?? 1050;
+    const h = query.data.data?.canvas?.height ?? 600;
+    const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
+    const availH = Math.max(200, window.innerHeight - 56  - 80);
+    const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.95)).toFixed(2));
+    // Mutate Zustand store directly — bypasses React batching
+    useEditorStore.setState({ zoom: fz });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.data?.id]);
+
+  // Sync data into store once per design
+  const lastSyncedDesignId = useRef<string | null>(null);
   useEffect(() => {
-    if (query.data) {
+    if (query.data && lastSyncedDesignId.current !== query.data.id) {
+      lastSyncedDesignId.current = query.data.id;
       setTitle(query.data.title);
-      const w = query.data.data?.canvas?.width  ?? 1050;
-      const h = query.data.data?.canvas?.height ?? 600;
-      // flushSync ensures zoom is committed BEFORE setDoc triggers canvas mount
-      flushSync(() => {
-        if (typeof window !== "undefined") {
-          const availW = Math.max(200, window.innerWidth  - 256 - 288 - 80);
-          const availH = Math.max(200, window.innerHeight - 56  - 80);
-          const fz = Math.min(availW / w, availH / h, 0.95);
-          setZoom(Math.max(0.2, parseFloat(fz.toFixed(2))));
-        }
-      });
       setDoc(query.data.data);
     }
-  }, [query.data, setDoc, setZoom]);
+  }, [query.data, setDoc]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -568,17 +572,28 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Canvas area — scroll container, FabricCanvas sizes itself via minWidth/minHeight */}
+        {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            overflow: "auto",
-            background: "#0f0f1a",
-          }}
+          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a", position: "relative" }}
         >
-          <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
+          {doc && (
+            <div style={{
+              // Always sized to at least the viewport so centering works
+              minWidth: "100%",
+              minHeight: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 40,
+              boxSizing: "border-box",
+            }}>
+              <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
+            </div>
+          )}
+          {!doc && (
+            <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
+          )}
         </div>
 
         {/* Right layers panel */}

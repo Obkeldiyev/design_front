@@ -7,9 +7,9 @@ if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
 }
 
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
-  const canvasElRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef   = useRef<fabric.Canvas | null>(null);
-  const lastPageId  = useRef<string | null>(null);
+  const canvasElRef  = useRef<HTMLCanvasElement>(null);
+  const fabricRef    = useRef<fabric.Canvas | null>(null);
+  const lastPageId   = useRef<string | null>(null);
   const lastPageJson = useRef<string>("");
 
   const doc          = useEditorStore((s) => s.doc);
@@ -46,7 +46,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 2. Zoom + resize canvas element ─────────────────────────────────────
+  // ── 2. Resize + zoom ──────────────────────────────────────────────────────
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
@@ -67,7 +67,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     lastPageJson.current = "";
   }, [doc]);
 
-  // ── 4. Load page JSON ────────────────────────────────────────────────────
+  // ── 4. Load page ──────────────────────────────────────────────────────────
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc || !activePageId) return;
@@ -75,7 +75,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     if (!page) return;
     const jsonStr = JSON.stringify(page.fabric);
     if (lastPageId.current === activePageId && lastPageJson.current === jsonStr) return;
-    lastPageId.current  = activePageId;
+    lastPageId.current   = activePageId;
     lastPageJson.current = jsonStr;
     const json = page.fabric as Record<string, unknown>;
     const bg   = doc.canvas.background || "";
@@ -102,33 +102,10 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    <div
-      style={{
-        // DO NOT set width/height — let minWidth/minHeight drive the size
-        // This prevents the "width:100% then overflow left" bug
-        minWidth: scaledW + 80,
-        minHeight: scaledH + 80,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 40,
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          width: scaledW,
-          height: scaledH,
-          flexShrink: 0,
-          borderRadius: 6,
-          overflow: "hidden",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-          outline: "1px solid rgba(128,128,128,0.15)",
-          lineHeight: 0,
-        }}
-      >
-        <canvas ref={canvasElRef} style={{ display: "block" }} />
-      </div>
+    <div style={{ width: scaledW, height: scaledH, flexShrink: 0, lineHeight: 0,
+      borderRadius: 6, overflow: "hidden",
+      boxShadow: "0 4px 32px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)" }}>
+      <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
 }
