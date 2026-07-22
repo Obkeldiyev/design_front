@@ -467,7 +467,7 @@ function Editor() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflowY: "hidden" }}>
         {/* Left toolbar */}
         <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0">
           <div>
@@ -576,29 +576,18 @@ function Editor() {
         {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
+          style={{ flex: 1, overflow: "auto", background: "#0f0f1a" }}
         >
           <div style={{
-            padding: "40px",
-            boxSizing: "border-box",
+            /* Take full width when canvas fits; grow to fit canvas when it doesn't */
+            minWidth: "100%",
+            minHeight: "100%",
             display: "flex",
             justifyContent: "center",
-            alignItems: "flex-start",
-            minWidth: doc ? doc.canvas.width * zoom + 80 : "100%",
-            minHeight: doc ? doc.canvas.height * zoom + 80 : "100%",
+            alignItems: "center",
+            padding: "40px",
+            boxSizing: "border-box",
           }}>
-            {/* DEBUG — remove after fixing */}
-            {doc && (
-              <div style={{
-                position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)",
-                background: "rgba(255,0,0,0.9)", color: "white", padding: "4px 12px",
-                borderRadius: 4, fontSize: 12, zIndex: 9999, pointerEvents: "none",
-                fontFamily: "monospace"
-              }}>
-                zoom={zoom.toFixed(2)} canvasW={doc.canvas.width} scaledW={Math.round(doc.canvas.width*zoom)}
-                innerW={typeof window!=="undefined"?window.innerWidth:0}
-              </div>
-            )}
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>
