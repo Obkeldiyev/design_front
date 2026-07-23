@@ -62,9 +62,18 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const w = doc.canvas.width  * zoom;
     const h = doc.canvas.height * zoom;
     c.setDimensions({ width: w, height: h });
-    c.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
-    setBg(c, doc.canvas.background || "");
-    c.requestRenderAll();
+    // Apply viewport in next frame after dimensions settle
+    requestAnimationFrame(() => {
+      if (!fabricRef.current) return;
+      fabricRef.current.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+      // Keep Fabric's wrapper contained
+      const wrapper = (fabricRef.current as any).wrapperEl as HTMLElement | undefined;
+      if (wrapper) {
+        wrapper.style.cssText = `position:relative;display:block;margin:0;padding:0;line-height:0;width:${w}px;height:${h}px;overflow:hidden;`;
+      }
+      setBg(fabricRef.current, doc.canvas.background || "");
+      fabricRef.current.requestRenderAll();
+    });
   }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
   // Clear when doc resets
@@ -98,24 +107,25 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
     const load = () => {
       c.setDimensions({ width: w * z, height: h * z });
-      c.setViewportTransform([z, 0, 0, z, 0, 0]);
       c.clear();
       setBg(c, bg);
 
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
-        c.requestRenderAll();
+        requestAnimationFrame(() => {
+          if (!fabricRef.current) return;
+          fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
+          fabricRef.current.requestRenderAll();
+        });
         return;
       }
 
-      // Pass full JSON but strip any saved viewport/zoom
       const loadJson: Record<string, unknown> = { ...json };
       delete loadJson.viewportTransform;
 
       const result = c.loadFromJSON(loadJson);
       const done = () => {
         setBg(c, bg);
-        c.setViewportTransform([z, 0, 0, z, 0, 0]);
-        c.requestRenderAll();
+        // Apply viewport in next frame so Fabric's internal state has settled
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
           fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
@@ -158,6 +168,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         overflow: "hidden",
         borderRadius: 6,
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+        position: "relative",
+        isolation: "isolate",
       }}
     >
       <canvas ref={canvasElRef} style={{ display: "block" }} />
