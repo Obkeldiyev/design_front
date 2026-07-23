@@ -331,12 +331,13 @@ function Editor() {
       if (!el || el.clientWidth < 50) return;
       const w = doc.canvas?.width ?? 1050;
       const h = doc.canvas?.height ?? 600;
-      // Use ACTUAL scroll container size — this is the true available space
-      const availW = el.clientWidth - 80;
-      const availH = (el.clientHeight || window.innerHeight - 56) - 80;
+      // Use window.innerWidth — the actual visible browser window width
+      // el.clientWidth can be larger than the visible area on wide CSS layouts
+      const availW = window.innerWidth - 256 - 288 - 80;
+      const availH = window.innerHeight - 56 - 80;
       if (availW < 50 || availH < 50) return;
-      // No upper cap — just fit to container
-      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
+      // Canvas must ALWAYS fit — never overflow — hard limit with no upper cap beyond 1.0
+      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h, 1)).toFixed(2));
       if (Math.abs(fz - useEditorStore.getState().zoom) > 0.01) {
         useEditorStore.setState({ zoom: fz });
       }
