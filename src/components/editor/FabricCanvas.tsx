@@ -14,12 +14,12 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
   const doc          = useEditorStore((s) => s.doc);
   const activePageId = useEditorStore((s) => s.activePageId);
-  const designKey    = useEditorStore((s) => s.designKey); // changes on each new design load
+  const designKey    = useEditorStore((s) => s.designKey);
   const zoom         = useEditorStore((s) => s.zoom);
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
 
-  // ── 1. Mount Fabric once ─────────────────────────────────────────────────
+  // ── 1. Mount Fabric at NATIVE size (no zoom) ──────────────────────────────
   useEffect(() => {
     if (!canvasElRef.current || fabricRef.current) return;
     const c = new fabric.Canvas(canvasElRef.current, {
@@ -47,16 +47,19 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 2. Resize + zoom ──────────────────────────────────────────────────────
+  // ── 2. Update canvas native size when doc dimensions change ───────────────
+  // Canvas always renders at NATIVE size (1050×600).
+  // Visual scaling is done via CSS transform on the wrapper div.
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
-    c.setDimensions({ width: doc.canvas.width * zoom, height: doc.canvas.height * zoom });
-    // Reset viewport transform to avoid pan offset, then apply zoom
-    c.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+    // Set canvas to native (unscaled) dimensions
+    c.setDimensions({ width: doc.canvas.width, height: doc.canvas.height });
+    // Reset viewport to identity — no zoom, no pan
+    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     setBg(c, doc.canvas.background || "");
     c.requestRenderAll();
-  }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
+  }, [doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
   // ── 3. Clear on doc reset ────────────────────────────────────────────────
   useEffect(() => {
@@ -65,6 +68,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     if (!c) return;
     c.clear();
     c.setDimensions({ width: 100, height: 100 });
+    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     c.requestRenderAll();
     lastPageId.current = null;
     lastPageJson.current = "";
@@ -76,23 +80,26 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     if (!c || !doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
-    // Always reload — designKey changes on every setDoc call
     lastPageId.current   = activePageId;
     lastPageJson.current = JSON.stringify(page.fabric);
     const json = page.fabric as Record<string, unknown>;
     const bg   = doc.canvas.background || "";
     const load = () => {
       c.clear();
+      // Always reset to identity viewport before loading
+      c.setViewportTransform([1, 0, 0, 1, 0, 0]);
       setBg(c, bg);
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
         c.requestRenderAll();
         return;
       }
-      const r    = c.loadFromJSON(json);
+      // Strip any saved viewport from the JSON
+      const cleanJson = { ...json, viewportTransform: [1, 0, 0, 1, 0, 0] };
+      const r    = c.loadFromJSON(cleanJson);
       const done = () => {
         setBg(c, bg);
-        // Ensure viewport is at origin after load
-        c.setViewportTransform([useEditorStore.getState().zoom, 0, 0, useEditorStore.getState().zoom, 0, 0]);
+        // Ensure viewport is identity after load
+        c.setViewportTransform([1, 0, 0, 1, 0, 0]);
         c.requestRenderAll();
       };
       if (r && typeof (r as any).then === "function") (r as any).then(done).catch(done);
@@ -107,21 +114,37 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
   }
 
-  const scaledW = doc.canvas.width  * zoom;
-  const scaledH = doc.canvas.height * zoom;
+  // ── CSS transform scaling ─────────────────────────────────────────────────
+  // The Fabric canvas renders at NATIVE size (1050×600).
+  // We scale it visually via CSS transform. This avoids all Fabric zoom bugs.
+  const nativeW = doc.canvas.width;
+  const nativeH = doc.canvas.height;
+  const scaledW = nativeW * zoom;
+  const scaledH = nativeH * zoom;
 
   return (
+    // Outer div is sized to the SCALED dimensions — this is what the layout sees
     <div style={{
       width: scaledW,
       height: scaledH,
-      lineHeight: 0,
+      flexShrink: 0,
+      flexGrow: 0,
+      position: "relative",
       borderRadius: 6,
       overflow: "hidden",
       boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
-      flexShrink: 0,
-      flexGrow: 0,
     }}>
-      <canvas ref={canvasElRef} style={{ display: "block" }} />
+      {/* Inner div transforms the native-size canvas to fit the scaled box */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        transformOrigin: "top left",
+        transform: `scale(${zoom})`,
+        // Pointer events still work because we just scale the visual
+      }}>
+        <canvas ref={canvasElRef} style={{ display: "block" }} />
+      </div>
     </div>
   );
 }
