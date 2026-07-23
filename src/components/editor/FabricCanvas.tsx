@@ -14,6 +14,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
   const doc          = useEditorStore((s) => s.doc);
   const activePageId = useEditorStore((s) => s.activePageId);
+  const designKey    = useEditorStore((s) => s.designKey); // changes on each new design load
   const zoom         = useEditorStore((s) => s.zoom);
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
@@ -62,6 +63,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const c = fabricRef.current;
     if (!c) return;
     c.clear();
+    c.setDimensions({ width: 100, height: 100 });
     c.requestRenderAll();
     lastPageId.current = null;
     lastPageJson.current = "";
@@ -73,10 +75,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     if (!c || !doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
-    const jsonStr = JSON.stringify(page.fabric);
-    if (lastPageId.current === activePageId && lastPageJson.current === jsonStr) return;
+    // Always reload — designKey changes on every setDoc call
     lastPageId.current   = activePageId;
-    lastPageJson.current = jsonStr;
+    lastPageJson.current = JSON.stringify(page.fabric);
     const json = page.fabric as Record<string, unknown>;
     const bg   = doc.canvas.background || "";
     const load = () => {
@@ -94,7 +95,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePageId]);
+  }, [activePageId, designKey]);
 
   if (!doc) {
     return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;

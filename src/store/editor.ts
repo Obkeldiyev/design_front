@@ -7,6 +7,7 @@ export type SaveStatus = "saved" | "saving" | "dirty" | "error";
 type EditorState = {
   doc: CanvasDoc | null;
   activePageId: string | null;
+  designKey: number; // increments on every new design load — forces canvas reload
   zoom: number;
   saveStatus: SaveStatus;
   selectedIds: string[];
@@ -28,12 +29,13 @@ type EditorState = {
 export const useEditorStore = create<EditorState>((set, get) => ({
   doc: null,
   activePageId: null,
+  designKey: 0,
   zoom: 0.6,
   saveStatus: "saved",
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
   setDoc: (doc) => {
-    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved" });
+    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved", designKey: get().designKey + 1 });
   },
   setActivePage: (id) => set({ activePageId: id }),
   addPage: () => {
