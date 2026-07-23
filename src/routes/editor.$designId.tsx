@@ -436,7 +436,7 @@ function Editor() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <header className="flex h-14 items-center justify-between border-b border-border bg-card px-3">
+      <header className="flex h-14 items-center justify-between border-b border-border bg-card px-3 flex-shrink-0" style={{ zIndex: 20, position: "relative" }}>
         <div className="flex items-center gap-2">
           <Link
             to="/designs"
@@ -490,7 +490,7 @@ function Editor() {
 
       <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
         {/* Left toolbar */}
-        <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0">
+        <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0" style={{ zIndex: 10, position: "relative" }}>
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Add element
@@ -597,7 +597,7 @@ function Editor() {
         {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
+          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a", position: "relative" }}
         >
           <div style={{
             display: "flex",
@@ -607,13 +607,15 @@ function Editor() {
             minHeight: "100%",
             padding: "40px",
             boxSizing: "border-box",
+            position: "relative",
+            zIndex: 0,
           }}>
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>
 
         {/* Right layers panel */}
-        <div className="w-72 flex flex-col bg-card border-l border-border flex-shrink-0 overflow-y-auto">
+        <div className="w-72 flex flex-col bg-card border-l border-border flex-shrink-0 overflow-y-auto" style={{ zIndex: 10, position: "relative" }}>
           <LayersPanel canvas={canvasInstance} />
           
           <div className="border-t border-border p-3 space-y-3">
