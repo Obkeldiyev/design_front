@@ -125,9 +125,13 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       const result = c.loadFromJSON(loadJson);
       const done = () => {
         setBg(c, bg);
-        // Apply viewport in next frame so Fabric's internal state has settled
+        // Use setZoom which properly scales object rendering
+        c.setZoom(z);
+        c.setViewportTransform([z, 0, 0, z, 0, 0]);
+        c.requestRenderAll();
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
+          fabricRef.current.setZoom(z);
           fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
           fabricRef.current.requestRenderAll();
         });
