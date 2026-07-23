@@ -106,9 +106,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       const done = () => {
         setBg(c, bg);
         // Force viewport to zoom-from-origin, no pan
-        const vpt = [currentZoom, 0, 0, currentZoom, 0, 0] as [number,number,number,number,number,number];
+        const vpt: [number,number,number,number,number,number] = [currentZoom, 0, 0, currentZoom, 0, 0];
         c.setViewportTransform(vpt);
-        console.log('[FabricCanvas] viewport after load:', JSON.stringify(c.viewportTransform));
         c.requestRenderAll();
       };
       if (r && typeof (r as any).then === "function") (r as any).then(done).catch(done);
