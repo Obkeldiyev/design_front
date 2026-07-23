@@ -145,23 +145,15 @@ function Editor() {
     if (lastSyncedDesignId.current === query.data.id) return;
     lastSyncedDesignId.current = query.data.id;
     setTitle(query.data.title);
-    // Calculate zoom using actual container width, not window.innerWidth guess
     const w = query.data.data?.canvas?.width ?? 1050;
     const h = query.data.data?.canvas?.height ?? 600;
-    const el = canvasScrollRef.current;
-    if (el && el.clientWidth > 50) {
-      const availW = el.clientWidth - 80;
-      const availH = (el.clientHeight || window.innerHeight - 56) - 80;
-      const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.95));
+    // window.innerWidth = actual browser window width
+    const availW = window.innerWidth - 256 - 288 - 80;
+    const availH = window.innerHeight - 56 - 80;
+    if (availW > 50 && availH > 50) {
+      // Cap at 0.8 so canvas is never too big — always comfortable to work with
+      const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.8));
       useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
-    } else {
-      // Fallback: calculate from window minus known panel widths
-      const availW = window.innerWidth - 256 - 288 - 80;
-      const availH = window.innerHeight - 56 - 80;
-      if (availW > 50) {
-        const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.95));
-        useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
-      }
     }
     setDoc(query.data.data);
   }, [query.data, setDoc]);
@@ -338,14 +330,19 @@ function Editor() {
     const el = canvasScrollRef.current;
     if (!el || !doc) return;
     const recalc = () => {
-      if (el.clientWidth < 50) return;
+      if (!el || el.clientWidth < 50) return;
       const w = doc.canvas?.width ?? 1050;
       const h = doc.canvas?.height ?? 600;
-      const availW = el.clientWidth - 80;
-      const availH = el.clientHeight - 80;
+      // Use the smaller of: container size OR actual window viewport
+      // This handles non-maximized browser windows correctly
+      const containerW = el.clientWidth;
+      const containerH = el.clientHeight;
+      const viewportW = window.innerWidth - 256 - 288; // subtract panels
+      const viewportH = window.innerHeight - 56;
+      const availW = Math.min(containerW, viewportW) - 80;
+      const availH = Math.min(containerH, viewportH) - 80;
       if (availW < 50 || availH < 50) return;
-      const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.95)).toFixed(2));
-      // Only update if zoom is very different from current (avoid feedback loop)
+      const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.8)).toFixed(2));
       if (Math.abs(fz - useEditorStore.getState().zoom) > 0.01) {
         useEditorStore.setState({ zoom: fz });
       }
