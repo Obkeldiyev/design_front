@@ -145,7 +145,25 @@ function Editor() {
     if (lastSyncedDesignId.current === query.data.id) return;
     lastSyncedDesignId.current = query.data.id;
     setTitle(query.data.title);
-    setDoc(query.data.data); // setDoc now auto-calculates correct zoom
+    // Calculate zoom using actual container width, not window.innerWidth guess
+    const w = query.data.data?.canvas?.width ?? 1050;
+    const h = query.data.data?.canvas?.height ?? 600;
+    const el = canvasScrollRef.current;
+    if (el && el.clientWidth > 50) {
+      const availW = el.clientWidth - 80;
+      const availH = (el.clientHeight || window.innerHeight - 56) - 80;
+      const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.95));
+      useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
+    } else {
+      // Fallback: calculate from window minus known panel widths
+      const availW = window.innerWidth - 256 - 288 - 80;
+      const availH = window.innerHeight - 56 - 80;
+      if (availW > 50) {
+        const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.95));
+        useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
+      }
+    }
+    setDoc(query.data.data);
   }, [query.data, setDoc]);
 
   const save = useMutation({
@@ -299,20 +317,13 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, doc, markDirty, setZoom, canvasInstance]);
 
-  // Center scroll after zoom/doc changes — fire multiple times to ensure DOM is ready
+  // Center scroll after zoom/doc changes
   useEffect(() => {
     const el = canvasScrollRef.current;
     if (!el) return;
     const center = () => {
       if (!el) return;
       const excess = el.scrollWidth - el.clientWidth;
-      const inner = el.querySelector('#canvas-inner') as HTMLElement | null;
-      const canvasBox = el.querySelector('canvas') as HTMLElement | null;
-      const innerRect = inner?.getBoundingClientRect();
-      const canvasRect = canvasBox?.getBoundingClientRect();
-      console.log('[CANVAS CENTER] scrollW='+el.scrollWidth+' clientW='+el.clientWidth+' excess='+excess+' zoom='+zoom);
-      console.log('[INNER RECT] left='+innerRect?.left?.toFixed(0)+' width='+innerRect?.width?.toFixed(0));
-      console.log('[CANVAS RECT] left='+canvasRect?.left?.toFixed(0)+' width='+canvasRect?.width?.toFixed(0));
       el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
     };
     center();
@@ -322,18 +333,29 @@ function Editor() {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [zoom, doc?.canvas.width, doc?.canvas.height, activePageId]);
 
-  // Also center when canvas first mounts
+  // Recalculate zoom when scroll container is resized (handles initial render)
   useEffect(() => {
-    if (!canvasInstance) return;
     const el = canvasScrollRef.current;
-    if (!el) return;
-    const center = () => {
-      const excess = el.scrollWidth - el.clientWidth;
-      el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
+    if (!el || !doc) return;
+    const recalc = () => {
+      if (el.clientWidth < 50) return;
+      const w = doc.canvas?.width ?? 1050;
+      const h = doc.canvas?.height ?? 600;
+      const availW = el.clientWidth - 80;
+      const availH = el.clientHeight - 80;
+      if (availW < 50 || availH < 50) return;
+      const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.95)).toFixed(2));
+      // Only update if zoom is very different from current (avoid feedback loop)
+      if (Math.abs(fz - useEditorStore.getState().zoom) > 0.01) {
+        useEditorStore.setState({ zoom: fz });
+      }
     };
-    setTimeout(center, 100);
-    setTimeout(center, 400);
-  }, [canvasInstance]);
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.canvas?.width, doc?.canvas?.height, !!doc]);
 
   useEffect(() => {
     if (saveStatus !== "dirty") return;

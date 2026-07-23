@@ -28,27 +28,12 @@ type EditorState = {
 export const useEditorStore = create<EditorState>((set, get) => ({
   doc: null,
   activePageId: null,
-  // Default zoom fits a 1050px canvas in a typical ~700px center area
-  zoom: typeof window !== "undefined"
-    ? parseFloat(Math.max(0.2, Math.min((window.innerWidth - 256 - 288 - 80) / 1050, 0.95)).toFixed(2))
-    : 0.6,
+  zoom: 0.6,
   saveStatus: "saved",
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
   setDoc: (doc) => {
-    let zoom = 0.6;
-    if (typeof window !== "undefined" && window.innerWidth > 0) {
-      const w = doc?.canvas?.width  ?? 1050;
-      const h = doc?.canvas?.height ?? 600;
-      const availW = window.innerWidth  - 256 - 288 - 80;
-      const availH = window.innerHeight - 56  - 80;
-      if (availW > 50 && availH > 50) {
-        const zw = availW / w;
-        const zh = availH / h;
-        zoom = parseFloat(Math.max(0.2, Math.min(zw, zh, 0.95)).toFixed(2));
-      }
-    }
-    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved", zoom });
+    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved" });
   },
   setActivePage: (id) => set({ activePageId: id }),
   addPage: () => {
