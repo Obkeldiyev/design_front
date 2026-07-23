@@ -496,7 +496,7 @@ function Editor() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: "1 1 0", minHeight: 0 }}>
+      <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
         {/* Left toolbar */}
         <aside className="flex w-64 flex-col gap-4 border-r border-border bg-card p-3 overflow-y-auto flex-shrink-0">
           <div>
@@ -605,23 +605,15 @@ function Editor() {
         {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
+          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a", display: "flex", flexDirection: "column" }}
         >
-          {/* Centering wrapper — always fills at least the full scroll container.
-              justify-content:center works when canvas fits.
-              When canvas overflows, the scroll bar lets user scroll. */}
-          <div
-            id="canvas-inner"
-            style={{
-              display: "inline-flex",
-              minWidth: "100%",
-              minHeight: "100%",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: "40px",
-              boxSizing: "border-box",
-            }}
-          >
+          <div style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px",
+          }}>
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
         </div>
