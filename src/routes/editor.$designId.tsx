@@ -147,14 +147,12 @@ function Editor() {
     setTitle(query.data.title);
     const w = query.data.data?.canvas?.width ?? 1050;
     const h = query.data.data?.canvas?.height ?? 600;
-    // window.innerWidth = actual browser window width
-    const availW = window.innerWidth - 256 - 288 - 80;
-    const availH = window.innerHeight - 56 - 80;
-    if (availW > 50 && availH > 50) {
-      // Cap at 0.8 so canvas is never too big — always comfortable to work with
-      const fz = Math.max(0.2, Math.min(availW / w, availH / h, 0.8));
-      useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
-    }
+    // Ensure canvas ALWAYS fits in the visible center area — never wider, never taller
+    const availW = window.innerWidth - 256 - 288 - 80;  // left(256) + right(288) + padding(80)
+    const availH = window.innerHeight - 56 - 80;         // header(56) + padding(80)
+    // Hard limit: canvas must fit — no overflow possible
+    const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
+    useEditorStore.setState({ zoom: fz });
     setDoc(query.data.data);
   }, [query.data, setDoc]);
 
@@ -333,16 +331,12 @@ function Editor() {
       if (!el || el.clientWidth < 50) return;
       const w = doc.canvas?.width ?? 1050;
       const h = doc.canvas?.height ?? 600;
-      // Use the smaller of: container size OR actual window viewport
-      // This handles non-maximized browser windows correctly
-      const containerW = el.clientWidth;
-      const containerH = el.clientHeight;
-      const viewportW = window.innerWidth - 256 - 288; // subtract panels
-      const viewportH = window.innerHeight - 56;
-      const availW = Math.min(containerW, viewportW) - 80;
-      const availH = Math.min(containerH, viewportH) - 80;
+      // Use ACTUAL scroll container size — this is the true available space
+      const availW = el.clientWidth - 80;
+      const availH = (el.clientHeight || window.innerHeight - 56) - 80;
       if (availW < 50 || availH < 50) return;
-      const fz = parseFloat(Math.max(0.2, Math.min(availW / w, availH / h, 0.8)).toFixed(2));
+      // No upper cap — just fit to container
+      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
       if (Math.abs(fz - useEditorStore.getState().zoom) > 0.01) {
         useEditorStore.setState({ zoom: fz });
       }

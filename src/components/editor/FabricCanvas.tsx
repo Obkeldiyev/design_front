@@ -31,6 +31,14 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       height: 100,
     });
     fabricRef.current = c;
+    // Fix Fabric's wrapper positioning — it must sit at 0,0
+    const wrapper = (c as any).wrapperEl as HTMLElement | undefined;
+    if (wrapper) {
+      wrapper.style.position = "static";
+      wrapper.style.display  = "block";
+      wrapper.style.margin   = "0";
+      wrapper.style.padding  = "0";
+    }
     c.on("object:modified", markDirty);
     c.on("object:added",    markDirty);
     c.on("object:removed",  markDirty);
