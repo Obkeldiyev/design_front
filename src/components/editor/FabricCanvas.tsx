@@ -20,7 +20,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
 
-  // ── 1. Mount Fabric ───────────────────────────────────────────────────────
+    // ── 1. Mount Fabric ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!canvasElRef.current || fabricRef.current) return;
     const c = new fabric.Canvas(canvasElRef.current, {
@@ -105,8 +105,10 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       const r = c.loadFromJSON(cleanJson);
       const done = () => {
         setBg(c, bg);
-        // Re-apply zoom viewport after load
-        c.setViewportTransform([currentZoom, 0, 0, currentZoom, 0, 0]);
+        // Force viewport to zoom-from-origin, no pan
+        const vpt = [currentZoom, 0, 0, currentZoom, 0, 0] as [number,number,number,number,number,number];
+        c.setViewportTransform(vpt);
+        console.log('[FabricCanvas] viewport after load:', JSON.stringify(c.viewportTransform));
         c.requestRenderAll();
       };
       if (r && typeof (r as any).then === "function") (r as any).then(done).catch(done);

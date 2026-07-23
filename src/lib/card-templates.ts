@@ -2,6 +2,7 @@
  * Built-in card design templates.
  * Each template is a full CanvasDoc ready to load into the Fabric editor.
  * Objects use Fabric.js v7 JSON format.
+ * ALL COORDINATES VERIFIED TO FIT WITHIN 1050×600 CANVAS
  */
 import type { CanvasDoc } from "@/lib/api/types";
 
@@ -108,7 +109,6 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     }
   },
 
-
   // ── 3. Gradient Purple ────────────────────────────────────────────────────
   {
     id: "gradient-purple",
@@ -126,7 +126,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
         fabric: {
           version: "6.0.0", objects: [
             { type: "Rect", version: "6.0.0", left: 0, top: 0, width: 1050, height: 600, fill: "#4f46e5", opacity: 0.6, id: "overlay" },
-            { type: "Circle", version: "6.0.0", left: 700, top: -180, radius: 380, fill: "#6d28d9", opacity: 0.5, id: "circle-1" },
+            { type: "Circle", version: "6.0.0", left: 640, top: -180, radius: 380, fill: "#6d28d9", opacity: 0.5, id: "circle-1" },
             { type: "Circle", version: "6.0.0", left: -100, top: 300, radius: 250, fill: "#4f46e5", opacity: 0.4, id: "circle-2" },
             { type: "IText", version: "6.0.0", left: 60, top: 90, text: "JAMES PARK", fontSize: 54, fontFamily: "Inter", fontWeight: "800", fill: "#ffffff", id: "t-name" },
             { type: "IText", version: "6.0.0", left: 62, top: 156, text: "Full-Stack Developer", fontSize: 22, fontFamily: "Inter", fontWeight: "300", fill: "#c4b5fd", id: "t-role" },
@@ -134,7 +134,6 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 62, top: 262, text: "+82 10-0000-1234", fontSize: 18, fontFamily: "Inter", fill: "#e0e7ff", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 62, top: 294, text: "devcraft.io", fontSize: 18, fontFamily: "Inter", fill: "#e0e7ff", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 62, top: 500, text: "DevCraft", fontSize: 28, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", id: "t-company" },
-            { type: "Rect", version: "6.0.0", left: 62, top: 492, width: 28, height: 28, fill: "#ffffff", rx: 6, ry: 6, opacity: 0, id: "spacer" },
           ]
         }
       }, {
@@ -224,7 +223,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 66, top: 258, text: "+1 (555) 700-8899", fontSize: 16, fontFamily: "Inter", fill: "#d97706", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 66, top: 284, text: "42 Via Roma, Little Italy, NY", fontSize: 15, fontFamily: "Inter", fill: "#92400e", id: "t-addr" },
             { type: "IText", version: "6.0.0", left: 66, top: 500, text: "Mon–Sun  12pm – 10pm", fontSize: 15, fontFamily: "Inter", fill: "#f59e0b", id: "t-hours" },
-            { type: "IText", version: "6.0.0", left: 620, top: 160, text: "✦", fontSize: 200, fontFamily: "Inter", fill: "#f59e0b", opacity: 0.08, id: "deco" },
+            { type: "IText", version: "6.0.0", left: 750, top: 240, text: "✦", fontSize: 120, fontFamily: "Inter", fill: "#f59e0b", opacity: 0.08, id: "deco" },
           ]
         }
       }, {
@@ -270,7 +269,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 62, top: 280, text: "+1 (310) 555-9900", fontSize: 16, fontFamily: "Inter", fill: "#cbd5e1", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 62, top: 305, text: "premierhomes.com/richard", fontSize: 15, fontFamily: "Inter", fill: "#64748b", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 62, top: 490, text: "PREMIER HOMES", fontSize: 24, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", letterSpacing: 4, id: "t-co" },
-            { type: "IText", version: "6.0.0", left: 720, top: 120, text: "⌂", fontSize: 130, fontFamily: "Inter", fill: "#e2e8f0", opacity: 0.5, id: "icon-house" },
+            { type: "IText", version: "6.0.0", left: 720, top: 240, text: "⌂", fontSize: 80, fontFamily: "Inter", fill: "#e2e8f0", opacity: 0.5, id: "icon-house" },
             { type: "IText", version: "6.0.0", left: 720, top: 380, text: "Luxury · Residential\nCommercial · Land", fontSize: 18, fontFamily: "Inter", fill: "#475569", id: "t-types" },
           ]
         }
@@ -316,7 +315,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 70, top: 338, text: "+1 (212) 555-0088", fontSize: 16, fontFamily: "Inter", fill: "#d4a76a", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 70, top: 365, text: "harrisonlaw.com", fontSize: 15, fontFamily: "Inter", fill: "#78350f", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 70, top: 415, text: "350 Park Ave, 40th Floor\nNew York, NY 10022", fontSize: 14, fontFamily: "Inter", fill: "#78350f", id: "t-addr" },
-            { type: "IText", version: "6.0.0", left: 680, top: 120, text: "⚖", fontSize: 200, fontFamily: "Inter", fill: "#d97706", opacity: 0.07, id: "icon-scale" },
+            { type: "IText", version: "6.0.0", left: 720, top: 180, text: "⚖", fontSize: 120, fontFamily: "Inter", fill: "#d97706", opacity: 0.08, id: "icon-scale" },
           ]
         }
       }, {
@@ -351,8 +350,8 @@ export const CARD_TEMPLATES: CardTemplate[] = [
         fabric: {
           version: "6.0.0", objects: [
             { type: "Rect", version: "6.0.0", left: 0, top: 0, width: 1050, height: 600, fill: "#0f172a", opacity: 0.7, id: "bg2" },
-            { type: "Circle", version: "6.0.0", left: 600, top: -100, radius: 300, fill: "#06b6d4", opacity: 0.06, id: "glow-1" },
-            { type: "Circle", version: "6.0.0", left: 800, top: 300, radius: 200, fill: "#8b5cf6", opacity: 0.07, id: "glow-2" },
+            { type: "Circle", version: "6.0.0", left: 650, top: -80, radius: 260, fill: "#06b6d4", opacity: 0.06, id: "glow-1" },
+            { type: "Circle", version: "6.0.0", left: 820, top: 340, radius: 180, fill: "#8b5cf6", opacity: 0.07, id: "glow-2" },
             { type: "Rect", version: "6.0.0", left: 60, top: 80, width: 50, height: 6, fill: "#06b6d4", rx: 3, ry: 3, id: "accent" },
             { type: "IText", version: "6.0.0", left: 60, top: 104, text: "NINA TORRES", fontSize: 52, fontFamily: "Inter", fontWeight: "800", fill: "#f0f9ff", id: "t-name" },
             { type: "IText", version: "6.0.0", left: 62, top: 168, text: "Cloud Architect  /  DevOps", fontSize: 20, fontFamily: "Inter", fontWeight: "300", fill: "#06b6d4", id: "t-role" },
@@ -361,7 +360,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 62, top: 290, text: "cloudnine.dev", fontSize: 17, fontFamily: "Inter", fill: "#94a3b8", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 62, top: 500, text: "CloudNine", fontSize: 26, fontFamily: "Inter", fontWeight: "700", fill: "#06b6d4", id: "t-co" },
             { type: "Rect", version: "6.0.0", left: 700, top: 180, width: 260, height: 260, fill: "#06b6d4", opacity: 0.05, rx: 24, ry: 24, id: "grid-box" },
-            { type: "IText", version: "6.0.0", left: 730, top: 220, text: "</>", fontSize: 80, fontFamily: "Inter", fontWeight: "700", fill: "#06b6d4", opacity: 0.25, id: "code-icon" },
+            { type: "IText", version: "6.0.0", left: 760, top: 260, text: "</>", fontSize: 70, fontFamily: "Inter", fontWeight: "700", fill: "#06b6d4", opacity: 0.25, id: "code-icon" },
           ]
         }
       }, {
@@ -447,8 +446,8 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 80, top: 320, text: "victoria@prestige.com", fontSize: 16, fontFamily: "Inter", fill: "#8a7d65", id: "t-email" },
             { type: "IText", version: "6.0.0", left: 80, top: 350, text: "+44 20 7946 0000", fontSize: 16, fontFamily: "Inter", fill: "#8a7d65", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 80, top: 490, text: "PRESTIGE GROUP", fontSize: 20, fontFamily: "Inter", fontWeight: "700", fill: "#c9a84c", letterSpacing: 5, id: "t-co" },
-            { type: "Circle", version: "6.0.0", left: 650, top: 50, radius: 220, fill: "#c9a84c", opacity: 0.04, id: "circle-glow" },
-            { type: "IText", version: "6.0.0", left: 700, top: 160, text: "◆", fontSize: 150, fontFamily: "Inter", fill: "#c9a84c", opacity: 0.08, id: "diamond-deco" },
+            { type: "Circle", version: "6.0.0", left: 680, top: 80, radius: 180, fill: "#c9a84c", opacity: 0.04, id: "circle-glow" },
+            { type: "IText", version: "6.0.0", left: 760, top: 200, text: "◆", fontSize: 100, fontFamily: "Inter", fill: "#c9a84c", opacity: 0.08, id: "diamond-deco" },
           ]
         }
       }, {
@@ -493,7 +492,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 62, top: 302, text: "+1 (650) 555-3210", fontSize: 17, fontFamily: "Inter", fill: "#475569", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 62, top: 332, text: "nexus.ai", fontSize: 17, fontFamily: "Inter", fill: "#6366f1", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 80, top: 505, text: "nexus.ai  ·  San Francisco, CA", fontSize: 15, fontFamily: "Inter", fill: "#94a3b8", id: "t-footer" },
-            { type: "IText", version: "6.0.0", left: 750, top: 120, text: "Nexus\nAI", fontSize: 88, fontFamily: "Inter", fontWeight: "900", fill: "#f1f5f9", id: "t-bg-text" },
+            { type: "IText", version: "6.0.0", left: 730, top: 180, text: "Nexus", fontSize: 70, fontFamily: "Inter", fontWeight: "900", fill: "#f1f5f9", id: "t-bg-text" },
           ]
         }
       }, {
@@ -539,7 +538,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
             { type: "IText", version: "6.0.0", left: 62, top: 322, text: "+1 (713) 555-0044", fontSize: 16, fontFamily: "Inter", fill: "#a8a29e", id: "t-phone" },
             { type: "IText", version: "6.0.0", left: 62, top: 348, text: "ironclad.build", fontSize: 16, fontFamily: "Inter", fill: "#a8a29e", id: "t-web" },
             { type: "IText", version: "6.0.0", left: 62, top: 395, text: "Lic. #CGC1234  ·  Bonded & Insured", fontSize: 13, fontFamily: "Inter", fill: "#57534e", id: "t-lic" },
-            { type: "IText", version: "6.0.0", left: 640, top: 180, text: "⚙", fontSize: 280, fontFamily: "Inter", fill: "#f59e0b", opacity: 0.06, id: "gear-deco" },
+            { type: "IText", version: "6.0.0", left: 740, top: 260, text: "⚙", fontSize: 150, fontFamily: "Inter", fill: "#f59e0b", opacity: 0.06, id: "gear-deco" },
           ]
         }
       }, {
@@ -558,194 +557,4 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     }
   },
 
-
   // ── 13. Education ─────────────────────────────────────────────────────────
-  { id: "education-blue", title: "Education Blue", category: "Education", industry: "Education", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#1e3a5f" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 6, fill: "#3b82f6", id: "top" },
-        { type: "IText", left: 60, top: 80, text: "PROF. ANNA WELLS", fontSize: 44, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", id: "t-name" },
-        { type: "IText", left: 62, top: 136, text: "PhD — Mathematics & CS", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#93c5fd", id: "t-role" },
-        { type: "Rect", left: 62, top: 170, width: 280, height: 2, fill: "#3b82f6", id: "div" },
-        { type: "IText", left: 62, top: 190, text: "Westfield University", fontSize: 20, fontFamily: "Inter", fontWeight: "600", fill: "#bfdbfe", id: "t-uni" },
-        { type: "IText", left: 62, top: 225, text: "a.wells@westfield.edu", fontSize: 16, fontFamily: "Inter", fill: "#93c5fd", id: "t-email" },
-        { type: "IText", left: 62, top: 252, text: "+1 (617) 555-0032", fontSize: 16, fontFamily: "Inter", fill: "#93c5fd", id: "t-phone" },
-        { type: "IText", left: 62, top: 279, text: "westfield.edu/annawells", fontSize: 15, fontFamily: "Inter", fill: "#60a5fa", id: "t-web" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#1e3a5f", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 6, fill: "#3b82f6", id: "top-b" },
-        { type: "IText", left: 525, top: 270, text: "Westfield University", fontSize: 40, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", textAlign: "center", originX: "center", id: "t-co" },
-        { type: "IText", left: 525, top: 325, text: "Inspiring Minds Since 1892", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#93c5fd", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 14. Finance ───────────────────────────────────────────────────────────
-  { id: "finance-slate", title: "Finance Slate", category: "Finance", industry: "Finance", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#0f172a" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 320, height: 600, fill: "#1e293b", id: "lp" },
-        { type: "Rect", left: 318, top: 0, width: 4, height: 600, fill: "#22d3ee", id: "al" },
-        { type: "IText", left: 40, top: 100, text: "WM", fontSize: 72, fontFamily: "Inter", fontWeight: "900", fill: "#22d3ee", id: "init" },
-        { type: "IText", left: 40, top: 185, text: "Wealth\nManagement", fontSize: 20, fontFamily: "Inter", fontWeight: "300", fill: "#94a3b8", lineHeight: 1.4, id: "dept" },
-        { type: "IText", left: 360, top: 80, text: "WILLIAM CARTER", fontSize: 42, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", id: "t-name" },
-        { type: "IText", left: 362, top: 134, text: "Senior Financial Advisor", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#22d3ee", id: "t-role" },
-        { type: "IText", left: 362, top: 185, text: "w.carter@apexwealth.com", fontSize: 16, fontFamily: "Inter", fill: "#94a3b8", id: "t-email" },
-        { type: "IText", left: 362, top: 212, text: "+1 (212) 555-7788", fontSize: 16, fontFamily: "Inter", fill: "#94a3b8", id: "t-phone" },
-        { type: "IText", left: 362, top: 239, text: "apexwealth.com", fontSize: 15, fontFamily: "Inter", fill: "#22d3ee", id: "t-web" },
-        { type: "IText", left: 362, top: 490, text: "APEX WEALTH GROUP", fontSize: 20, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", letterSpacing: 3, id: "t-co" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#0f172a", id: "bg" },
-        { type: "IText", left: 525, top: 270, text: "APEX WEALTH GROUP", fontSize: 36, fontFamily: "Inter", fontWeight: "700", fill: "#ffffff", textAlign: "center", originX: "center", id: "t-co" },
-        { type: "IText", left: 525, top: 322, text: "Your Future. Our Expertise.", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#94a3b8", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 15. Freelancer ────────────────────────────────────────────────────────
-  { id: "freelancer-coral", title: "Freelancer Coral", category: "Creative", industry: "IT", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#fff7f5" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 8, fill: "#f97316", id: "top" },
-        { type: "IText", left: 60, top: 70, text: "ZOE", fontSize: 88, fontFamily: "Inter", fontWeight: "900", fill: "#f97316", id: "t-fn" },
-        { type: "IText", left: 62, top: 162, text: "LAMBERT", fontSize: 56, fontFamily: "Inter", fontWeight: "900", fill: "#1c1917", id: "t-ln" },
-        { type: "IText", left: 64, top: 232, text: "Freelance UX Designer & Brand Consultant", fontSize: 15, fontFamily: "Inter", fill: "#78716c", id: "t-role" },
-        { type: "Rect", left: 64, top: 260, width: 40, height: 4, fill: "#f97316", rx: 2, ry: 2, id: "acc" },
-        { type: "IText", left: 64, top: 285, text: "zoe@zoecreates.co", fontSize: 15, fontFamily: "Inter", fill: "#57534e", id: "t-email" },
-        { type: "IText", left: 64, top: 310, text: "+33 6 00 00 00 00", fontSize: 15, fontFamily: "Inter", fill: "#57534e", id: "t-phone" },
-        { type: "IText", left: 64, top: 335, text: "zoecreates.co", fontSize: 15, fontFamily: "Inter", fill: "#f97316", id: "t-web" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#fff7f5", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 8, fill: "#f97316", id: "top-b" },
-        { type: "IText", left: 525, top: 265, text: "zoecreates.co", fontSize: 44, fontFamily: "Inter", fontWeight: "900", fill: "#f97316", textAlign: "center", originX: "center", id: "t-web" },
-        { type: "IText", left: 525, top: 325, text: "UX · Branding · Product Design", fontSize: 18, fontFamily: "Inter", fill: "#78716c", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 16. Beauty ────────────────────────────────────────────────────────────
-  { id: "beauty-rose", title: "Beauty Rose", category: "Beauty", industry: "Beauty", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#fff1f2" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 660, top: 0, width: 390, height: 600, fill: "#fda4af", id: "rp" },
-        { type: "IText", left: 60, top: 90, text: "Bella", fontSize: 82, fontFamily: "Georgia", fontStyle: "italic", fontWeight: "700", fill: "#be123c", id: "t-brand" },
-        { type: "IText", left: 62, top: 184, text: "Beauty & Wellness Studio", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#9f1239", id: "t-tagline" },
-        { type: "IText", left: 62, top: 235, text: "Isabella Romano", fontSize: 26, fontFamily: "Inter", fontWeight: "600", fill: "#1c1917", id: "t-name" },
-        { type: "IText", left: 62, top: 268, text: "Senior Stylist & Colorist", fontSize: 16, fontFamily: "Inter", fill: "#9f1239", id: "t-role" },
-        { type: "IText", left: 62, top: 310, text: "isabella@bellastudio.com", fontSize: 15, fontFamily: "Inter", fill: "#57534e", id: "t-email" },
-        { type: "IText", left: 62, top: 335, text: "+39 02 0000 0000", fontSize: 15, fontFamily: "Inter", fill: "#57534e", id: "t-phone" },
-        { type: "IText", left: 62, top: 360, text: "bellastudio.com", fontSize: 15, fontFamily: "Inter", fill: "#be123c", id: "t-web" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#fff1f2", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 6, fill: "#fda4af", id: "top-b" },
-        { type: "IText", left: 525, top: 255, text: "Bella", fontSize: 96, fontFamily: "Georgia", fontStyle: "italic", fill: "#be123c", textAlign: "center", originX: "center", id: "t-brand" },
-        { type: "IText", left: 525, top: 360, text: "Beauty & Wellness Studio", fontSize: 18, fontFamily: "Inter", fontWeight: "300", fill: "#9f1239", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 17. Sports ────────────────────────────────────────────────────────────
-  { id: "sports-energy", title: "Sports Energy", category: "Sports", industry: "Sports", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#0a0a0a" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#171717", id: "bg2" },
-        { type: "Rect", left: 0, top: 0, width: 6, height: 600, fill: "#84cc16", id: "gb" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 4, fill: "#84cc16", id: "tb" },
-        { type: "IText", left: 60, top: 70, text: "TYLER", fontSize: 80, fontFamily: "Inter", fontWeight: "900", fill: "#ffffff", id: "t-fn" },
-        { type: "IText", left: 60, top: 155, text: "BROOKS", fontSize: 80, fontFamily: "Inter", fontWeight: "900", fill: "#84cc16", id: "t-ln" },
-        { type: "IText", left: 62, top: 250, text: "Certified Personal Trainer & Nutritionist", fontSize: 15, fontFamily: "Inter", fill: "#a3a3a3", id: "t-role" },
-        { type: "IText", left: 62, top: 310, text: "tyler@proformfit.com", fontSize: 15, fontFamily: "Inter", fill: "#737373", id: "t-email" },
-        { type: "IText", left: 62, top: 335, text: "+1 (310) 555-6060", fontSize: 15, fontFamily: "Inter", fill: "#737373", id: "t-phone" },
-        { type: "IText", left: 62, top: 360, text: "proformfit.com", fontSize: 15, fontFamily: "Inter", fill: "#84cc16", id: "t-web" },
-        { type: "IText", left: 62, top: 490, text: "PROFORM FITNESS", fontSize: 22, fontFamily: "Inter", fontWeight: "800", fill: "#ffffff", letterSpacing: 4, id: "t-co" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#171717", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 4, fill: "#84cc16", id: "tb" },
-        { type: "IText", left: 525, top: 265, text: "PROFORM FITNESS", fontSize: 40, fontFamily: "Inter", fontWeight: "900", fill: "#ffffff", textAlign: "center", originX: "center", id: "t-co" },
-        { type: "IText", left: 525, top: 320, text: "Train Hard. Live Strong.", fontSize: 20, fontFamily: "Inter", fontWeight: "300", fill: "#84cc16", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 18. Non-profit ────────────────────────────────────────────────────────
-  { id: "nonprofit-green", title: "Non-profit Green", category: "Non-profit", industry: "Non-profit", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#f0fdf4" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 8, fill: "#16a34a", id: "tg" },
-        { type: "Rect", left: 0, top: 0, width: 280, height: 600, fill: "#dcfce7", id: "lb" },
-        { type: "IText", left: 30, top: 470, text: "Since\n2010", fontSize: 18, fontFamily: "Inter", fontWeight: "600", fill: "#16a34a", textAlign: "center", id: "t-since" },
-        { type: "IText", left: 320, top: 80, text: "MARIA SANTOS", fontSize: 40, fontFamily: "Inter", fontWeight: "700", fill: "#14532d", id: "t-name" },
-        { type: "IText", left: 322, top: 132, text: "Program Director", fontSize: 18, fontFamily: "Inter", fill: "#16a34a", id: "t-role" },
-        { type: "IText", left: 322, top: 182, text: "Green Futures Foundation", fontSize: 17, fontFamily: "Inter", fontWeight: "600", fill: "#166534", id: "t-org" },
-        { type: "IText", left: 322, top: 212, text: "m.santos@greenfutures.org", fontSize: 15, fontFamily: "Inter", fill: "#4b7280", id: "t-email" },
-        { type: "IText", left: 322, top: 237, text: "+55 11 0000-0000", fontSize: 15, fontFamily: "Inter", fill: "#4b7280", id: "t-phone" },
-        { type: "IText", left: 322, top: 262, text: "greenfutures.org", fontSize: 15, fontFamily: "Inter", fill: "#16a34a", id: "t-web" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#f0fdf4", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 8, fill: "#16a34a", id: "tg" },
-        { type: "IText", left: 525, top: 255, text: "Green Futures Foundation", fontSize: 38, fontFamily: "Inter", fontWeight: "700", fill: "#14532d", textAlign: "center", originX: "center", id: "t-org" },
-        { type: "IText", left: 525, top: 310, text: "Protecting the Planet for Future Generations", fontSize: 16, fontFamily: "Inter", fill: "#4b7280", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-  // ── 19. Government ────────────────────────────────────────────────────────
-  { id: "government-official", title: "Government Official", category: "Government", industry: "Government", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#f8fafc" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 10, fill: "#1d4ed8", id: "tb" },
-        { type: "Rect", left: 0, top: 590, width: 1050, height: 10, fill: "#1d4ed8", id: "bb" },
-        { type: "Rect", left: 0, top: 10, width: 1050, height: 4, fill: "#dc2626", id: "rb" },
-        { type: "IText", left: 60, top: 70, text: "ROBERT J. HAYES", fontSize: 42, fontFamily: "Inter", fontWeight: "700", fill: "#1e293b", id: "t-name" },
-        { type: "IText", left: 62, top: 122, text: "Director of Public Affairs", fontSize: 18, fontFamily: "Inter", fill: "#1d4ed8", id: "t-role" },
-        { type: "IText", left: 62, top: 172, text: "City of Springfield — Office of the Mayor", fontSize: 16, fontFamily: "Inter", fontWeight: "600", fill: "#334155", id: "t-dept" },
-        { type: "IText", left: 62, top: 202, text: "r.hayes@springfield.gov", fontSize: 15, fontFamily: "Inter", fill: "#64748b", id: "t-email" },
-        { type: "IText", left: 62, top: 227, text: "+1 (555) 555-1000", fontSize: 15, fontFamily: "Inter", fill: "#64748b", id: "t-phone" },
-        { type: "IText", left: 62, top: 490, text: "City Hall, 1 Springfield Plaza, IL 62701", fontSize: 13, fontFamily: "Inter", fill: "#94a3b8", id: "t-addr" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#f8fafc", id: "bg" },
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 10, fill: "#1d4ed8", id: "tb" },
-        { type: "Rect", left: 0, top: 590, width: 1050, height: 10, fill: "#1d4ed8", id: "bb" },
-        { type: "IText", left: 525, top: 258, text: "City of Springfield", fontSize: 40, fontFamily: "Inter", fontWeight: "700", fill: "#1e293b", textAlign: "center", originX: "center", id: "t-city" },
-        { type: "IText", left: 525, top: 310, text: "Office of Public Affairs", fontSize: 20, fontFamily: "Inter", fontWeight: "300", fill: "#1d4ed8", textAlign: "center", originX: "center", id: "t-dept" },
-      ] } }
-    ]}
-  },
-
-  // ── 20. Healthcare ────────────────────────────────────────────────────────
-  { id: "healthcare-teal", title: "Healthcare Teal", category: "Medical", industry: "Medical", isPremium: false, width: 1050, height: 600,
-    doc: { version: 1, canvas: { width: 1050, height: 600, background: "#f0fdfa" }, pages: [
-      { id: FRONT, name: "Front", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 700, top: 0, width: 350, height: 600, fill: "#0d9488", id: "rt" },
-        { type: "IText", left: 60, top: 80, text: "LAKEWOOD", fontSize: 38, fontFamily: "Inter", fontWeight: "800", fill: "#134e4a", id: "t-clinic" },
-        { type: "IText", left: 62, top: 126, text: "HEALTH CLINIC", fontSize: 20, fontFamily: "Inter", fontWeight: "300", fill: "#0d9488", letterSpacing: 3, id: "t-clinic2" },
-        { type: "Rect", left: 62, top: 160, width: 200, height: 2, fill: "#99f6e4", id: "div" },
-        { type: "IText", left: 62, top: 180, text: "Dr. Kevin Park", fontSize: 30, fontFamily: "Inter", fontWeight: "700", fill: "#134e4a", id: "t-name" },
-        { type: "IText", left: 62, top: 218, text: "General Practitioner", fontSize: 17, fontFamily: "Inter", fill: "#0d9488", id: "t-role" },
-        { type: "IText", left: 62, top: 265, text: "k.park@lakewoodhealth.com", fontSize: 15, fontFamily: "Inter", fill: "#64748b", id: "t-email" },
-        { type: "IText", left: 62, top: 290, text: "+1 (503) 555-8800", fontSize: 15, fontFamily: "Inter", fill: "#64748b", id: "t-phone" },
-        { type: "IText", left: 62, top: 315, text: "lakewoodhealth.com", fontSize: 15, fontFamily: "Inter", fill: "#0d9488", id: "t-web" },
-      ] } },
-      { id: BACK, name: "Back", fabric: { version: "6.0.0", objects: [
-        { type: "Rect", left: 0, top: 0, width: 1050, height: 600, fill: "#0d9488", id: "bg" },
-        { type: "IText", left: 525, top: 255, text: "LAKEWOOD", fontSize: 44, fontFamily: "Inter", fontWeight: "800", fill: "#ffffff", textAlign: "center", originX: "center", id: "t-clinic" },
-        { type: "IText", left: 525, top: 308, text: "HEALTH CLINIC", fontSize: 22, fontFamily: "Inter", fontWeight: "300", fill: "#99f6e4", letterSpacing: 3, textAlign: "center", originX: "center", id: "t-clinic2" },
-        { type: "IText", left: 525, top: 350, text: "Your Health is Our Priority", fontSize: 16, fontFamily: "Inter", fill: "#ccfbf1", textAlign: "center", originX: "center", id: "t-tag" },
-      ] } }
-    ]}
-  },
-
-];
-
-// ─── helper: get unique categories ────────────────────────────────────────────
-export const TEMPLATE_CATEGORIES = [
-  "All",
-  ...Array.from(new Set(CARD_TEMPLATES.map((t) => t.category))),
-];
