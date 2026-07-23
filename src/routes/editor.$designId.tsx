@@ -145,14 +145,16 @@ function Editor() {
     if (lastSyncedDesignId.current === query.data.id) return;
     lastSyncedDesignId.current = query.data.id;
     setTitle(query.data.title);
-    const w = query.data.data?.canvas?.width ?? 1050;
+    const w = query.data.data?.canvas?.width  ?? 1050;
     const h = query.data.data?.canvas?.height ?? 600;
-    // Ensure canvas ALWAYS fits in the visible center area — never wider, never taller
-    const availW = window.innerWidth - 256 - 288 - 80;  // left(256) + right(288) + padding(80)
-    const availH = window.innerHeight - 56 - 80;         // header(56) + padding(80)
-    // Hard limit: canvas must fit — no overflow possible
-    const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
-    useEditorStore.setState({ zoom: fz });
+    // Calculate zoom to fit canvas in visible area — use window.innerWidth
+    // Left panel = 256px, right panel = 288px, padding = 80px
+    const availW = window.innerWidth  - 256 - 288 - 80;
+    const availH = window.innerHeight - 56  - 80;
+    if (availW > 50 && availH > 50) {
+      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
+      useEditorStore.setState({ zoom: fz });
+    }
     setDoc(query.data.data);
   }, [query.data, setDoc]);
 
@@ -323,31 +325,7 @@ function Editor() {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [zoom, doc?.canvas.width, doc?.canvas.height, activePageId]);
 
-  // Recalculate zoom when scroll container is resized (handles initial render)
-  useEffect(() => {
-    const el = canvasScrollRef.current;
-    if (!el || !doc) return;
-    const recalc = () => {
-      if (!el || el.clientWidth < 50) return;
-      const w = doc.canvas?.width ?? 1050;
-      const h = doc.canvas?.height ?? 600;
-      // Use window.innerWidth — the actual visible browser window width
-      // el.clientWidth can be larger than the visible area on wide CSS layouts
-      const availW = window.innerWidth - 256 - 288 - 80;
-      const availH = window.innerHeight - 56 - 80;
-      if (availW < 50 || availH < 50) return;
-      // Canvas must ALWAYS fit — never overflow — hard limit with no upper cap beyond 1.0
-      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h, 1)).toFixed(2));
-      if (Math.abs(fz - useEditorStore.getState().zoom) > 0.01) {
-        useEditorStore.setState({ zoom: fz });
-      }
-    };
-    recalc();
-    const ro = new ResizeObserver(recalc);
-    ro.observe(el);
-    return () => ro.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc?.canvas?.width, doc?.canvas?.height, !!doc]);
+  // (zoom is calculated once on load in the data effect above)
 
   useEffect(() => {
     if (saveStatus !== "dirty") return;
