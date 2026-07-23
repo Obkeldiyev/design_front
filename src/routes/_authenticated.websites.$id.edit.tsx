@@ -526,7 +526,7 @@ function VisualBlock({
     <div
       id={`block-${block.id}`}
       className={[
-        "relative",
+        "relative group/block",
         isDragging ? "opacity-30" : "",
         !block.visible && !preview ? "opacity-50" : "",
       ].filter(Boolean).join(" ")}
@@ -550,12 +550,11 @@ function VisualBlock({
         <div className="absolute top-0 left-0 right-0 h-1 bg-primary z-20" />
       )}
 
-      {/* Floating toolbar */}
-      {showOverlay && (
+      {/* Floating toolbar — always visible in edit mode */}
+      {!preview && (
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 bg-primary text-primary-foreground rounded-b-lg px-1 py-1 shadow-lg pointer-events-auto"
+          className="absolute top-0 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 bg-gray-900/90 text-white rounded-b-lg px-1 py-1 shadow-lg pointer-events-auto opacity-0 group-hover/block:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
-          onMouseEnter={() => onHover(true)}
         >
           {/* Drag handle */}
           <div
