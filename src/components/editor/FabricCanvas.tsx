@@ -108,8 +108,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         return;
       }
 
-      // Step 3: strip viewportTransform from saved JSON
-      const safeJson = { objects: (json.objects as any[]), background: bg };
+      // Step 3: strip only viewportTransform, keep everything else including version
+      const safeJson: Record<string, unknown> = { ...json };
+      delete safeJson.viewportTransform;
 
       const afterLoad = () => {
         setBg(c, bg);
