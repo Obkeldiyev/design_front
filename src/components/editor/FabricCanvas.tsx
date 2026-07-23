@@ -52,7 +52,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const c = fabricRef.current;
     if (!c || !doc) return;
     c.setDimensions({ width: doc.canvas.width * zoom, height: doc.canvas.height * zoom });
-    c.setZoom(zoom);
+    // Reset viewport transform to avoid pan offset, then apply zoom
+    c.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     setBg(c, doc.canvas.background || "");
     c.requestRenderAll();
   }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
@@ -88,7 +89,12 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         return;
       }
       const r    = c.loadFromJSON(json);
-      const done = () => { setBg(c, bg); c.requestRenderAll(); };
+      const done = () => {
+        setBg(c, bg);
+        // Ensure viewport is at origin after load
+        c.setViewportTransform([useEditorStore.getState().zoom, 0, 0, useEditorStore.getState().zoom, 0, 0]);
+        c.requestRenderAll();
+      };
       if (r && typeof (r as any).then === "function") (r as any).then(done).catch(done);
       else done();
     };
@@ -115,7 +121,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       flexShrink: 0,
       flexGrow: 0,
     }}>
-      <canvas ref={canvasElRef} style={{ display: "block", width: scaledW, height: scaledH }} />
+      <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
 }
