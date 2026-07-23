@@ -597,18 +597,16 @@ function Editor() {
         {/* Canvas area */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a", position: "relative" }}
+          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
         >
           <div style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minWidth: "100%",
+            alignItems: "flex-start",
+            justifyContent: "safe center",
+            minWidth: "max-content",
             minHeight: "100%",
             padding: "40px",
             boxSizing: "border-box",
-            position: "relative",
-            zIndex: 0,
           }}>
             <FabricCanvas onReady={(c) => { canvasRef.current = c; setCanvasInstance(c); }} />
           </div>
