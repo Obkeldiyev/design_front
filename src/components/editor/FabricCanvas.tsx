@@ -99,9 +99,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         c.requestRenderAll();
         return;
       }
-      // Force identity viewport so objects load at their natural coordinates
-      // Then we re-apply zoom after load via setViewportTransform
-      const cleanJson = { ...json, viewportTransform: [1, 0, 0, 1, 0, 0] };
+      // Remove viewportTransform from JSON entirely — let Fabric use the one we set
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { viewportTransform: _vt, ...cleanJson } = json as any;
       const r = c.loadFromJSON(cleanJson);
       const done = () => {
         setBg(c, bg);
