@@ -399,3 +399,78 @@ export const CARD_TEMPLATES: CardTemplate[] = [
       ]}}
     ]}
   },
+  // ── 18. Non-profit Green
+  { id:"nonprofit-green", title:"Non-profit Green", category:"Non-profit", industry:"Non-profit", isPremium:false, width:1050, height:600,
+    doc:{ version:1, canvas:{ width:1050, height:600, background:"#f0fdf4" }, pages:[
+      { id:FRONT, name:"Front", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:0, top:0, width:1050, height:7, fill:"#16a34a", id:"bar" },
+        { type:"Rect", left:0, top:0, width:250, height:600, fill:"#dcfce7", id:"lp" },
+        { type:"IText", left:18, top:460, text:"Since\n2010", fontSize:16, fontFamily:"Inter", fontWeight:"600", fill:"#16a34a", textAlign:"center", id:"since" },
+        { type:"IText", left:278, top:55, text:"MARIA SANTOS", fontSize:36, fontFamily:"Inter", fontWeight:"700", fill:"#14532d", id:"name" },
+        { type:"IText", left:280, top:104, text:"Program Director", fontSize:17, fontFamily:"Inter", fill:"#16a34a", id:"role" },
+        { type:"IText", left:280, top:148, text:"Green Futures Foundation", fontSize:15, fontFamily:"Inter", fontWeight:"600", fill:"#166534", id:"org" },
+        { type:"IText", left:280, top:178, text:"m.santos@greenfutures.org", fontSize:14, fontFamily:"Inter", fill:"#4b7280", id:"email" },
+        { type:"IText", left:280, top:202, text:"+55 11 0000-0000", fontSize:14, fontFamily:"Inter", fill:"#4b7280", id:"phone" },
+        { type:"IText", left:280, top:226, text:"greenfutures.org", fontSize:14, fontFamily:"Inter", fill:"#16a34a", id:"web" },
+      ]}},
+      { id:BACK, name:"Back", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:0, top:0, width:1050, height:600, fill:"#f0fdf4", id:"bg" },
+        { type:"Rect", left:0, top:0, width:1050, height:7, fill:"#16a34a", id:"bar" },
+        { type:"IText", left:525, top:252, text:"Green Futures Foundation", fontSize:34, fontFamily:"Inter", fontWeight:"700", fill:"#14532d", textAlign:"center", originX:"center", id:"org" },
+        { type:"IText", left:525, top:302, text:"Protecting the Planet for Future Generations", fontSize:14, fontFamily:"Inter", fill:"#4b7280", textAlign:"center", originX:"center", id:"tag" },
+      ]}}
+    ]}
+  },
+  // ── 19. Government Official
+  { id:"government-official", title:"Government Official", category:"Government", industry:"Government", isPremium:false, width:1050, height:600,
+    doc:{ version:1, canvas:{ width:1050, height:600, background:"#f8fafc" }, pages:[
+      { id:FRONT, name:"Front", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:0, top:0, width:1050, height:10, fill:"#1d4ed8", id:"tb" },
+        { type:"Rect", left:0, top:590, width:1050, height:10, fill:"#1d4ed8", id:"bb" },
+        { type:"Rect", left:0, top:10, width:1050, height:4, fill:"#dc2626", id:"rb" },
+        { type:"IText", left:55, top:54, text:"ROBERT J. HAYES", fontSize:38, fontFamily:"Inter", fontWeight:"700", fill:"#1e293b", id:"name" },
+        { type:"IText", left:57, top:105, text:"Director of Public Affairs", fontSize:17, fontFamily:"Inter", fill:"#1d4ed8", id:"role" },
+        { type:"IText", left:57, top:148, text:"City of Springfield — Office of the Mayor", fontSize:14, fontFamily:"Inter", fontWeight:"600", fill:"#334155", id:"dept" },
+        { type:"IText", left:57, top:176, text:"r.hayes@springfield.gov", fontSize:14, fontFamily:"Inter", fill:"#64748b", id:"email" },
+        { type:"IText", left:57, top:200, text:"+1 (555) 555-1000", fontSize:14, fontFamily:"Inter", fill:"#64748b", id:"phone" },
+        { type:"IText", left:57, top:512, text:"City Hall, 1 Springfield Plaza, IL 62701", fontSize:12, fontFamily:"Inter", fill:"#94a3b8", id:"addr" },
+      ]}},
+      { id:BACK, name:"Back", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:0, top:0, width:1050, height:600, fill:"#f8fafc", id:"bg" },
+        { type:"Rect", left:0, top:0, width:1050, height:10, fill:"#1d4ed8", id:"tb" },
+        { type:"Rect", left:0, top:590, width:1050, height:10, fill:"#1d4ed8", id:"bb" },
+        { type:"IText", left:525, top:254, text:"City of Springfield", fontSize:36, fontFamily:"Inter", fontWeight:"700", fill:"#1e293b", textAlign:"center", originX:"center", id:"city" },
+        { type:"IText", left:525, top:304, text:"Office of Public Affairs", fontSize:19, fontFamily:"Inter", fontWeight:"300", fill:"#1d4ed8", textAlign:"center", originX:"center", id:"dept" },
+      ]}}
+    ]}
+  },
+  // ── 20. Healthcare Teal
+  { id:"healthcare-teal", title:"Healthcare Teal", category:"Medical", industry:"Medical", isPremium:false, width:1050, height:600,
+    doc:{ version:1, canvas:{ width:1050, height:600, background:"#f0fdfa" }, pages:[
+      { id:FRONT, name:"Front", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:680, top:0, width:370, height:600, fill:"#0d9488", id:"rp" },
+        { type:"IText", left:48, top:55, text:"LAKEWOOD", fontSize:34, fontFamily:"Inter", fontWeight:"800", fill:"#134e4a", id:"clinic" },
+        { type:"IText", left:50, top:100, text:"HEALTH CLINIC", fontSize:18, fontFamily:"Inter", fontWeight:"300", fill:"#0d9488", id:"clinic2" },
+        { type:"Rect", left:50, top:132, width:190, height:2, fill:"#99f6e4", id:"div" },
+        { type:"IText", left:50, top:150, text:"Dr. Kevin Park", fontSize:27, fontFamily:"Inter", fontWeight:"700", fill:"#134e4a", id:"name" },
+        { type:"IText", left:50, top:188, text:"General Practitioner", fontSize:16, fontFamily:"Inter", fill:"#0d9488", id:"role" },
+        { type:"IText", left:50, top:230, text:"k.park@lakewoodhealth.com", fontSize:14, fontFamily:"Inter", fill:"#64748b", id:"email" },
+        { type:"IText", left:50, top:254, text:"+1 (503) 555-8800", fontSize:14, fontFamily:"Inter", fill:"#64748b", id:"phone" },
+        { type:"IText", left:50, top:278, text:"lakewoodhealth.com", fontSize:14, fontFamily:"Inter", fill:"#0d9488", id:"web" },
+        { type:"IText", left:710, top:232, text:"✚", fontSize:96, fontFamily:"Inter", fill:"#ffffff", opacity:0.2, id:"cross" },
+      ]}},
+      { id:BACK, name:"Back", fabric:{ version:"6.0.0", objects:[
+        { type:"Rect", left:0, top:0, width:1050, height:600, fill:"#0d9488", id:"bg" },
+        { type:"IText", left:525, top:250, text:"LAKEWOOD", fontSize:42, fontFamily:"Inter", fontWeight:"800", fill:"#ffffff", textAlign:"center", originX:"center", id:"clinic" },
+        { type:"IText", left:525, top:302, text:"HEALTH CLINIC", fontSize:20, fontFamily:"Inter", fontWeight:"300", fill:"#99f6e4", textAlign:"center", originX:"center", id:"clinic2" },
+        { type:"IText", left:525, top:342, text:"Your Health is Our Priority", fontSize:15, fontFamily:"Inter", fill:"#ccfbf1", textAlign:"center", originX:"center", id:"tag" },
+      ]}}
+    ]}
+  },
+
+];
+
+export const TEMPLATE_CATEGORIES = [
+  "All",
+  ...Array.from(new Set(CARD_TEMPLATES.map((t) => t.category))),
+];
