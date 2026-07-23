@@ -105,13 +105,16 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
       const afterLoad = () => {
         setBg(c, bg);
-        // Step 4: force viewport again after load — this is the critical call
+        // Step 4: force viewport — scale z, translate EXACTLY 0,0
         c.setViewportTransform([z, 0, 0, z, 0, 0]);
+        // Also use absolutePan to ensure pan is reset to origin
+        try { (c as any).absolutePan?.({ x: 0, y: 0 }); } catch (_) {}
         c.requestRenderAll();
-        // Step 5: one more time after next paint to catch any late reset
+        // Step 5: one more time after next paint
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
           fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
+          try { (fabricRef.current as any).absolutePan?.({ x: 0, y: 0 }); } catch (_) {}
           fabricRef.current.requestRenderAll();
         });
       };
@@ -135,6 +138,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
+  const vpt = fabricRef.current?.viewportTransform ?? [zoom,0,0,zoom,0,0];
 
   return (
     <div style={{
@@ -146,8 +150,13 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       overflow: "hidden",
       boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
       lineHeight: 0,
+      position: "relative",
     }}>
-      <canvas ref={canvasElRef} style={{ display: "block" }} />
+      {/* Debug overlay — remove after fix */}
+      <div style={{ position:"absolute", top:0, left:0, zIndex:999, background:"rgba(255,0,0,0.85)", color:"#fff", fontSize:10, padding:"2px 4px", pointerEvents:"none", whiteSpace:"nowrap" }}>
+        vpt:[{vpt.map((v:number)=>v.toFixed(1)).join(",")}] z={zoom}
+      </div>
+      <canvas ref={canvasElRef} style={{ display: "block", position: "absolute", top: 0, left: 0 }} />
     </div>
   );
 }
