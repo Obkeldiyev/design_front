@@ -306,6 +306,7 @@ function Editor() {
     const center = () => {
       if (!el) return;
       const excess = el.scrollWidth - el.clientWidth;
+      console.log('[CANVAS CENTER] scrollW='+el.scrollWidth+' clientW='+el.clientWidth+' excess='+excess+' zoom='+zoom);
       el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
     };
     center();
