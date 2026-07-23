@@ -112,8 +112,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       overflow: "hidden",
       boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
       flexShrink: 0,
+      flexGrow: 0,
     }}>
-      <canvas ref={canvasElRef} style={{ display: "block" }} />
+      <canvas ref={canvasElRef} style={{ display: "block", width: scaledW, height: scaledH }} />
     </div>
   );
 }

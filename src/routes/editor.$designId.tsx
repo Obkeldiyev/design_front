@@ -306,7 +306,13 @@ function Editor() {
     const center = () => {
       if (!el) return;
       const excess = el.scrollWidth - el.clientWidth;
+      const inner = el.querySelector('#canvas-inner') as HTMLElement | null;
+      const canvasBox = el.querySelector('canvas') as HTMLElement | null;
+      const innerRect = inner?.getBoundingClientRect();
+      const canvasRect = canvasBox?.getBoundingClientRect();
       console.log('[CANVAS CENTER] scrollW='+el.scrollWidth+' clientW='+el.clientWidth+' excess='+excess+' zoom='+zoom);
+      console.log('[INNER RECT] left='+innerRect?.left?.toFixed(0)+' width='+innerRect?.width?.toFixed(0));
+      console.log('[CANVAS RECT] left='+canvasRect?.left?.toFixed(0)+' width='+canvasRect?.width?.toFixed(0));
       el.scrollLeft = excess > 0 ? Math.round(excess / 2) : 0;
     };
     center();
