@@ -138,7 +138,6 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
-  const vpt = fabricRef.current?.viewportTransform ?? [zoom,0,0,zoom,0,0];
 
   return (
     <div style={{
@@ -150,13 +149,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       overflow: "hidden",
       boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
       lineHeight: 0,
-      position: "relative",
     }}>
-      {/* Debug overlay — remove after fix */}
-      <div style={{ position:"absolute", top:0, left:0, zIndex:999, background:"rgba(255,0,0,0.85)", color:"#fff", fontSize:10, padding:"2px 4px", pointerEvents:"none", whiteSpace:"nowrap" }}>
-        vpt:[{vpt.map((v:number)=>v.toFixed(1)).join(",")}] z={zoom}
-      </div>
-      <canvas ref={canvasElRef} style={{ display: "block", position: "absolute", top: 0, left: 0 }} />
+      <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
 }
