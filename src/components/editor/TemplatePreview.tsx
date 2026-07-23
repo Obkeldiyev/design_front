@@ -24,31 +24,32 @@ function escapeXml(s: string) {
 function renderObject(obj: FabricObj, key: number): string {
   const op = obj.opacity !== undefined ? obj.opacity : 1;
   const opAttr = op < 1 ? ` opacity="${op}"` : "";
+  const t = obj.type?.toLowerCase?.() ?? "";
 
-  switch (obj.type) {
-    case "Rect": {
+  switch (t) {
+    case "rect": {
       const rx = obj.rx ?? 0;
       return `<rect x="${obj.left}" y="${obj.top}" width="${obj.width}" height="${obj.height}" rx="${rx}" ry="${rx}" fill="${escapeXml(obj.fill ?? "#000")}"`
         + opAttr + `/>`;
     }
 
-    case "Circle": {
-      const cx = obj.left + obj.radius;
-      const cy = obj.top + obj.radius;
+    case "circle": {
+      const cx = (obj.left ?? 0) + (obj.radius ?? 0);
+      const cy = (obj.top ?? 0) + (obj.radius ?? 0);
       return `<circle cx="${cx}" cy="${cy}" r="${obj.radius}" fill="${escapeXml(obj.fill ?? "#000")}"` + opAttr + `/>`;
     }
 
-    case "Line": {
-      const x1 = obj.left + (obj.x1 ?? 0);
-      const y1 = obj.top + (obj.y1 ?? 0);
-      const x2 = obj.left + (obj.x2 ?? 0);
-      const y2 = obj.top + (obj.y2 ?? 0);
+    case "line": {
+      const x1 = (obj.left ?? 0) + (obj.x1 ?? 0);
+      const y1 = (obj.top ?? 0) + (obj.y1 ?? 0);
+      const x2 = (obj.left ?? 0) + (obj.x2 ?? 0);
+      const y2 = (obj.top ?? 0) + (obj.y2 ?? 0);
       return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${escapeXml(obj.stroke ?? "#000")}" stroke-width="${obj.strokeWidth ?? 1}"` + opAttr + `/>`;
     }
 
-    case "IText":
-    case "Textbox":
-    case "Text": {
+    case "i-text":
+    case "textbox":
+    case "text": {
       const fill = escapeXml(obj.fill ?? "#000");
       const fontSize = obj.fontSize ?? 20;
       const fontFamily = escapeXml(obj.fontFamily ?? "Inter, sans-serif");
@@ -59,14 +60,14 @@ function renderObject(obj: FabricObj, key: number): string {
       const lineEm = lineHeight;
 
       if (lines.length === 1) {
-        return `<text x="${obj.left}" y="${obj.top + fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle} fill="${fill}"` + opAttr + `>${escapeXml(lines[0])}</text>`;
+        return `<text x="${obj.left}" y="${(obj.top ?? 0) + fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle} fill="${fill}"` + opAttr + `>${escapeXml(lines[0])}</text>`;
       }
       const tspans = lines
         .map((line, i) =>
           `<tspan x="${obj.left}" dy="${i === 0 ? "0" : `${lineEm}em`}">${escapeXml(line)}</tspan>`
         )
         .join("");
-      return `<text x="${obj.left}" y="${obj.top + fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle} fill="${fill}"` + opAttr + `>${tspans}</text>`;
+      return `<text x="${obj.left}" y="${(obj.top ?? 0) + fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle} fill="${fill}"` + opAttr + `>${tspans}</text>`;
     }
 
     default:
