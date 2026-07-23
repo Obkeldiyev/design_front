@@ -85,9 +85,12 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const json = page.fabric as Record<string, unknown>;
     const bg   = doc.canvas.background || "";
     const load = () => {
-      c.clear();
-      // Always reset to identity viewport before loading
+      const cw = doc.canvas.width;
+      const ch = doc.canvas.height;
+      // Always set native dimensions FIRST before loading objects
+      c.setDimensions({ width: cw, height: ch });
       c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      c.clear();
       setBg(c, bg);
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
         c.requestRenderAll();
@@ -98,7 +101,6 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       const r    = c.loadFromJSON(cleanJson);
       const done = () => {
         setBg(c, bg);
-        // Ensure viewport is identity after load
         c.setViewportTransform([1, 0, 0, 1, 0, 0]);
         c.requestRenderAll();
       };
