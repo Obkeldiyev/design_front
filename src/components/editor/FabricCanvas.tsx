@@ -7,9 +7,10 @@ if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
 }
 
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
-  const canvasElRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef   = useRef<fabric.Canvas | null>(null);
-  const lastPageId  = useRef<string | null>(null);
+  const wrapRef      = useRef<HTMLDivElement>(null);
+  const canvasElRef  = useRef<HTMLCanvasElement>(null);
+  const fabricRef    = useRef<fabric.Canvas | null>(null);
+  const lastPageId   = useRef<string | null>(null);
   const lastPageJson = useRef<string>("");
 
   const doc          = useEditorStore((s) => s.doc);
@@ -19,7 +20,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
 
-  // ── 1. Mount ──────────────────────────────────────────────────────────────
+  // Mount Fabric once
   useEffect(() => {
     if (!canvasElRef.current || fabricRef.current) return;
     const c = new fabric.Canvas(canvasElRef.current, {
@@ -27,64 +28,65 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       preserveObjectStacking: true,
       selection: true,
       enableRetinaScaling: false,
-      width: 100,
-      height: 100,
+      width: 300,
+      height: 200,
     });
     fabricRef.current = c;
-    // Critical: Fabric's wrapperEl defaults to position:absolute which overlays UI
-    const wrapper = (c as any).wrapperEl as HTMLElement | undefined;
-    if (wrapper) {
-      wrapper.style.position = "relative";
-      wrapper.style.display  = "block";
-      wrapper.style.margin   = "0";
-      wrapper.style.padding  = "0";
-      wrapper.style.lineHeight = "0";
+
+    // Keep Fabric's wrapper inside our container
+    const inner = (c as any).wrapperEl as HTMLElement | undefined;
+    if (inner) {
+      inner.style.cssText = "position:relative;display:block;margin:0;padding:0;line-height:0;";
     }
+
     c.on("object:modified", markDirty);
-    c.on("object:added",    markDirty);
-    c.on("object:removed",  markDirty);
+    c.on("object:added", markDirty);
+    c.on("object:removed", markDirty);
     c.on("selection:created", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
     c.on("selection:updated", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
     c.on("selection:cleared", () => setSelected([]));
     onReady?.(c);
+
     return () => {
       try { c.dispose(); } catch (_) {}
       fabricRef.current = null;
       lastPageId.current = null;
       lastPageJson.current = "";
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 2. Zoom ───────────────────────────────────────────────────────────────
+  // Resize + apply zoom
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
-    c.setDimensions({ width: doc.canvas.width * zoom, height: doc.canvas.height * zoom });
+    const w = doc.canvas.width  * zoom;
+    const h = doc.canvas.height * zoom;
+    c.setDimensions({ width: w, height: h });
     c.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     setBg(c, doc.canvas.background || "");
     c.requestRenderAll();
   }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
-  // ── 3. Clear on reset ─────────────────────────────────────────────────────
+  // Clear when doc resets
   useEffect(() => {
     if (doc !== null) return;
     const c = fabricRef.current;
     if (!c) return;
     c.clear();
-    c.setDimensions({ width: 100, height: 100 });
+    c.setDimensions({ width: 300, height: 200 });
     c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     c.requestRenderAll();
     lastPageId.current = null;
     lastPageJson.current = "";
   }, [doc]);
 
-  // ── 4. Load page ──────────────────────────────────────────────────────────
+  // Load page
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
+
     lastPageId.current   = activePageId;
     lastPageJson.current = JSON.stringify(page.fabric);
 
@@ -95,13 +97,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const h    = doc.canvas.height;
 
     const load = () => {
-      // Step 1: set correct dimensions
       c.setDimensions({ width: w * z, height: h * z });
-
-      // Step 2: FORCE viewport BEFORE and AFTER clear — Fabric must not pan
       c.setViewportTransform([z, 0, 0, z, 0, 0]);
       c.clear();
-      c.setViewportTransform([z, 0, 0, z, 0, 0]);
       setBg(c, bg);
 
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
@@ -109,31 +107,26 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         return;
       }
 
-      // Step 3: strip only viewportTransform, keep everything else including version
-      const safeJson: Record<string, unknown> = { ...json };
-      delete safeJson.viewportTransform;
+      // Pass full JSON but strip any saved viewport/zoom
+      const loadJson: Record<string, unknown> = { ...json };
+      delete loadJson.viewportTransform;
 
-      const afterLoad = () => {
+      const result = c.loadFromJSON(loadJson);
+      const done = () => {
         setBg(c, bg);
-        // Step 4: force viewport — scale z, translate EXACTLY 0,0
         c.setViewportTransform([z, 0, 0, z, 0, 0]);
-        // Also use absolutePan to ensure pan is reset to origin
-        try { (c as any).absolutePan?.({ x: 0, y: 0 }); } catch (_) {}
         c.requestRenderAll();
-        // Step 5: one more time after next paint
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
           fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
-          try { (fabricRef.current as any).absolutePan?.({ x: 0, y: 0 }); } catch (_) {}
           fabricRef.current.requestRenderAll();
         });
       };
 
-      const result = c.loadFromJSON(safeJson);
       if (result && typeof (result as any).then === "function") {
-        (result as any).then(afterLoad).catch(afterLoad);
+        (result as any).then(done).catch(done);
       } else {
-        afterLoad();
+        done();
       }
     };
 
@@ -143,23 +136,30 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   }, [activePageId, designKey]);
 
   if (!doc) {
-    return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
+    return (
+      <div ref={wrapRef} style={{ display: "none" }}>
+        <canvas ref={canvasElRef} />
+      </div>
+    );
   }
 
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    <div style={{
-      width: scaledW,
-      height: scaledH,
-      flexShrink: 0,
-      flexGrow: 0,
-      borderRadius: 6,
-      overflow: "hidden",
-      boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
-      lineHeight: 0,
-    }}>
+    <div
+      ref={wrapRef}
+      style={{
+        width: scaledW,
+        height: scaledH,
+        flexShrink: 0,
+        flexGrow: 0,
+        lineHeight: 0,
+        overflow: "hidden",
+        borderRadius: 6,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+      }}
+    >
       <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
