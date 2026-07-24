@@ -18,7 +18,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/register")({
-  head: () => ({ meta: [{ title: "Create account — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Create account — card24" }] }),
   component: Register,
 });
 
@@ -101,7 +101,7 @@ function Register() {
             Built for entrepreneurs<br />who don't have time to design.
           </div>
         </div>
-        <div className="text-xs text-sidebar-foreground/50">© Cardify</div>
+        <div className="text-xs text-sidebar-foreground/50">© card24</div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/businesses/")({
-  head: () => ({ meta: [{ title: "Businesses — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Businesses — card24" }] }),
   component: BusinessesList,
 });
 

@@ -170,7 +170,7 @@ export async function addImageFromFile(canvas: fabric.Canvas, file: File) {
 }
 
 export async function addQR(canvas: fabric.Canvas, data: string) {
-  const dataUrl = await QRCode.toDataURL(data || "https://cardify.app", {
+  const dataUrl = await QRCode.toDataURL(data || "https://card24.uz", {
     margin: 1,
     width: 320,
     color: { dark: "#000000", light: "#ffffff" },
@@ -219,27 +219,27 @@ export function duplicateSelected(canvas: fabric.Canvas) {
   });
 }
 
-export function exportPNG(canvas: fabric.Canvas, multiplier = 2): string {
+export function exportPNG(canvas: fabric.Canvas, multiplier = 2, width = canvas.getWidth(), height = canvas.getHeight()): string {
   return canvas.toDataURL({
     format: "png",
     multiplier,
     quality: 1,
     left: 0,
     top: 0,
-    width: canvas.getWidth(),
-    height: canvas.getHeight(),
+    width,
+    height,
   });
 }
 
-export function exportJPG(canvas: fabric.Canvas, multiplier = 2): string {
+export function exportJPG(canvas: fabric.Canvas, multiplier = 2, width = canvas.getWidth(), height = canvas.getHeight()): string {
   return canvas.toDataURL({
     format: "jpeg",
     multiplier,
     quality: 0.95,
     left: 0,
     top: 0,
-    width: canvas.getWidth(),
-    height: canvas.getHeight(),
+    width,
+    height,
   });
 }
 

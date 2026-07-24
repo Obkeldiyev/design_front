@@ -9,7 +9,7 @@ import { apiError } from "@/lib/api/client";
 import { Shield } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Admin — card24" }] }),
   component: Admin,
 });
 

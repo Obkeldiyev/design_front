@@ -4,7 +4,7 @@ import { Plus, QrCode } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/qr/")({
-  head: () => ({ meta: [{ title: "QR Codes — Cardify" }] }),
+  head: () => ({ meta: [{ title: "QR Codes — card24" }] }),
   component: QrIndex,
 });
 

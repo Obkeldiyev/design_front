@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cardify — Business Cards, QR & Digital Identity in 60 seconds" },
+      { title: "card24 — Business Cards, QR & Digital Identity in 60 seconds" },
       {
         name: "description",
         content:
@@ -36,7 +36,7 @@ function Landing() {
               <Sparkles className="h-4 w-4" />
             </div>
             <span className="font-display text-xl font-semibold tracking-tight">
-              Cardify
+              card24
             </span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
@@ -136,7 +136,7 @@ function Landing() {
 
       <footer className="border-t border-border py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-muted-foreground md:flex-row">
-          <div>© {new Date().getFullYear()} Cardify</div>
+          <div>© {new Date().getFullYear()} card24</div>
           <div className="flex items-center gap-6">
             <Link to="/pricing">{t("nav.pricing")}</Link>
             <Link to="/templates">{t("nav.templates")}</Link>

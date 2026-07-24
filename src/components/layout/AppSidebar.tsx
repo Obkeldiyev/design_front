@@ -48,7 +48,7 @@ export function AppSidebar() {
           <Sparkles className="h-4 w-4" />
         </div>
         <span className="font-display text-lg font-bold bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
-          Cardify
+          card24
         </span>
       </Link>
 

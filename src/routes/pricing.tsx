@@ -5,8 +5,8 @@ import { Check } from "lucide-react";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — Cardify" },
-      { name: "description", content: "Free, Pro and Business plans for Cardify." },
+      { title: "Pricing — card24" },
+      { name: "description", content: "Free, Pro and Business plans for card24." },
     ],
   }),
   component: Pricing,
@@ -57,7 +57,7 @@ function Pricing() {
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link to="/" className="font-display text-xl font-semibold">
-            Cardify
+            card24
           </Link>
           <Link to="/register">
             <Button size="sm">Get started</Button>

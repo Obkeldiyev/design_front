@@ -14,7 +14,7 @@ import { WEBSITE_TEMPLATES, WEBSITE_TEMPLATE_CATEGORIES, instantiateTemplate } f
 import { DEFAULT_THEME } from "@/lib/website-blocks";
 
 export const Route = createFileRoute("/_authenticated/websites/new")({
-  head: () => ({ meta: [{ title: "New website — Cardify" }] }),
+  head: () => ({ meta: [{ title: "New website — card24" }] }),
   component: NewWebsite,
 });
 

@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/businesses/new")({
-  head: () => ({ meta: [{ title: "New business — Cardify" }] }),
+  head: () => ({ meta: [{ title: "New business — card24" }] }),
   component: NewBusiness,
 });
 

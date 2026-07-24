@@ -7,7 +7,7 @@ import { Layers, Briefcase, QrCode, Globe, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — card24" }] }),
   component: Dashboard,
 });
 

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/businesses/$id")({
-  head: () => ({ meta: [{ title: "Edit business — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Edit business — card24" }] }),
   component: EditBusiness,
 });
 

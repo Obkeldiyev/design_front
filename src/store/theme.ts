@@ -3,7 +3,7 @@ import { UserAPI } from "@/lib/api/resources";
 import { api } from "@/lib/api/client";
 
 export type Theme = "light" | "dark";
-const KEY = "cardify_theme";
+const KEY = "card24_theme";
 
 function apply(theme: Theme) {
   if (typeof document === "undefined") return;

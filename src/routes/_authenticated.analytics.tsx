@@ -5,7 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Analytics — card24" }] }),
   component: Analytics,
 });
 

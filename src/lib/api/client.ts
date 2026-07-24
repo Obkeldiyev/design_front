@@ -15,8 +15,8 @@ function resolveApiUrl(): string {
 
 export const API_URL = resolveApiUrl();
 
-const TOKEN_KEY = "cardify_access_token";
-const REFRESH_KEY = "cardify_refresh_token";
+const TOKEN_KEY = "card24_access_token";
+const REFRESH_KEY = "card24_refresh_token";
 
 export const tokenStore = {
   get access() {

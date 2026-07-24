@@ -17,7 +17,7 @@ import { generateId } from "@/lib/uuid";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/designs/new")({
-  head: () => ({ meta: [{ title: "New design — Cardify" }] }),
+  head: () => ({ meta: [{ title: "New design — card24" }] }),
   component: NewDesign,
 });
 

@@ -107,6 +107,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
     const load = () => {
       c.setDimensions({ width: w * z, height: h * z });
+      c.setViewportTransform([1, 0, 0, 1, 0, 0]);
       c.clear();
       setBg(c, bg);
 

@@ -10,7 +10,7 @@ import { downloadDataUrl } from "@/lib/editor/tools";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/qr/new")({
-  head: () => ({ meta: [{ title: "New QR — Cardify" }] }),
+  head: () => ({ meta: [{ title: "New QR — card24" }] }),
   component: NewQR,
 });
 
@@ -19,7 +19,7 @@ type QRType = "WEBSITE" | "TELEGRAM" | "WHATSAPP" | "PHONE" | "EMAIL" | "VCARD" 
 function NewQR() {
   const { t } = useTranslation();
   const [type, setType] = useState<QRType>("WEBSITE");
-  const [value, setValue] = useState("https://cardify.app");
+  const [value, setValue] = useState("https://card24.uz");
   const [fg, setFg] = useState("#111111");
   const [bg, setBg] = useState("#ffffff");
   const [dataUrl, setDataUrl] = useState("");

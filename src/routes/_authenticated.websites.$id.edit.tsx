@@ -28,7 +28,7 @@ import { WebsiteAPI } from "@/lib/api/resources";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/websites/$id/edit")({
-  head: () => ({ meta: [{ title: "Website Builder — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Website Builder — card24" }] }),
   component: WebsiteBuilderPage,
 });
 

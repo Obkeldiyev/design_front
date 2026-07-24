@@ -66,7 +66,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/editor/$designId")({
-  head: () => ({ meta: [{ title: "Editor — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Editor — card24" }] }),
   component: EditorPage,
 });
 
@@ -107,7 +107,9 @@ function Editor() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null); // for CSS bg
   const [title, setTitle] = useState("");
-  const [qrData, setQrData] = useState("https://cardify.app");
+  const [qrData, setQrData] = useState("https://card24.uz");
+  const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
+  const [objectVersion, setObjectVersion] = useState(0);
 
   const doc = useEditorStore((s) => s.doc);
   const setDoc = useEditorStore((s) => s.setDoc);
@@ -157,6 +159,33 @@ function Editor() {
     }
     setDoc(query.data.data);
   }, [query.data, setDoc]);
+
+  const refreshActiveObject = () => {
+    const canvas = canvasRef.current;
+    setActiveObject((canvas?.getActiveObject() as fabricTypes.FabricObject | undefined) ?? null);
+    setObjectVersion((v) => v + 1);
+  };
+
+  useEffect(() => {
+    const canvas = canvasInstance;
+    if (!canvas) return;
+
+    const refresh = () => refreshActiveObject();
+    const EVENTS = [
+      "selection:created",
+      "selection:updated",
+      "selection:cleared",
+      "object:modified",
+      "object:moving",
+      "object:scaling",
+      "object:rotating",
+    ] as const;
+
+    EVENTS.forEach((eventName) => canvas.on(eventName, refresh));
+    refresh();
+    return () => EVENTS.forEach((eventName) => canvas.off(eventName, refresh));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasInstance]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -393,7 +422,9 @@ function Editor() {
       downloadDataUrl(URL.createObjectURL(blob), `${title || "design"}.svg`);
       return;
     }
-    const url = exportPNG(c, 2);
+    const url = format === "jpg"
+      ? exportJPG(c, 2, doc?.canvas.width, doc?.canvas.height)
+      : exportPNG(c, 2, doc?.canvas.width, doc?.canvas.height);
     downloadDataUrl(url, `${title || "design"}.${format}`);
   };
 
@@ -595,6 +626,15 @@ function Editor() {
           <LayersPanel canvas={canvasInstance} />
           
           <div className="border-t border-border p-3 space-y-3">
+            <ObjectInspector
+              key={objectVersion}
+              canvas={canvasInstance}
+              object={activeObject}
+              onDirty={() => {
+                markDirty();
+                refreshActiveObject();
+              }}
+            />
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Canvas
@@ -667,6 +707,160 @@ function Editor() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ObjectInspector({
+  canvas,
+  object,
+  onDirty,
+}: {
+  canvas: fabricTypes.Canvas | null;
+  object: fabricTypes.FabricObject | null;
+  onDirty: () => void;
+}) {
+  if (!canvas || !object || object.type === "activeSelection") {
+    return (
+      <div className="rounded-md border border-border p-3 text-xs text-muted-foreground">
+        Select one element to edit its properties.
+      </div>
+    );
+  }
+
+  const anyObj = object as any;
+  const type = String(object.type ?? "object");
+  const isText = ["i-text", "textbox", "text"].includes(type.toLowerCase());
+  const hasFill = "fill" in anyObj;
+  const hasStroke = "stroke" in anyObj;
+  const baseWidth = Math.max(1, Number(object.width ?? 1));
+  const baseHeight = Math.max(1, Number(object.height ?? 1));
+  const visualWidth = Math.round(baseWidth * Number(object.scaleX ?? 1));
+  const visualHeight = Math.round(baseHeight * Number(object.scaleY ?? 1));
+
+  const simpleColor = (value: unknown, fallback: string) =>
+    typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+
+  const apply = (props: Record<string, unknown>) => {
+    object.set(props);
+    object.setCoords();
+    canvas.requestRenderAll();
+    onDirty();
+  };
+
+  const setNumber = (key: string, raw: string) => {
+    const value = Number(raw);
+    if (Number.isFinite(value)) apply({ [key]: value });
+  };
+
+  const setVisualSize = (key: "width" | "height", raw: string) => {
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) return;
+    if (key === "width") apply({ scaleX: value / baseWidth });
+    if (key === "height") apply({ scaleY: value / baseHeight });
+  };
+
+  return (
+    <div className="space-y-3 border-b border-border pb-3">
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Element
+        </div>
+        <div className="mt-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-medium">
+          {type}
+        </div>
+      </div>
+
+      {isText && (
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Text</label>
+          <Input
+            value={String(anyObj.text ?? "")}
+            onChange={(e) => apply({ text: e.target.value })}
+            className="h-9 text-sm"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">X</label>
+          <Input type="number" value={Math.round(object.left ?? 0)} onChange={(e) => setNumber("left", e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Y</label>
+          <Input type="number" value={Math.round(object.top ?? 0)} onChange={(e) => setNumber("top", e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Width</label>
+          <Input type="number" value={visualWidth} onChange={(e) => setVisualSize("width", e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Height</label>
+          <Input type="number" value={visualHeight} onChange={(e) => setVisualSize("height", e.target.value)} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Rotate</label>
+          <Input type="number" value={Math.round(object.angle ?? 0)} onChange={(e) => setNumber("angle", e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Opacity</label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={Math.round(Number(object.opacity ?? 1) * 100)}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              if (Number.isFinite(value)) apply({ opacity: Math.max(0, Math.min(100, value)) / 100 });
+            }}
+          />
+        </div>
+      </div>
+
+      {hasFill && (
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Fill</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={simpleColor(anyObj.fill, "#111111")}
+              onChange={(e) => apply({ fill: e.target.value })}
+              className="h-9 w-9 rounded cursor-pointer border border-border p-0.5"
+            />
+            <Input value={String(anyObj.fill ?? "")} onChange={(e) => apply({ fill: e.target.value })} className="h-9 font-mono text-sm" />
+          </div>
+        </div>
+      )}
+
+      {hasStroke && (
+        <div className="grid grid-cols-[1fr_72px] gap-2">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Stroke</label>
+            <Input value={String(anyObj.stroke ?? "")} onChange={(e) => apply({ stroke: e.target.value || undefined })} className="h-9 font-mono text-sm" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Size</label>
+            <Input type="number" value={Number(anyObj.strokeWidth ?? 0)} onChange={(e) => setNumber("strokeWidth", e.target.value)} />
+          </div>
+        </div>
+      )}
+
+      {isText && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Font size</label>
+            <Input type="number" value={Number(anyObj.fontSize ?? 16)} onChange={(e) => setNumber("fontSize", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Weight</label>
+            <Input value={String(anyObj.fontWeight ?? "400")} onChange={(e) => apply({ fontWeight: e.target.value })} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

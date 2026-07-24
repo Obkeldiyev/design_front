@@ -165,7 +165,7 @@ function PublicSite() {
       <div className="text-center py-4 text-xs text-gray-400 border-t border-gray-100">
         Built with{" "}
         <a href="/" className="font-semibold text-primary hover:underline">
-          Cardify
+          card24
         </a>
       </div>
     </div>

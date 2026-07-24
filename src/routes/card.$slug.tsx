@@ -6,7 +6,7 @@ import { Phone, Mail, Globe, MapPin, Download } from "lucide-react";
 export const Route = createFileRoute("/card/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} — Cardify` },
+      { title: `${params.slug} — card24` },
       { name: "description", content: "Digital business card" },
     ],
   }),
@@ -28,7 +28,7 @@ function CardPublic() {
   const data = {
     name: slug.replace(/-/g, " ").replace(/\b\w/g, (m: string) => m.toUpperCase()),
     title: "Digital Business Card",
-    description: "Powered by Cardify",
+    description: "Powered by card24",
     phone: "+998 90 000 00 00",
     email: "hello@example.com",
     website: "https://example.com",
@@ -99,7 +99,7 @@ END:VCARD`;
           <div className="mt-8 text-center text-xs text-muted-foreground">
             Powered by{" "}
             <a href="/" className="font-semibold text-primary">
-              Cardify
+              card24
             </a>
           </div>
         </div>

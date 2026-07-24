@@ -20,7 +20,7 @@ export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),
-  head: () => ({ meta: [{ title: "Log in — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Log in — card24" }] }),
   component: Login,
 });
 
@@ -47,7 +47,7 @@ function Login() {
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10 text-sidebar-foreground">
         <Link to="/" className="font-display text-xl font-semibold">
-          Cardify
+          card24
         </Link>
         <div>
           <div className="font-display text-3xl font-semibold leading-tight">
@@ -57,14 +57,14 @@ function Login() {
             Cards, QR pages, sites — all from the same JSON.
           </div>
         </div>
-        <div className="text-xs text-sidebar-foreground/50">© Cardify</div>
+        <div className="text-xs text-sidebar-foreground/50">© card24</div>
       </div>
       <div className="flex items-center justify-center p-6 lg:p-12">
         <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-5">
           <div>
             <h1 className="font-display text-3xl font-bold">Welcome back</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Log in to your Cardify account.
+              Log in to your card24 account.
             </p>
           </div>
           <div className="space-y-2">

@@ -10,7 +10,7 @@ import { apiError } from "@/lib/api/client";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Settings — card24" }] }),
   component: Settings,
 });
 

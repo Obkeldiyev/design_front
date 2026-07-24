@@ -55,13 +55,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cardify — AI Business Card & Digital Identity Platform" },
+      { title: "card24 — AI Business Card & Digital Identity Platform" },
       {
         name: "description",
         content:
           "Create business cards, digital cards, QR codes and mini-websites in under 60 seconds with AI. The faster alternative to Canva for brand identity.",
       },
-      { property: "og:title", content: "Cardify — AI Business Card Platform" },
+      { property: "og:title", content: "card24 — AI Business Card Platform" },
       {
         property: "og:description",
         content: "Business cards, QR codes, digital cards and mini-sites in 60 seconds.",

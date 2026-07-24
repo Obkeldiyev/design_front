@@ -12,7 +12,7 @@ export const LANGS = [
 
 export type LangCode = (typeof LANGS)[number]["code"];
 
-export const LANG_STORAGE_KEY = "cardify_lang";
+export const LANG_STORAGE_KEY = "card24_lang";
 
 // Always use the latest JSON bundles — works both on first load and HMR re-runs
 const resources = {

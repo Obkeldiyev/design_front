@@ -8,7 +8,7 @@ import { TemplatePreview } from "@/components/editor/TemplatePreview";
 export const Route = createFileRoute("/templates")({
   head: () => ({
     meta: [
-      { title: "Card Templates — Cardify" },
+      { title: "Card Templates — card24" },
       { name: "description", content: "Browse professional business card templates by industry." },
     ],
   }),
@@ -29,7 +29,7 @@ function Templates() {
       <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link to="/" className="font-display text-xl font-bold tracking-tight">
-            Cardify
+            card24
           </Link>
           <div className="flex items-center gap-3">
             <a href="/login" className="text-sm text-muted-foreground hover:text-foreground">
@@ -149,7 +149,7 @@ function Templates() {
 
       {/* Footer */}
       <footer className="border-t border-border mt-10 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Cardify. All rights reserved.
+        © {new Date().getFullYear()} card24. All rights reserved.
       </footer>
     </div>
   );

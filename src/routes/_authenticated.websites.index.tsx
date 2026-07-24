@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/websites/")({
-  head: () => ({ meta: [{ title: "Websites — Cardify" }] }),
+  head: () => ({ meta: [{ title: "Websites — card24" }] }),
   component: WebsitesIndex,
 });
 
