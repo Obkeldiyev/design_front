@@ -55,22 +55,30 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     };
   }, []);
 
-  // Resize + apply zoom
+  const applyCanvasDimensions = (c: fabric.Canvas, width: number, height: number, displayZoom: number) => {
+    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    c.setDimensions({ width, height });
+    c.setDimensions(
+      { width: width * displayZoom, height: height * displayZoom },
+      { cssOnly: true },
+    );
+
+    const wrapper = (c as any).wrapperEl as HTMLElement | undefined;
+    if (wrapper) {
+      wrapper.style.cssText = `position:relative;display:block;margin:0;padding:0;line-height:0;width:${width * displayZoom}px;height:${height * displayZoom}px;overflow:hidden;`;
+    }
+  };
+
+  // Resize + apply CSS zoom
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
-    const w = doc.canvas.width  * zoom;
-    const h = doc.canvas.height * zoom;
-    c.setDimensions({ width: w, height: h });
-    // Apply viewport in next frame after dimensions settle
+    const w = doc.canvas.width;
+    const h = doc.canvas.height;
+    applyCanvasDimensions(c, w, h, zoom);
     requestAnimationFrame(() => {
       if (!fabricRef.current) return;
-      fabricRef.current.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
-      // Keep Fabric's wrapper contained
-      const wrapper = (fabricRef.current as any).wrapperEl as HTMLElement | undefined;
-      if (wrapper) {
-        wrapper.style.cssText = `position:relative;display:block;margin:0;padding:0;line-height:0;width:${w}px;height:${h}px;overflow:hidden;`;
-      }
+      applyCanvasDimensions(fabricRef.current, w, h, zoom);
       setBg(fabricRef.current, doc.canvas.background || "");
       fabricRef.current.requestRenderAll();
     });
@@ -83,6 +91,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     if (!c) return;
     c.clear();
     c.setDimensions({ width: 300, height: 200 });
+    c.setDimensions({ width: 300, height: 200 }, { cssOnly: true });
     c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     c.requestRenderAll();
     lastPageId.current = null;
@@ -106,15 +115,14 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const h    = doc.canvas.height;
 
     const load = () => {
-      c.setDimensions({ width: w * z, height: h * z });
-      c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      applyCanvasDimensions(c, w, h, z);
       c.clear();
       setBg(c, bg);
 
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
-          fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
+          applyCanvasDimensions(fabricRef.current, w, h, z);
           fabricRef.current.requestRenderAll();
         });
         return;
@@ -126,14 +134,11 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       const result = c.loadFromJSON(loadJson);
       const done = () => {
         setBg(c, bg);
-        // Use setZoom which properly scales object rendering
-        c.setZoom(z);
-        c.setViewportTransform([z, 0, 0, z, 0, 0]);
+        applyCanvasDimensions(c, w, h, z);
         c.requestRenderAll();
         requestAnimationFrame(() => {
           if (!fabricRef.current) return;
-          fabricRef.current.setZoom(z);
-          fabricRef.current.setViewportTransform([z, 0, 0, z, 0, 0]);
+          applyCanvasDimensions(fabricRef.current, w, h, z);
           fabricRef.current.requestRenderAll();
         });
       };

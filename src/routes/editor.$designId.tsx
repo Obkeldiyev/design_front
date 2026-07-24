@@ -121,6 +121,7 @@ function Editor() {
   const zoom = useEditorStore((s) => s.zoom);
   const setZoom = useEditorStore((s) => s.setZoom);
   const saveStatus = useEditorStore((s) => s.saveStatus);
+  const selectedIds = useEditorStore((s) => s.selectedIds);
   const markSaving = useEditorStore((s) => s.markSaving);
   const markSaved = useEditorStore((s) => s.markSaved);
   const markError = useEditorStore((s) => s.markError);
@@ -186,6 +187,11 @@ function Editor() {
     return () => EVENTS.forEach((eventName) => canvas.off(eventName, refresh));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasInstance]);
+
+  useEffect(() => {
+    refreshActiveObject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds.join("|")]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -730,9 +736,10 @@ function ObjectInspector({
 
   const anyObj = object as any;
   const type = String(object.type ?? "object");
-  const isText = ["i-text", "textbox", "text"].includes(type.toLowerCase());
-  const hasFill = "fill" in anyObj;
-  const hasStroke = "stroke" in anyObj;
+  const objectType = type.toLowerCase();
+  const isText = ["i-text", "textbox", "text"].includes(objectType);
+  const canFill = !["image", "group", "activeSelection"].includes(objectType);
+  const canStroke = !["image", "activeSelection"].includes(objectType);
   const baseWidth = Math.max(1, Number(object.width ?? 1));
   const baseHeight = Math.max(1, Number(object.height ?? 1));
   const visualWidth = Math.round(baseWidth * Number(object.scaleX ?? 1));
@@ -821,30 +828,30 @@ function ObjectInspector({
         </div>
       </div>
 
-      {hasFill && (
+      {canFill && (
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Fill</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={simpleColor(anyObj.fill, "#111111")}
+              value={simpleColor(object.get("fill"), "#111111")}
               onChange={(e) => apply({ fill: e.target.value })}
               className="h-9 w-9 rounded cursor-pointer border border-border p-0.5"
             />
-            <Input value={String(anyObj.fill ?? "")} onChange={(e) => apply({ fill: e.target.value })} className="h-9 font-mono text-sm" />
+            <Input value={String(object.get("fill") ?? "")} onChange={(e) => apply({ fill: e.target.value })} className="h-9 font-mono text-sm" />
           </div>
         </div>
       )}
 
-      {hasStroke && (
+      {canStroke && (
         <div className="grid grid-cols-[1fr_72px] gap-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Stroke</label>
-            <Input value={String(anyObj.stroke ?? "")} onChange={(e) => apply({ stroke: e.target.value || undefined })} className="h-9 font-mono text-sm" />
+            <Input value={String(object.get("stroke") ?? "")} onChange={(e) => apply({ stroke: e.target.value || undefined })} className="h-9 font-mono text-sm" />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Size</label>
-            <Input type="number" value={Number(anyObj.strokeWidth ?? 0)} onChange={(e) => setNumber("strokeWidth", e.target.value)} />
+            <Input type="number" value={Number(object.get("strokeWidth") ?? 0)} onChange={(e) => setNumber("strokeWidth", e.target.value)} />
           </div>
         </div>
       )}
