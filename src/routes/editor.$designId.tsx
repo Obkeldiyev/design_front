@@ -58,6 +58,7 @@ import {
 } from "@/lib/editor/tools";
 import { toast } from "sonner";
 import { apiError } from "@/lib/api/client";
+import { CARD_TEMPLATES } from "@/lib/card-templates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +70,34 @@ export const Route = createFileRoute("/editor/$designId")({
   head: () => ({ meta: [{ title: "Editor — card24" }] }),
   component: EditorPage,
 });
+
+const LEGACY_TEMPLATE_MATCHES: Array<{ marker: string; templateId: string }> = [
+  { marker: "ALEX MORGAN", templateId: "c1" },
+  { marker: "SARAH CHEN", templateId: "c2" },
+  { marker: "DR. EMILY NGO", templateId: "c3" },
+  { marker: "La Bella Cucina", templateId: "c4" },
+  { marker: "NINA TORRES", templateId: "c5" },
+];
+
+function cloneDoc<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function textContent(doc: unknown) {
+  const pages = (doc as any)?.pages;
+  if (!Array.isArray(pages)) return "";
+  return pages
+    .flatMap((page) => Array.isArray(page?.fabric?.objects) ? page.fabric.objects : [])
+    .map((object) => String(object?.text ?? ""))
+    .join("\n");
+}
+
+function repairLegacyTemplateDoc(doc: any) {
+  const content = textContent(doc);
+  const match = LEGACY_TEMPLATE_MATCHES.find((item) => content.includes(item.marker));
+  const template = match ? CARD_TEMPLATES.find((item) => item.id === match.templateId) : null;
+  return template ? cloneDoc(template.doc) : doc;
+}
 
 // Client-only wrapper — prevents SSR for the entire editor
 // (Fabric.js, drag-and-drop, and canvas all require browser APIs)
@@ -158,7 +187,11 @@ function Editor() {
       const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
       useEditorStore.setState({ zoom: fz });
     }
-    setDoc(query.data.data);
+    const repairedDoc = repairLegacyTemplateDoc(query.data.data);
+    setDoc(repairedDoc);
+    if (repairedDoc !== query.data.data) {
+      setTimeout(() => useEditorStore.getState().markDirty(), 0);
+    }
   }, [query.data, setDoc]);
 
   const refreshActiveObject = () => {
