@@ -149,7 +149,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       flexGrow: 0,
       lineHeight: 0,
       overflow: "hidden",
-      borderRadius: 6,
+      borderRadius: doc.canvas.borderRadius ? doc.canvas.borderRadius * zoom : 6,
       boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
     }}>
       <canvas ref={canvasElRef} style={{ display: "block" }} />

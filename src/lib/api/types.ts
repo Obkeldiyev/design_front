@@ -39,7 +39,7 @@ export type DesignStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type CanvasDoc = {
   version: 1;
-  canvas: { width: number; height: number; background: string };
+  canvas: { width: number; height: number; background: string; borderRadius?: number };
   pages: Array<{
     id: string;
     name: string;

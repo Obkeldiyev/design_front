@@ -184,7 +184,8 @@ function Editor() {
     const availW = window.innerWidth  - 256 - 288 - 80;
     const availH = window.innerHeight - 56  - 80;
     if (availW > 50 && availH > 50) {
-      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h)).toFixed(2));
+      // Cap at 0.7 max — ensures canvas always fits with comfortable margins
+      const fz = parseFloat(Math.max(0.15, Math.min(availW / w, availH / h, 0.7)).toFixed(2));
       useEditorStore.setState({ zoom: fz });
     }
     const repairedDoc = repairLegacyTemplateDoc(query.data.data);
@@ -739,6 +740,27 @@ function Editor() {
                         markDirty();
                       }}
                     />
+                  </div>
+                </div>
+                {/* Corner radius */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Corner Radius</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={0}
+                      max={60}
+                      step={1}
+                      value={doc.canvas.borderRadius ?? 0}
+                      onChange={(e) => {
+                        setDoc({ ...doc, canvas: { ...doc.canvas, borderRadius: +e.target.value } });
+                        markDirty();
+                      }}
+                      className="flex-1 h-2 accent-primary cursor-pointer"
+                    />
+                    <span className="w-8 text-xs text-right tabular-nums text-muted-foreground">
+                      {doc.canvas.borderRadius ?? 0}px
+                    </span>
                   </div>
                 </div>
               </div>
