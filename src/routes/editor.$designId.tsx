@@ -662,7 +662,7 @@ function Editor() {
               display:        "flex",
               alignItems:     "center",
               justifyContent: "center",
-              minWidth:       doc.canvas.width * zoom + 80,
+              minWidth:       Math.ceil(doc.canvas.width * zoom) + 80,
               minHeight:      "100%",
               padding:        "40px",
               boxSizing:      "border-box",

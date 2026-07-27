@@ -35,7 +35,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),
   setDoc: (doc) => {
-    set({ doc, activePageId: doc.pages[0]?.id ?? null, saveStatus: "saved", designKey: get().designKey + 1 });
+  setDoc: (doc) => {
+    const prev = get().doc;
+    // Only increment designKey when loading a completely different design
+    // (different page IDs = new design). Canvas metadata changes (background,
+    // borderRadius, width, height) must NOT trigger a page reload.
+    const prevPageIds = prev?.pages.map((p) => p.id).join(",") ?? "";
+    const nextPageIds = doc.pages.map((p) => p.id).join(",");
+    const isNewDesign = prevPageIds !== nextPageIds;
+    set({
+      doc,
+      activePageId: isNewDesign ? (doc.pages[0]?.id ?? null) : get().activePageId,
+      saveStatus: "saved",
+      designKey: isNewDesign ? get().designKey + 1 : get().designKey,
+    });
   },
   setActivePage: (id) => set({ activePageId: id }),
   addPage: () => {

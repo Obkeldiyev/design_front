@@ -114,12 +114,15 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const nativeW = doc.canvas.width;
   const nativeH = doc.canvas.height;
   const radius  = (doc.canvas.borderRadius ?? 0) * zoom;
+  // Use Math.ceil to prevent sub-pixel clipping of the scaled inner canvas
+  const scaledW = Math.ceil(nativeW * zoom);
+  const scaledH = Math.ceil(nativeH * zoom);
 
   return (
     <div style={{
       position: "relative",
-      width: nativeW * zoom,
-      height: nativeH * zoom,
+      width: scaledW,
+      height: scaledH,
       flexShrink: 0,
       flexGrow: 0,
       borderRadius: radius,
