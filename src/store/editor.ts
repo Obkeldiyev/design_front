@@ -30,7 +30,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   doc: null,
   activePageId: null,
   designKey: 0,
-  zoom: 0.5,
+  zoom: 0.3,
   saveStatus: "saved",
   selectedIds: [],
   resetDoc: () => set({ doc: null, activePageId: null, saveStatus: "saved", selectedIds: [] }),

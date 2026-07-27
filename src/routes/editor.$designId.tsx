@@ -201,13 +201,13 @@ function Editor() {
     const w = query.data.data?.canvas?.width  ?? 1050;
     const h = query.data.data?.canvas?.height ?? 600;
 
-    // Initial zoom: fit canvas into available viewport (capped at 0.7)
-    // Left panel 256px, right panel 288px, horizontal padding 80px
-    // Header 56px, vertical padding 80px
+    // Initial zoom: fit canvas into available viewport
+    // Left panel=256, right panel=288, padding=80, header=56
     const availW = window.innerWidth  - 256 - 288 - 80;
     const availH = window.innerHeight - 56  - 80;
     if (availW > 50 && availH > 50) {
-      const fz = Math.max(0.15, Math.min(availW / w, availH / h, 0.7));
+      // Cap at 1.0 — never upscale beyond native size
+      const fz = Math.max(0.15, Math.min(availW / w, availH / h, 1.0));
       useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
     }
 
