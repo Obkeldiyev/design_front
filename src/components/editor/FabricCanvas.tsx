@@ -6,11 +6,15 @@ if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
   (fabric.FabricObject.customProperties as string[]).push("id", "name");
 }
 
+/** Apply zoom from top-left corner (0,0) — no pan offset */
+function applyZoom(c: fabric.Canvas, z: number) {
+  c.zoomToPoint(new fabric.Point(0, 0), z);
+}
+
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
-  const wrapRef      = useRef<HTMLDivElement>(null);
-  const canvasElRef  = useRef<HTMLCanvasElement>(null);
-  const fabricRef    = useRef<fabric.Canvas | null>(null);
-  const lastPageId   = useRef<string | null>(null);
+  const canvasElRef = useRef<HTMLCanvasElement>(null);
+  const fabricRef   = useRef<fabric.Canvas | null>(null);
+  const lastPageId  = useRef<string | null>(null);
   const lastPageJson = useRef<string>("");
 
   const doc          = useEditorStore((s) => s.doc);
@@ -20,7 +24,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
 
-  // Mount Fabric once
+  // ── 1. Mount ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!canvasElRef.current || fabricRef.current) return;
     const c = new fabric.Canvas(canvasElRef.current, {
@@ -28,83 +32,59 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       preserveObjectStacking: true,
       selection: true,
       enableRetinaScaling: false,
-      width: 300,
-      height: 200,
+      width: 100,
+      height: 100,
     });
     fabricRef.current = c;
-
-    // Keep Fabric's wrapper inside our container
-    const inner = (c as any).wrapperEl as HTMLElement | undefined;
-    if (inner) {
-      inner.style.cssText = "position:relative;display:block;margin:0;padding:0;line-height:0;";
-    }
-
     c.on("object:modified", markDirty);
-    c.on("object:added", markDirty);
-    c.on("object:removed", markDirty);
+    c.on("object:added",    markDirty);
+    c.on("object:removed",  markDirty);
     c.on("selection:created", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
     c.on("selection:updated", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
     c.on("selection:cleared", () => setSelected([]));
     onReady?.(c);
-
     return () => {
       try { c.dispose(); } catch (_) {}
       fabricRef.current = null;
       lastPageId.current = null;
       lastPageJson.current = "";
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const applyCanvasDimensions = (c: fabric.Canvas, width: number, height: number, displayZoom: number) => {
-    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    c.setDimensions({ width, height });
-    c.setDimensions(
-      { width: width * displayZoom, height: height * displayZoom },
-      { cssOnly: true },
-    );
-
-    const wrapper = (c as any).wrapperEl as HTMLElement | undefined;
-    if (wrapper) {
-      wrapper.style.cssText = `position:relative;display:block;margin:0;padding:0;line-height:0;width:${width * displayZoom}px;height:${height * displayZoom}px;overflow:hidden;`;
-    }
-  };
-
-  // Resize + apply CSS zoom
+  // ── 2. Apply zoom + resize ────────────────────────────────────────────────
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
     const w = doc.canvas.width;
     const h = doc.canvas.height;
-    applyCanvasDimensions(c, w, h, zoom);
-    requestAnimationFrame(() => {
-      if (!fabricRef.current) return;
-      applyCanvasDimensions(fabricRef.current, w, h, zoom);
-      setBg(fabricRef.current, doc.canvas.background || "");
-      fabricRef.current.requestRenderAll();
-    });
+    // Resize canvas element to scaled size
+    c.setDimensions({ width: w * zoom, height: h * zoom });
+    // Zoom from top-left (0,0) — this correctly scales ALL object positions
+    applyZoom(c, zoom);
+    setBg(c, doc.canvas.background || "");
+    c.requestRenderAll();
   }, [zoom, doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
-  // Clear when doc resets
+  // ── 3. Clear on reset ─────────────────────────────────────────────────────
   useEffect(() => {
     if (doc !== null) return;
     const c = fabricRef.current;
     if (!c) return;
     c.clear();
-    c.setDimensions({ width: 300, height: 200 });
-    c.setDimensions({ width: 300, height: 200 }, { cssOnly: true });
-    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    c.setDimensions({ width: 100, height: 100 });
+    applyZoom(c, 1);
     c.requestRenderAll();
     lastPageId.current = null;
     lastPageJson.current = "";
   }, [doc]);
 
-  // Load page
+  // ── 4. Load page ──────────────────────────────────────────────────────────
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
-
     lastPageId.current   = activePageId;
     lastPageJson.current = JSON.stringify(page.fabric);
 
@@ -115,32 +95,31 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const h    = doc.canvas.height;
 
     const load = () => {
-      applyCanvasDimensions(c, w, h, z);
+      // 1. Set native size first (no zoom yet)
+      c.setDimensions({ width: w, height: h });
+      applyZoom(c, 1); // identity
       c.clear();
       setBg(c, bg);
 
       if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
-        requestAnimationFrame(() => {
-          if (!fabricRef.current) return;
-          applyCanvasDimensions(fabricRef.current, w, h, z);
-          fabricRef.current.requestRenderAll();
-        });
+        // 2. Apply zoom after clearing
+        c.setDimensions({ width: w * z, height: h * z });
+        applyZoom(c, z);
+        c.requestRenderAll();
         return;
       }
 
+      // 3. Load objects at NATIVE coordinates (zoom=1)
       const loadJson: Record<string, unknown> = { ...json };
-      delete loadJson.viewportTransform;
+      delete (loadJson as any).viewportTransform;
 
       const result = c.loadFromJSON(loadJson);
       const done = () => {
         setBg(c, bg);
-        applyCanvasDimensions(c, w, h, z);
+        // 4. NOW apply zoom — objects are at native coords, zoom scales them correctly
+        c.setDimensions({ width: w * z, height: h * z });
+        applyZoom(c, z);
         c.requestRenderAll();
-        requestAnimationFrame(() => {
-          if (!fabricRef.current) return;
-          applyCanvasDimensions(fabricRef.current, w, h, z);
-          fabricRef.current.requestRenderAll();
-        });
       };
 
       if (result && typeof (result as any).then === "function") {
@@ -156,32 +135,23 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   }, [activePageId, designKey]);
 
   if (!doc) {
-    return (
-      <div ref={wrapRef} style={{ display: "none" }}>
-        <canvas ref={canvasElRef} />
-      </div>
-    );
+    return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
   }
 
   const scaledW = doc.canvas.width  * zoom;
   const scaledH = doc.canvas.height * zoom;
 
   return (
-    <div
-      ref={wrapRef}
-      style={{
-        width: scaledW,
-        height: scaledH,
-        flexShrink: 0,
-        flexGrow: 0,
-        lineHeight: 0,
-        overflow: "hidden",
-        borderRadius: 6,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-        position: "relative",
-        isolation: "isolate",
-      }}
-    >
+    <div style={{
+      width: scaledW,
+      height: scaledH,
+      flexShrink: 0,
+      flexGrow: 0,
+      lineHeight: 0,
+      overflow: "hidden",
+      borderRadius: 6,
+      boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+    }}>
       <canvas ref={canvasElRef} style={{ display: "block" }} />
     </div>
   );
