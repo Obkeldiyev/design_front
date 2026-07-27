@@ -1,6 +1,6 @@
 /**
- * FabricCanvas — renders at native size, scales via CSS transform.
- * This completely avoids Fabric zoom/viewport bugs.
+ * FabricCanvas — renders at NATIVE size, scales via CSS transform.
+ * No Fabric zoom/viewport manipulation — completely avoids those bugs.
  */
 import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
@@ -13,8 +13,6 @@ if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const fabricRef   = useRef<fabric.Canvas | null>(null);
-  const lastPageId  = useRef<string | null>(null);
-  const lastJson    = useRef<string>("");
 
   const doc          = useEditorStore((s) => s.doc);
   const activePageId = useEditorStore((s) => s.activePageId);
@@ -23,7 +21,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   const markDirty    = useEditorStore((s) => s.markDirty);
   const setSelected  = useEditorStore((s) => s.setSelected);
 
-  // ── Mount Fabric at NATIVE size, NO zoom ─────────────────────────────────
+  // Mount once
   useEffect(() => {
     if (!canvasElRef.current || fabricRef.current) return;
     const c = new fabric.Canvas(canvasElRef.current, {
@@ -45,24 +43,21 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     return () => {
       try { c.dispose(); } catch (_) {}
       fabricRef.current = null;
-      lastPageId.current = null;
-      lastJson.current = "";
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Resize canvas when doc dimensions change ──────────────────────────────
-  // Canvas stays at NATIVE size — no Fabric zoom applied
+  // Sync native size + background
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc) return;
     c.setDimensions({ width: doc.canvas.width, height: doc.canvas.height });
-    c.setViewportTransform([1, 0, 0, 1, 0, 0]); // identity — no zoom
+    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     setBg(c, doc.canvas.background || "");
     c.requestRenderAll();
   }, [doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
 
-  // ── Clear when doc resets ─────────────────────────────────────────────────
+  // Clear on reset
   useEffect(() => {
     if (doc !== null) return;
     const c = fabricRef.current;
@@ -71,39 +66,30 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     c.setDimensions({ width: 1050, height: 600 });
     c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     c.requestRenderAll();
-    lastPageId.current = null;
-    lastJson.current = "";
   }, [doc]);
 
-  // ── Load page at native coordinates ──────────────────────────────────────
+  // Load page
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || !doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
-    lastPageId.current = activePageId;
-    lastJson.current   = JSON.stringify(page.fabric);
-
     const json = page.fabric as Record<string, unknown>;
     const bg   = doc.canvas.background || "";
     const w    = doc.canvas.width;
     const h    = doc.canvas.height;
-
     const load = () => {
-      // Always native size, identity viewport
       c.setDimensions({ width: w, height: h });
       c.setViewportTransform([1, 0, 0, 1, 0, 0]);
       c.clear();
       setBg(c, bg);
-
-      if (!json || !Array.isArray(json.objects) || !(json.objects as any[]).length) {
+      const objects = (json?.objects as unknown[]) ?? [];
+      if (!Array.isArray(objects) || objects.length === 0) {
         c.requestRenderAll();
         return;
       }
-
       const loadJson = { ...json } as any;
       delete loadJson.viewportTransform;
-
       const result = c.loadFromJSON(loadJson);
       const done = () => {
         setBg(c, bg);
@@ -116,34 +102,30 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         done();
       }
     };
-
     const t = setTimeout(load, 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePageId, designKey]);
 
-  if (!doc) return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
+  if (!doc) {
+    return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
+  }
 
   const nativeW = doc.canvas.width;
   const nativeH = doc.canvas.height;
-  const radius  = (doc.canvas.borderRadius ?? 0);
+  const radius  = (doc.canvas.borderRadius ?? 0) * zoom;
 
-  // ── CSS transform scaling — no Fabric zoom bugs ───────────────────────────
-  // The canvas renders at native 1050×600.
-  // We scale it DOWN visually using CSS transform: scale(zoom).
-  // The outer div is sized to the SCALED dimensions so layout is correct.
   return (
     <div style={{
+      position: "relative",
       width: nativeW * zoom,
       height: nativeH * zoom,
       flexShrink: 0,
       flexGrow: 0,
-      position: "relative",
-      borderRadius: radius * zoom,
+      borderRadius: radius,
       overflow: "hidden",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+      boxShadow: "0 4px 32px rgba(0,0,0,0.45)",
     }}>
-      {/* This div scales the native canvas to fit the outer box */}
       <div style={{
         position: "absolute",
         top: 0,
@@ -162,7 +144,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
 
 function setBg(c: fabric.Canvas, bg: string) {
   try {
-    c.backgroundColor = /^(#|rgb|hsl|transparent)/i.test(bg) ? (bg || "#ffffff") : "#ffffff";
+    c.backgroundColor = bg && /^(#|rgb|hsl|transparent)/i.test(bg) ? bg : "#ffffff";
     c.requestRenderAll();
   } catch (_) {}
 }
