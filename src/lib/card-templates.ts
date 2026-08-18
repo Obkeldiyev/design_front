@@ -26,6 +26,7 @@ function text(
 ) {
   return {
     type: "textbox",
+    version: "6.0.0",
     id,
     left,
     top,
@@ -34,6 +35,8 @@ function text(
     fontSize,
     fontFamily: "Inter",
     fill,
+    originX: "left",
+    originY: "top",
     splitByGrapheme: false,
     ...options,
   };
@@ -48,7 +51,7 @@ function rect(
   fill: string,
   options: Record<string, unknown> = {},
 ) {
-  return { type: "rect", id, left, top, width, height, fill, ...options };
+  return { type: "rect", version: "6.0.0", id, left, top, width, height, fill, originX: "left", originY: "top", ...options };
 }
 
 function doc(background: string, frontObjects: unknown[], backObjects: unknown[]): CanvasDoc {
@@ -56,8 +59,8 @@ function doc(background: string, frontObjects: unknown[], backObjects: unknown[]
     version: 1,
     canvas: { width: WIDTH, height: HEIGHT, background },
     pages: [
-      { id: "front", name: "Front", fabric: { version: "7.0.0", objects: frontObjects } },
-      { id: "back", name: "Back", fabric: { version: "7.0.0", objects: backObjects } },
+      { id: "front", name: "Front", fabric: { version: "6.0.0", objects: frontObjects } },
+      { id: "back",  name: "Back",  fabric: { version: "6.0.0", objects: backObjects  } },
     ],
   };
 }
@@ -212,4 +215,109 @@ export const CARD_TEMPLATES: CardTemplate[] = [
 export const TEMPLATE_CATEGORIES = [
   "All",
   ...Array.from(new Set(CARD_TEMPLATES.map((template) => template.category))),
+  {
+    id: "c6", title: "Real Estate", category: "Real Estate", industry: "Real Estate", isPremium: false, width: WIDTH, height: HEIGHT,
+    doc: doc("#0f172a", [
+      rect("rp", 680, 0, 370, HEIGHT, "#1e293b"),
+      rect("gb", 680, 0, 5, HEIGHT, "#f59e0b"),
+      text("fn", "RICHARD", 60, 80, 560, 54, "#ffffff", { fontWeight: "800" }),
+      text("ln", "HAMILTON", 60, 148, 560, 54, "#f59e0b", { fontWeight: "800" }),
+      text("lic", "Licensed Realtor · DRE #01234567", 62, 222, 480, 18, "#94a3b8"),
+      text("email", "richard@premierhomes.com", 62, 268, 480, 20, "#cbd5e1"),
+      text("phone", "+1 (310) 555-9900", 62, 304, 480, 20, "#cbd5e1"),
+      text("web", "premierhomes.com", 62, 340, 480, 20, "#f59e0b"),
+      text("co", "PREMIER HOMES", 62, 500, 400, 24, "#ffffff", { fontWeight: "700" }),
+    ], [
+      rect("bg", 0, 0, WIDTH, HEIGHT, "#0f172a"),
+      rect("bar", 0, 0, WIDTH, 5, "#f59e0b"),
+      text("co", "PREMIER HOMES", 250, 248, 550, 44, "#ffffff", { fontWeight: "800", textAlign: "center" }),
+      text("tag", "Your Dream. Our Mission.", 250, 312, 550, 22, "#94a3b8", { textAlign: "center" }),
+    ]),
+  },
+  {
+    id: "c7", title: "Creative Bold", category: "Creative", industry: "Creative", isPremium: false, width: WIDTH, height: HEIGHT,
+    doc: doc("#fafafa", [
+      rect("lb", 0, 0, 460, HEIGHT, "#18181b"),
+      rect("rb", 444, 0, 32, HEIGHT, "#ef4444"),
+      text("fn", "LUCAS", 40, 100, 380, 72, "#ffffff", { fontWeight: "900" }),
+      text("ln", "OKAFOR", 40, 180, 380, 72, "#ef4444", { fontWeight: "900" }),
+      text("role", "Visual Artist & Photographer", 40, 274, 380, 18, "#a1a1aa"),
+      text("email", "lucas@okafor.studio", 40, 430, 380, 17, "#71717a"),
+      text("phone", "+44 7700 900123", 40, 462, 380, 17, "#71717a"),
+      text("web", "okafor.studio", 40, 494, 380, 17, "#71717a"),
+      text("co", "OKAFOR\nSTUDIO", 510, 90, 480, 54, "#18181b", { fontWeight: "900" }),
+      text("svc", "Photography\nIllustration\nBrand Identity", 510, 316, 440, 22, "#71717a"),
+    ], [
+      rect("bg", 0, 0, WIDTH, HEIGHT, "#18181b"),
+      rect("bar", 0, 0, 32, HEIGHT, "#ef4444"),
+      text("co", "OKAFOR STUDIO", 200, 248, 650, 52, "#ffffff", { fontWeight: "900", textAlign: "center" }),
+      text("web", "okafor.studio", 200, 320, 650, 22, "#71717a", { textAlign: "center" }),
+    ]),
+  },
+  {
+    id: "c8", title: "Luxury Gold", category: "Business", industry: "Business", isPremium: true, width: WIDTH, height: HEIGHT,
+    doc: doc("#0d0d0d", [
+      rect("t", 0, 0, WIDTH, 2, "#c9a84c"),
+      rect("b", 0, 598, WIDTH, 2, "#c9a84c"),
+      rect("l", 0, 0, 2, HEIGHT, "#c9a84c"),
+      rect("r", 1048, 0, 2, HEIGHT, "#c9a84c"),
+      text("fn", "VICTORIA", 80, 100, 580, 58, "#c9a84c", { fontFamily: "Georgia" }),
+      text("ln", "BLACKWOOD", 80, 170, 580, 58, "#f5f0e8", { fontFamily: "Georgia", fontWeight: "700" }),
+      rect("rule", 80, 244, 280, 1, "#c9a84c"),
+      text("role", "Private Client Advisor", 80, 268, 420, 20, "#a78a50"),
+      text("email", "victoria@prestige.com", 80, 320, 420, 18, "#8a7d65"),
+      text("phone", "+44 20 7946 0000", 80, 354, 420, 18, "#8a7d65"),
+      text("co", "PRESTIGE GROUP", 80, 500, 420, 22, "#c9a84c", { fontWeight: "700" }),
+    ], [
+      rect("t", 0, 0, WIDTH, 2, "#c9a84c"),
+      rect("b", 0, 598, WIDTH, 2, "#c9a84c"),
+      text("co", "PRESTIGE GROUP", 225, 248, 600, 44, "#c9a84c", { fontFamily: "Georgia", fontWeight: "700", textAlign: "center" }),
+      text("tag", "Private Client Services", 225, 310, 600, 22, "#a78a50", { textAlign: "center" }),
+    ]),
+  },
+  {
+    id: "c9", title: "Construction", category: "Construction", industry: "Construction", isPremium: false, width: WIDTH, height: HEIGHT,
+    doc: doc("#1c1917", [
+      rect("header", 0, 0, WIDTH, 130, "#f59e0b"),
+      text("co", "IRONCLAD", 52, 22, 680, 68, "#1c1917", { fontWeight: "900" }),
+      text("co2", "CONSTRUCTION GROUP", 54, 96, 680, 20, "#1c1917", { fontWeight: "600" }),
+      text("name", "MIKE STEELE", 52, 178, 560, 44, "#ffffff", { fontWeight: "800" }),
+      text("role", "Senior Site Manager", 54, 234, 500, 22, "#f59e0b"),
+      rect("rule", 54, 272, 240, 2, "#44403c"),
+      text("email", "mike@ironclad.build", 54, 292, 440, 18, "#a8a29e"),
+      text("phone", "+1 (713) 555-0044", 54, 322, 440, 18, "#a8a29e"),
+      text("web", "ironclad.build", 54, 352, 440, 18, "#a8a29e"),
+    ], [
+      rect("header", 0, 0, WIDTH, 130, "#f59e0b"),
+      text("co", "IRONCLAD", 250, 22, 550, 68, "#1c1917", { fontWeight: "900", textAlign: "center" }),
+      text("tag", "Building with Pride", 250, 200, 550, 38, "#ffffff", { fontWeight: "700", textAlign: "center" }),
+      text("web", "ironclad.build", 250, 260, 550, 22, "#f59e0b", { textAlign: "center" }),
+    ]),
+  },
+  {
+    id: "c10", title: "Startup Modern", category: "IT", industry: "IT", isPremium: false, width: WIDTH, height: HEIGHT,
+    doc: doc("#ffffff", [
+      rect("footer", 0, 468, WIDTH, 132, "#f8fafc"),
+      rect("fline", 0, 468, WIDTH, 2, "#e2e8f0"),
+      rect("logo-box", 56, 60, 56, 56, "#6366f1", { rx: 14, ry: 14 }),
+      text("logo-l", "N", 68, 70, 36, 36, "#ffffff", { fontWeight: "800", textAlign: "center" }),
+      text("name", "NOAH KIM", 56, 150, 560, 50, "#0f172a", { fontWeight: "700" }),
+      text("role", "Co-founder & CTO", 58, 216, 460, 24, "#6366f1"),
+      text("email", "noah@nexus.ai", 58, 278, 440, 22, "#475569"),
+      text("phone", "+1 (650) 555-3210", 58, 314, 440, 22, "#475569"),
+      text("web", "nexus.ai", 58, 350, 440, 22, "#6366f1"),
+      text("ft", "nexus.ai  ·  San Francisco, CA", 72, 494, 500, 18, "#94a3b8"),
+      text("bg-txt", "Nexus\nAI", 730, 110, 250, 88, "#f1f5f9", { fontWeight: "900" }),
+    ], [
+      rect("footer", 0, 468, WIDTH, 132, "#f8fafc"),
+      rect("fline", 0, 468, WIDTH, 2, "#e2e8f0"),
+      text("co", "nexus.ai", 250, 230, 550, 56, "#6366f1", { fontWeight: "700", textAlign: "center" }),
+      text("tag", "AI · Automation · Infrastructure", 250, 310, 550, 22, "#475569", { textAlign: "center" }),
+    ]),
+  },
+];
+
+export const TEMPLATE_CATEGORIES = [
+  "All",
+  ...Array.from(new Set(CARD_TEMPLATES.map((t) => t.category))),
 ];

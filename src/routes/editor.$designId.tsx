@@ -211,11 +211,8 @@ function Editor() {
       useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
     }
 
-    const repairedDoc = repairLegacyTemplateDoc(query.data.data);
+    const repairedDoc = query.data.data;
     setDoc(repairedDoc);
-    if (repairedDoc !== query.data.data) {
-      setTimeout(() => useEditorStore.getState().markDirty(), 0);
-    }
   }, [query.data, setDoc]);
 
   // ── Active object tracking ───────────────────────────────────────────────
