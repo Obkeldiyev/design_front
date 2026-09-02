@@ -273,6 +273,9 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveStatus]);
 
+  // Clipboard ref for Ctrl+C / Ctrl+V
+  const clipboardRef = useRef<fabricTypes.FabricObject | null>(null);
+
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -286,6 +289,7 @@ function Editor() {
 
       const ctrl = e.ctrlKey || e.metaKey;
 
+      // Delete / Backspace
       if ((e.key === "Delete" || e.key === "Backspace") && !ctrl) {
         const active = c.getActiveObject();
         if (!active || (active as any).isEditing) return;
@@ -295,6 +299,7 @@ function Editor() {
         return;
       }
 
+      // Ctrl+Z — undo (deselect for now, Fabric v6 has no built-in history)
       if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
         c.discardActiveObject();
@@ -302,6 +307,39 @@ function Editor() {
         return;
       }
 
+      // Ctrl+C — copy selected object to clipboard
+      if (ctrl && e.key.toLowerCase() === "c") {
+        const active = c.getActiveObject();
+        if (!active) return;
+        e.preventDefault();
+        active.clone().then((cloned: fabricTypes.FabricObject) => {
+          clipboardRef.current = cloned;
+        });
+        return;
+      }
+
+      // Ctrl+V — paste from clipboard
+      if (ctrl && e.key.toLowerCase() === "v") {
+        if (!clipboardRef.current) return;
+        e.preventDefault();
+        clipboardRef.current.clone().then((cloned: fabricTypes.FabricObject) => {
+          c.discardActiveObject();
+          cloned.set({
+            left: (cloned.left ?? 0) + 20,
+            top:  (cloned.top  ?? 0) + 20,
+          });
+          (cloned as any).id = `obj-${Date.now()}`;
+          c.add(cloned);
+          c.setActiveObject(cloned);
+          c.requestRenderAll();
+          markDirty();
+          // Update clipboard offset for repeated pastes
+          clipboardRef.current = cloned;
+        });
+        return;
+      }
+
+      // Ctrl+D — duplicate
       if (ctrl && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateSelected(c);
@@ -309,12 +347,14 @@ function Editor() {
         return;
       }
 
+      // Ctrl+S — save
       if (ctrl && e.key.toLowerCase() === "s") {
         e.preventDefault();
         save.mutate();
         return;
       }
 
+      // Ctrl+A — select all
       if (ctrl && e.key.toLowerCase() === "a") {
         e.preventDefault();
         const objs = c.getObjects();
@@ -326,12 +366,14 @@ function Editor() {
         return;
       }
 
+      // Escape — deselect
       if (e.key === "Escape") {
         c.discardActiveObject();
         c.requestRenderAll();
         return;
       }
 
+      // Arrow keys — nudge
       const moveKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
       if (moveKeys.includes(e.key)) {
         const obj = c.getActiveObject();
@@ -940,6 +982,38 @@ function ObjectInspector({
               type="number"
               value={Number(object.get("strokeWidth") ?? 0)}
               onChange={(e) => setNum("strokeWidth", e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Corner radius — rect only */}
+      {objectType === "rect" && (
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Corner Radius</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={Number(anyObj.rx ?? 0)}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                apply({ rx: v, ry: v });
+              }}
+              className="flex-1 h-2 cursor-pointer accent-primary"
+            />
+            <Input
+              type="number"
+              min={0}
+              max={500}
+              value={Math.round(Number(anyObj.rx ?? 0))}
+              onChange={(e) => {
+                const v = Math.max(0, Number(e.target.value));
+                apply({ rx: v, ry: v });
+              }}
+              className="h-9 w-16 text-sm"
             />
           </div>
         </div>

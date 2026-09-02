@@ -69,8 +69,8 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: "c1",
     title: "Executive Navy",
-    category: "Business",
-    industry: "Business",
+    category: "Brand",
+    industry: "Brand",
     isPremium: false,
     width: WIDTH,
     height: HEIGHT,
@@ -99,8 +99,8 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: "c2",
     title: "Clean Studio",
-    category: "Business",
-    industry: "Business",
+    category: "Brand",
+    industry: "Brand",
     isPremium: false,
     width: WIDTH,
     height: HEIGHT,
