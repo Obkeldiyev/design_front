@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { apiError } from "@/lib/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { CanvasDocPreview } from "@/components/editor/TemplatePreview";
 
 export const Route = createFileRoute("/_authenticated/designs/")({
   head: () => ({ meta: [{ title: "Designs — card24" }] }),
@@ -46,7 +47,9 @@ function DesignsList() {
           <p className="mt-1 text-muted-foreground">{t("designs.subtitle")}</p>
         </div>
         <Link to="/designs/new">
-          <Button size="lg"><Plus className="mr-2 h-4 w-4" /> {t("designs.new")}</Button>
+          <Button size="lg">
+            <Plus className="mr-2 h-4 w-4" /> {t("designs.new")}
+          </Button>
         </Link>
       </div>
 
@@ -54,7 +57,10 @@ function DesignsList() {
       {isLoading && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden animate-pulse">
+            <div
+              key={i}
+              className="rounded-2xl border border-border bg-card overflow-hidden animate-pulse"
+            >
               <div className="aspect-[7/4] bg-muted" />
               <div className="p-3 space-y-2">
                 <div className="h-4 bg-muted rounded w-2/3" />
@@ -90,25 +96,15 @@ function DesignsList() {
       {data && data.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.map((d) => {
-            const bg = d.data?.canvas?.background ?? "#f3f4f6";
-            const isSimple = /^(#|rgb|rgba|hsl|hsla|transparent)/i.test(bg);
-            // Render a CSS preview of the canvas background
             return (
-              <div key={d.id} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow">
+              <div
+                key={d.id}
+                className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow"
+              >
                 {/* Thumbnail */}
-                <Link
-                  to="/editor/$designId"
-                  params={{ designId: d.id }}
-                  className="block relative"
-                >
-                  <div
-                    className="aspect-[7/4] w-full flex items-end p-3"
-                    style={
-                      isSimple
-                        ? { background: bg }
-                        : { backgroundImage: bg, backgroundSize: "cover" }
-                    }
-                  >
+                <Link to="/editor/$designId" params={{ designId: d.id }} className="block relative">
+                  <div className="aspect-[7/4] w-full overflow-hidden bg-muted">
+                    <CanvasDocPreview doc={d.data} className="h-full w-full" />
                     {/* Edit overlay on hover */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <span className="flex items-center gap-1.5 bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full shadow">
@@ -150,8 +146,10 @@ function DesignsList() {
           })}
 
           {/* New design card */}
-          <Link to="/designs/new"
-            className="rounded-2xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/3 transition-colors flex flex-col items-center justify-center gap-2 aspect-auto min-h-[180px] group">
+          <Link
+            to="/designs/new"
+            className="rounded-2xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/3 transition-colors flex flex-col items-center justify-center gap-2 aspect-auto min-h-[180px] group"
+          >
             <div className="h-10 w-10 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
               <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>

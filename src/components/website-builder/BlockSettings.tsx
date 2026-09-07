@@ -569,6 +569,11 @@ function FeaturesSettings({ block, onUpdate }: { block: Block; onUpdate: (c: any
           value={c.backgroundColor || "#ffffff"}
           onChange={(v) => upd({ backgroundColor: v })}
         />
+        <ColorField
+          label="Text Color"
+          value={c.textColor || "#111827"}
+          onChange={(v) => upd({ textColor: v })}
+        />
         <SelectField
           label="Columns"
           value={String(c.columns || 3)}
@@ -584,17 +589,15 @@ function FeaturesSettings({ block, onUpdate }: { block: Block; onUpdate: (c: any
         <div className="space-y-2">
           {(c.items || []).map((item: any, i: number) => (
             <div key={i} className="border border-border rounded-lg p-2 space-y-1.5">
+              <IconField
+                value={item.icon || ""}
+                onChange={(icon) => {
+                  const it = [...c.items];
+                  it[i] = { ...it[i], icon };
+                  upd({ items: it });
+                }}
+              />
               <div className="flex gap-1">
-                <div className="w-24">
-                  <IconField
-                    value={item.icon || ""}
-                    onChange={(icon) => {
-                      const it = [...c.items];
-                      it[i] = { ...it[i], icon };
-                      upd({ items: it });
-                    }}
-                  />
-                </div>
                 <Input
                   value={item.title}
                   onChange={(e) => {

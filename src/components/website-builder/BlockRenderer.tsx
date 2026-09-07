@@ -21,6 +21,15 @@ function cssPx(value: unknown, fallback: number) {
   return `${Number.isFinite(n) ? n : fallback}px`;
 }
 
+function readableTextColor(background: unknown, fallback = "#111827") {
+  if (typeof background !== "string" || !/^#[0-9a-fA-F]{6}$/.test(background)) return fallback;
+  const r = parseInt(background.slice(1, 3), 16);
+  const g = parseInt(background.slice(3, 5), 16);
+  const b = parseInt(background.slice(5, 7), 16);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.5 ? "#111827" : "#f8fafc";
+}
+
 function designDefaults(type: Block["type"]) {
   return {
     paddingY:
@@ -539,11 +548,13 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const cols = c.columns === 2 ? "grid-cols-2" : c.columns === 4 ? "grid-cols-4" : "grid-cols-3";
   const setItems = (items: any[]) => upd({ items });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-20 px-8">
       <div className="max-w-6xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -553,7 +564,7 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-lg text-center text-gray-500 mb-14">
+          <p className="text-lg text-center mb-14 opacity-75" style={{ color: textColor }}>
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}

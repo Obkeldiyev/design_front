@@ -553,7 +553,7 @@ function WebsiteBuilder() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel */}
         {!preview && (
-          <aside className="w-56 border-r border-border bg-card flex flex-col flex-shrink-0 z-10">
+          <aside className="w-64 border-r border-border bg-card flex flex-col flex-shrink-0 z-10">
             <div className="flex border-b border-border">
               <button
                 onClick={() => setPanelTab("blocks")}
@@ -764,7 +764,7 @@ function WebsiteBuilder() {
 
         {/* Right panel — settings */}
         {!preview && (
-          <aside className="w-72 border-l border-border bg-card flex flex-col flex-shrink-0 overflow-hidden z-10">
+          <aside className="w-96 border-l border-border bg-card flex flex-col flex-shrink-0 overflow-hidden z-10">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border flex-shrink-0">
               <Settings2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold">

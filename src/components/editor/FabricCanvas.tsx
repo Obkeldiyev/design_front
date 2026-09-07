@@ -1,5 +1,5 @@
 /**
- * FabricCanvas — renders at NATIVE size, scales via CSS transform.
+ * FabricCanvas — renders at native size, scales via CSS transform.
  * No Fabric zoom/viewport manipulation — completely avoids those bugs.
  */
 import { useEffect, useRef } from "react";
@@ -39,7 +39,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       backgroundColor: "#ffffff",
       preserveObjectStacking: true,
       selection: true,
-      enableRetinaScaling: false,
+      enableRetinaScaling: true,
       centeredScaling: false,
       uniformScaling: false,
       width: 1050,
@@ -178,6 +178,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
           height: nativeH,
           transformOrigin: "top left",
           transform: `scale(${zoom})`,
+          backfaceVisibility: "hidden",
           lineHeight: 0,
         }}
       >

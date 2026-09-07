@@ -555,6 +555,19 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, doc, markDirty, setZoom, canvasInstance, undo, redo]);
 
+  useEffect(() => {
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const direction = e.deltaY > 0 ? -0.08 : 0.08;
+      setZoom(Math.max(0.1, Math.min(4, zoom + direction)));
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [setZoom, zoom]);
+
   // ── Center scroll after zoom / page / doc changes ───────────────────────
   useEffect(() => {
     const el = canvasScrollRef.current;
@@ -972,7 +985,6 @@ function Editor() {
                 }}
               />
               <RectCornerOverlay
-                key={`radius-${objectVersion}`}
                 canvas={canvasInstance}
                 object={activeObject}
                 zoom={zoom}
@@ -996,7 +1008,6 @@ function Editor() {
           {/* Object inspector + canvas settings */}
           <div className="border-t border-border p-3 space-y-3">
             <ObjectInspector
-              key={objectVersion}
               canvas={canvasInstance}
               object={activeObject}
               onDirty={() => {

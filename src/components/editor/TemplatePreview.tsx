@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * TemplatePreview — renders a CardTemplate as a scaled SVG thumbnail.
  * Approximates the Fabric canvas look without loading the full Fabric library.
  */
 import type { CardTemplate } from "@/lib/card-templates";
+import type { CanvasDoc } from "@/lib/api/types";
 
 interface Props {
   template: CardTemplate;
@@ -34,9 +36,13 @@ function renderObject(obj: FabricObj, key: number): string {
     `translate(${left} ${top})`,
     angle ? `rotate(${angle})` : "",
     scaleX !== 1 || scaleY !== 1 ? `scale(${scaleX} ${scaleY})` : "",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
   const transformAttr = transform ? ` transform="${transform}"` : "";
-  const strokeAttr = obj.stroke ? ` stroke="${escapeXml(obj.stroke)}" stroke-width="${obj.strokeWidth ?? 1}"` : "";
+  const strokeAttr = obj.stroke
+    ? ` stroke="${escapeXml(obj.stroke)}" stroke-width="${obj.strokeWidth ?? 1}"`
+    : "";
 
   function originOffset(width = 0, height = 0) {
     const x = obj.originX === "center" ? -width / 2 : obj.originX === "right" ? -width : 0;
@@ -71,7 +77,12 @@ function renderObject(obj: FabricObj, key: number): string {
       const fontFamily = escapeXml(obj.fontFamily ?? "Inter, sans-serif");
       const fontWeight = obj.fontWeight ? ` font-weight="${obj.fontWeight}"` : "";
       const fontStyle = obj.fontStyle === "italic" ? ` font-style="italic"` : "";
-      const textAnchor = obj.originX === "center" || obj.textAlign === "center" ? ` text-anchor="middle"` : obj.originX === "right" || obj.textAlign === "right" ? ` text-anchor="end"` : "";
+      const textAnchor =
+        obj.originX === "center" || obj.textAlign === "center"
+          ? ` text-anchor="middle"`
+          : obj.originX === "right" || obj.textAlign === "right"
+            ? ` text-anchor="end"`
+            : "";
       const lines: string[] = String(obj.text ?? "").split("\n");
       const lineHeight = obj.lineHeight ?? 1.2;
       const lineEm = lineHeight;
@@ -80,11 +91,21 @@ function renderObject(obj: FabricObj, key: number): string {
         return `<text x="0" y="${fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle}${textAnchor} fill="${fill}"${opAttr}${transformAttr}>${escapeXml(lines[0])}</text>`;
       }
       const tspans = lines
-        .map((line, i) =>
-          `<tspan x="0" dy="${i === 0 ? "0" : `${lineEm}em`}">${escapeXml(line)}</tspan>`
+        .map(
+          (line, i) =>
+            `<tspan x="0" dy="${i === 0 ? "0" : `${lineEm}em`}">${escapeXml(line)}</tspan>`,
         )
         .join("");
       return `<text x="0" y="${fontSize}" font-size="${fontSize}" font-family="${fontFamily}"${fontWeight}${fontStyle}${textAnchor} fill="${fill}"${opAttr}${transformAttr}>${tspans}</text>`;
+    }
+
+    case "image": {
+      const width = Number(obj.width ?? 0);
+      const height = Number(obj.height ?? 0);
+      const src = obj.src || obj._element?.src;
+      if (!src || !width || !height) return "";
+      const pos = originOffset(width, height);
+      return `<image href="${escapeXml(src)}" x="${pos.x}" y="${pos.y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"${opAttr}${transformAttr}/>`;
     }
 
     default:
@@ -92,10 +113,7 @@ function renderObject(obj: FabricObj, key: number): string {
   }
 }
 
-export function TemplatePreview({ template, displayWidth = 320, className = "" }: Props) {
-  const { doc, width, height } = template;
-  const displayHeight = Math.round(displayWidth * (height / width));
-
+function buildPreviewSvg(doc: CanvasDoc, width: number, height: number) {
   const page = doc.pages[0];
   const objects: FabricObj[] = Array.isArray((page?.fabric as any)?.objects)
     ? (page.fabric as any).objects
@@ -104,10 +122,16 @@ export function TemplatePreview({ template, displayWidth = 320, className = "" }
   const bg = doc.canvas.background || "#ffffff";
   const objectsSvg = objects.map((obj, i) => renderObject(obj, i)).join("\n    ");
 
-  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${displayWidth}" height="${displayHeight}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <rect width="${width}" height="${height}" fill="${escapeXml(bg)}"/>
   ${objectsSvg}
 </svg>`;
+}
+
+export function TemplatePreview({ template, displayWidth = 320, className = "" }: Props) {
+  const { doc, width, height } = template;
+  const displayHeight = Math.round(displayWidth * (height / width));
+  const svgContent = buildPreviewSvg(doc, width, height);
 
   return (
     <div
@@ -116,4 +140,12 @@ export function TemplatePreview({ template, displayWidth = 320, className = "" }
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );
+}
+
+export function CanvasDocPreview({ doc, className = "" }: { doc: CanvasDoc; className?: string }) {
+  const width = doc.canvas.width || 1050;
+  const height = doc.canvas.height || 600;
+  const svgContent = buildPreviewSvg(doc, width, height);
+
+  return <div className={className} dangerouslySetInnerHTML={{ __html: svgContent }} />;
 }
