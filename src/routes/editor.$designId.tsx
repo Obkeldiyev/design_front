@@ -665,7 +665,7 @@ function Editor() {
   // ── Loading state ────────────────────────────────────────────────────────
   if (query.isLoading || !doc) {
     return (
-      <div className="grid min-h-screen place-items-center text-muted-foreground">
+      <div className="grid min-h-screen place-items-center bg-[#05070f] text-slate-400">
         Loading editor…
       </div>
     );
@@ -678,16 +678,16 @@ function Editor() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-[#05070f] text-slate-100">
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <header
-        className="flex h-14 flex-shrink-0 items-center justify-between border-b border-border bg-card px-3"
+        className="flex h-14 flex-shrink-0 items-center justify-between border-b border-sky-300/10 bg-[#070b18]/95 px-3 shadow-[0_12px_40px_rgba(2,8,28,0.35)]"
         style={{ position: "relative", zIndex: 20 }}
       >
         <div className="flex items-center gap-2">
           <Link
             to="/designs"
-            className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+            className="rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
             aria-label="Back to designs"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -698,10 +698,10 @@ function Editor() {
               setTitle(e.target.value);
               markDirty();
             }}
-            className="h-8 w-64 border-transparent bg-transparent text-base font-medium focus-visible:border-border"
+            className="h-8 w-64 border-transparent bg-white/5 text-base font-medium text-white focus-visible:border-sky-300/30"
             aria-label="Design title"
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-slate-400">
             {saveStatus === "saved" && "All changes saved"}
             {saveStatus === "saving" && "Saving…"}
             {saveStatus === "dirty" && "Unsaved changes"}
@@ -730,7 +730,7 @@ function Editor() {
           >
             <Redo2 className="h-4 w-4" />
           </Button>
-          <div className="mx-1 h-6 w-px bg-border" />
+          <div className="mx-1 h-6 w-px bg-white/10" />
           <Button
             variant="ghost"
             size="sm"
@@ -748,7 +748,7 @@ function Editor() {
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <div className="mx-1 h-6 w-px bg-border" />
+          <div className="mx-1 h-6 w-px bg-white/10" />
           <Button variant="outline" size="sm" onClick={() => save.mutate()}>
             <Save className="mr-1 h-4 w-4" /> Save
           </Button>
@@ -774,7 +774,7 @@ function Editor() {
       <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
         {/* Left toolbar ─────────────────────────────────────────────────── */}
         <aside
-          className="flex w-64 flex-shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-card p-3"
+          className="flex w-64 flex-shrink-0 flex-col gap-4 overflow-y-auto border-r border-sky-300/10 bg-[#070b18] p-3"
           style={{ position: "relative", zIndex: 10 }}
         >
           {/* Add element */}
@@ -897,7 +897,7 @@ function Editor() {
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-muted/35 p-3">
+          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Shortcuts
             </p>
@@ -925,7 +925,7 @@ function Editor() {
               </p>
               <button
                 onClick={addPage}
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-1 text-slate-400 hover:bg-white/10 hover:text-white"
                 aria-label="Add page"
               >
                 <Plus className="h-4 w-4" />
@@ -936,7 +936,9 @@ function Editor() {
                 <div
                   key={p.id}
                   className={`flex items-center justify-between rounded-md border px-2 py-1.5 text-sm transition ${
-                    activePageId === p.id ? "border-primary bg-primary/5" : "border-border"
+                    activePageId === p.id
+                      ? "border-primary bg-primary/10 text-white"
+                      : "border-white/10 bg-white/[0.03] text-slate-300"
                   }`}
                 >
                   <button onClick={() => handlePageSwitch(p.id)} className="flex-1 text-left">
@@ -964,7 +966,14 @@ function Editor() {
         */}
         <div
           ref={canvasScrollRef}
-          style={{ flex: 1, minWidth: 0, overflow: "auto", background: "#0f0f1a" }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflow: "auto",
+            background:
+              "radial-gradient(circle at 72% 18%, rgba(47,107,255,0.20), transparent 35%), linear-gradient(rgba(148,178,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,178,255,0.04) 1px, transparent 1px), #05070f",
+            backgroundSize: "auto, 44px 44px, 44px 44px, auto",
+          }}
         >
           <div
             style={{
@@ -999,14 +1008,14 @@ function Editor() {
 
         {/* Right panel: layers + object inspector + canvas settings ────── */}
         <div
-          className="flex w-72 flex-shrink-0 flex-col overflow-y-auto border-l border-border bg-card"
+          className="flex w-72 flex-shrink-0 flex-col overflow-y-auto border-l border-sky-300/10 bg-[#070b18]"
           style={{ position: "relative", zIndex: 10 }}
         >
           {/* Layers panel */}
           <LayersPanel canvas={canvasInstance} />
 
           {/* Object inspector + canvas settings */}
-          <div className="border-t border-border p-3 space-y-3">
+          <div className="space-y-3 border-t border-white/10 p-3">
             <ObjectInspector
               canvas={canvasInstance}
               object={activeObject}
@@ -1132,7 +1141,7 @@ function ObjectInspector({
 }) {
   if (!canvas || !object || object.type === "activeSelection") {
     return (
-      <div className="rounded-md border border-border p-3 text-xs text-muted-foreground">
+      <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400">
         Select one element to edit its properties.
       </div>
     );
@@ -1172,13 +1181,13 @@ function ObjectInspector({
   };
 
   return (
-    <div className="space-y-3 border-b border-border pb-3">
+    <div className="space-y-3 border-b border-white/10 pb-3">
       {/* Type badge */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Element
         </p>
-        <div className="mt-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-medium">
+        <div className="mt-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-medium text-slate-200">
           {objectType}
         </div>
       </div>
@@ -1265,7 +1274,7 @@ function ObjectInspector({
               type="color"
               value={safeHex(object.get("fill"), "#111111")}
               onChange={(e) => apply({ fill: e.target.value })}
-              className="h-9 w-9 cursor-pointer rounded border border-border p-0.5"
+              className="h-9 w-9 cursor-pointer rounded border border-white/10 bg-white/5 p-0.5"
             />
             <Input
               value={String(object.get("fill") ?? "")}
@@ -1338,7 +1347,7 @@ function ObjectInspector({
                 key={value}
                 type="button"
                 onClick={() => apply({ rx: value, ry: value })}
-                className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:border-primary hover:text-foreground"
+                className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-slate-400 hover:border-primary hover:text-white"
               >
                 {value === maxRadius ? "Pill" : value}
               </button>
@@ -1403,7 +1412,7 @@ function RectCornerOverlay({
 
   return (
     <div
-      className="absolute z-20 w-44 rounded-lg border border-border bg-card p-2 shadow-xl"
+      className="absolute z-20 w-44 rounded-lg border border-sky-300/20 bg-[#070b18] p-2 text-slate-100 shadow-[0_20px_50px_rgba(2,8,28,0.45)]"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
@@ -1426,7 +1435,7 @@ function RectCornerOverlay({
             key={value}
             type="button"
             onClick={() => applyRadius(value)}
-            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-muted-foreground hover:border-primary hover:text-foreground"
+            className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-1 text-[11px] text-slate-400 hover:border-primary hover:text-white"
           >
             {value === maxRadius ? "Pill" : value}
           </button>
@@ -1450,7 +1459,7 @@ function ToolBtn({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 rounded-md border border-border bg-background py-2 text-xs hover:border-primary hover:bg-primary/5"
+      className="flex flex-col items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] py-2 text-xs text-slate-300 transition hover:border-primary hover:bg-primary/15 hover:text-white"
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>

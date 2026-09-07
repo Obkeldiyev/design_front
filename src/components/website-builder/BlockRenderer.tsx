@@ -60,6 +60,10 @@ function blockShellStyle(block: Block): React.CSSProperties {
     "--site-image-fit": String(content.imageFit || "cover"),
     "--site-image-position": String(content.imagePosition || "center"),
     borderRadius: cssPx(content.borderRadius, 0),
+    fontFamily: content.fontFamily || undefined,
+    fontWeight: content.fontWeight || undefined,
+    letterSpacing: cssPx(content.letterSpacing, 0),
+    textTransform: content.textTransform || undefined,
     boxShadow: SHADOWS[String(content.shadow || "none")] ?? SHADOWS.none,
     overflow: Number(content.borderRadius || 0) > 0 ? "hidden" : undefined,
   } as React.CSSProperties;

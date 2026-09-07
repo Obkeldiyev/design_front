@@ -4,6 +4,7 @@ type BrandLogoProps = {
   compact?: boolean;
   className?: string;
   imageClassName?: string;
+  textClassName?: string;
   showText?: boolean;
 };
 
@@ -11,6 +12,7 @@ export function BrandLogo({
   compact = false,
   className = "",
   imageClassName = "",
+  textClassName = "",
   showText = true,
 }: BrandLogoProps) {
   return (
@@ -25,7 +27,14 @@ export function BrandLogo({
         ].join(" ")}
       />
       {showText && (
-        <span className="font-display text-lg font-bold tracking-normal text-foreground">
+        <span
+          className={[
+            "font-display text-lg font-bold tracking-normal text-foreground",
+            textClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           card24
         </span>
       )}

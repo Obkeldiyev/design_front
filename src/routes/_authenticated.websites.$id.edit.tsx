@@ -34,9 +34,6 @@ const BlockRenderer = lazy(() =>
 const BlockSettings = lazy(() =>
   import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.BlockSettings })),
 );
-const ThemeSettings = lazy(() =>
-  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.ThemeSettings })),
-);
 import type { Block, BlockType, WebsiteTheme } from "@/lib/website-blocks";
 import { BLOCK_META, DEFAULT_THEME, createBlock } from "@/lib/website-blocks";
 import { generateId } from "@/lib/uuid";
@@ -57,7 +54,7 @@ function WebsiteBuilderPage() {
   }, []);
   if (!isClient) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-screen items-center justify-center bg-[#05070f]">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
@@ -65,7 +62,7 @@ function WebsiteBuilderPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-screen items-center justify-center bg-[#05070f]">
           <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         </div>
       }
@@ -440,7 +437,7 @@ function WebsiteBuilder() {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (websiteQuery.isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-screen items-center justify-center bg-[#05070f]">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <span className="text-sm">Loading website…</span>
@@ -451,20 +448,23 @@ function WebsiteBuilder() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen flex-col bg-background" style={{ fontFamily: theme.fontFamily }}>
+    <div
+      className="flex h-screen flex-col bg-[#05070f] text-slate-100"
+      style={{ fontFamily: theme.fontFamily }}
+    >
       {/* Header */}
-      <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 flex-shrink-0 z-20">
+      <header className="z-20 flex h-14 flex-shrink-0 items-center justify-between border-b border-sky-300/10 bg-[#070b18]/95 px-4 shadow-[0_12px_40px_rgba(2,8,28,0.35)]">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/websites"
-            className="rounded p-1.5 text-muted-foreground hover:bg-muted flex-shrink-0"
+            className="flex-shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-8 w-44 border-transparent bg-transparent text-base font-medium focus-visible:border-border"
+            className="h-8 w-44 border-transparent bg-white/5 text-base font-medium text-white focus-visible:border-sky-300/30"
           />
           {liveUrl && (
             <a
@@ -481,12 +481,12 @@ function WebsiteBuilder() {
         </div>
 
         {/* Viewport switcher */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 p-1">
           {(["desktop", "tablet", "mobile"] as Viewport[]).map((v) => (
             <button
               key={v}
               onClick={() => setViewport(v)}
-              className={`p-1.5 rounded-md transition-colors ${viewport === v ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`rounded-md p-1.5 transition-colors ${viewport === v ? "bg-primary text-primary-foreground shadow shadow-primary/20" : "text-slate-400 hover:bg-white/10 hover:text-white"}`}
               title={v}
             >
               {v === "desktop" ? (
@@ -551,138 +551,14 @@ function WebsiteBuilder() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel */}
-        {!preview && (
-          <aside className="w-64 border-r border-border bg-card flex flex-col flex-shrink-0 z-10">
-            <div className="flex border-b border-border">
-              <button
-                onClick={() => setPanelTab("blocks")}
-                className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${panelTab === "blocks" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <Plus className="h-3.5 w-3.5" /> Blocks
-              </button>
-              <button
-                onClick={() => setPanelTab("theme")}
-                className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${panelTab === "theme" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <Palette className="h-3.5 w-3.5" /> Theme
-              </button>
-              <button
-                onClick={() => setPanelTab("assets")}
-                className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${panelTab === "assets" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <ImageIcon className="h-3.5 w-3.5" /> Assets
-              </button>
-            </div>
-
-            {panelTab === "blocks" && (
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <div className="p-3 border-b border-border">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Add Section
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {(Object.keys(BLOCK_META) as BlockType[]).map((type) => {
-                      const meta = BLOCK_META[type];
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => addBlock(type)}
-                          draggable
-                          onDragStart={(e) => handlePaletteDragStart(e, type)}
-                          className="flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-background hover:border-primary hover:bg-primary/5 transition-colors text-center"
-                        >
-                          <span className="text-lg leading-none">{meta.icon}</span>
-                          <span className="text-xs font-medium leading-tight">{meta.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-2">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground px-1 mb-1.5">
-                    Layers
-                  </p>
-                  {blocks.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No sections yet
-                    </p>
-                  ) : (
-                    <div className="space-y-1">
-                      {blocks.map((block) => (
-                        <div
-                          key={block.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, block.id)}
-                          onDragOver={(e) => handleDragOver(e, block.id)}
-                          onDragEnd={() => {
-                            setDraggedBlockId(null);
-                            setDragOverBlockId(null);
-                          }}
-                          onDrop={(e) => handleDrop(e, block.id)}
-                          onClick={() => setSelectedBlockId(block.id)}
-                          className={[
-                            "flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer text-xs transition-all",
-                            selectedBlockId === block.id
-                              ? "bg-primary/10 border border-primary text-primary"
-                              : "hover:bg-muted/60 border border-transparent",
-                            draggedBlockId === block.id ? "opacity-40" : "",
-                            dragOverBlockId === block.id ? "border-t-2 border-t-primary" : "",
-                          ].join(" ")}
-                        >
-                          <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0 cursor-grab" />
-                          <span className="flex-1 truncate font-medium capitalize">
-                            {BLOCK_META[block.type]?.label ?? block.type}
-                          </span>
-                          {!block.visible && (
-                            <span className="text-muted-foreground text-xs opacity-50">●</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {panelTab === "theme" && (
-              <div className="flex-1 overflow-y-auto">
-                <ThemeSettings theme={theme} onUpdate={setTheme} />
-              </div>
-            )}
-
-            {panelTab === "assets" && (
-              <div className="flex-1 overflow-y-auto p-3 space-y-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Icons
-                  </p>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {["⚡", "✓", "★", "→", "☎", "✉", "#", "$", "▶", "＋"].map((icon) => (
-                      <button
-                        key={icon}
-                        onClick={() => addFeatureWithIcon(icon)}
-                        className="grid h-9 place-items-center rounded-md border border-border bg-background text-lg hover:border-primary hover:bg-primary/5"
-                        title="Add icon feature"
-                      >
-                        {icon}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border bg-muted/35 p-3 text-xs text-muted-foreground">
-                  Drag sections into the page, drop images on upload areas, and tune
-                  animation/radius from settings.
-                </div>
-              </div>
-            )}
-          </aside>
-        )}
-
         {/* Center canvas */}
         <div
-          className="flex-1 overflow-auto bg-[#e8e8e8]"
+          className="flex-1 overflow-auto bg-[#05070f]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 72% 18%, rgba(47,107,255,0.20), transparent 35%), linear-gradient(rgba(148,178,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,178,255,0.04) 1px, transparent 1px)",
+            backgroundSize: "auto, 44px 44px, 44px 44px",
+          }}
           onClick={() => !preview && setSelectedBlockId(null)}
         >
           <div
@@ -695,15 +571,15 @@ function WebsiteBuilder() {
             }}
           >
             {blocks.length === 0 && !preview ? (
-              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-                <div className="text-6xl">⬅</div>
-                <p className="text-lg font-medium">Add your first section from the left panel</p>
+              <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-slate-400">
+                <div className="text-6xl">+</div>
+                <p className="text-lg font-medium">Add your first section from the right rail</p>
                 <div className="flex gap-2 flex-wrap justify-center">
                   {(["navbar", "hero", "features"] as BlockType[]).map((type) => (
                     <button
                       key={type}
                       onClick={() => addBlock(type)}
-                      className="px-4 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:border-primary hover:bg-primary/5 transition-colors"
+                      className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition-colors hover:border-primary hover:bg-primary/15"
                     >
                       + {BLOCK_META[type].label}
                     </button>
@@ -751,7 +627,7 @@ function WebsiteBuilder() {
                         addBlock("hero");
                         setPanelTab("blocks");
                       }}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors bg-white/80"
+                      className="flex items-center gap-2 rounded-full border border-dashed border-sky-300/30 bg-[#070b18]/90 px-4 py-2 text-sm text-slate-300 shadow-lg transition-colors hover:border-primary hover:text-primary"
                     >
                       <Plus className="h-4 w-4" /> Add section
                     </button>
@@ -764,9 +640,9 @@ function WebsiteBuilder() {
 
         {/* Right panel — settings */}
         {!preview && (
-          <aside className="w-96 border-l border-border bg-card flex flex-col flex-shrink-0 overflow-hidden z-10">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border flex-shrink-0">
-              <Settings2 className="h-4 w-4 text-muted-foreground" />
+          <aside className="z-10 flex w-80 flex-shrink-0 flex-col overflow-hidden border-l border-sky-300/10 bg-[#070b18]">
+            <div className="flex flex-shrink-0 items-center gap-2 border-b border-white/10 px-4 py-3">
+              <Settings2 className="h-4 w-4 text-sky-300" />
               <span className="text-sm font-semibold">
                 {selectedBlock
                   ? `${BLOCK_META[selectedBlock.type]?.label ?? selectedBlock.type} Settings`
@@ -780,6 +656,121 @@ function WebsiteBuilder() {
                 onUpdate={(content) => selectedBlock && updateBlock(selectedBlock.id, content)}
                 onThemeUpdate={setTheme}
               />
+            </div>
+          </aside>
+        )}
+
+        {/* Right rail — compact blocks, theme, assets, and layers */}
+        {!preview && (
+          <aside className="flex w-20 flex-shrink-0 flex-col border-l border-sky-300/10 bg-[#05070f] text-slate-100">
+            <div className="grid gap-1 border-b border-white/10 p-2">
+              {[
+                { id: "blocks" as PanelTab, icon: Plus, label: "Blocks" },
+                { id: "theme" as PanelTab, icon: Palette, label: "Theme" },
+                { id: "assets" as PanelTab, icon: ImageIcon, label: "Assets" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setPanelTab(item.id);
+                    if (item.id === "theme") setSelectedBlockId(null);
+                  }}
+                  title={item.label}
+                  className={`grid h-11 place-items-center rounded-lg transition ${
+                    panelTab === item.id
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                      : "text-slate-400 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2">
+              {panelTab === "blocks" && (
+                <div className="grid gap-1.5">
+                  {(Object.keys(BLOCK_META) as BlockType[]).map((type) => {
+                    const meta = BLOCK_META[type];
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => addBlock(type)}
+                        draggable
+                        onDragStart={(e) => handlePaletteDragStart(e, type)}
+                        className="grid h-11 place-items-center rounded-lg border border-white/10 bg-white/5 text-lg hover:border-primary hover:bg-primary/15"
+                        title={`Add ${meta.label}`}
+                      >
+                        {meta.icon}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {panelTab === "theme" && (
+                <div className="grid gap-2">
+                  {[theme.primaryColor, theme.secondaryColor, theme.backgroundColor].map(
+                    (color, index) => (
+                      <button
+                        key={`${color}-${index}`}
+                        type="button"
+                        onClick={() => setSelectedBlockId(null)}
+                        className="h-10 rounded-lg border border-white/10"
+                        style={{ backgroundColor: color }}
+                        title="Edit site theme in settings"
+                      />
+                    ),
+                  )}
+                </div>
+              )}
+
+              {panelTab === "assets" && (
+                <div className="grid gap-1.5">
+                  {["⚡", "✓", "★", "→", "☎", "✉", "#", "$", "▶", "＋"].map((icon) => (
+                    <button
+                      key={icon}
+                      type="button"
+                      onClick={() => addFeatureWithIcon(icon)}
+                      className="grid h-10 place-items-center rounded-lg border border-white/10 bg-white/5 text-base hover:border-primary hover:bg-primary/15"
+                      title="Add icon feature"
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1 border-t border-white/10 p-2">
+              {blocks.slice(0, 8).map((block) => (
+                <button
+                  key={block.id}
+                  type="button"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, block.id)}
+                  onDragOver={(e) => handleDragOver(e, block.id)}
+                  onDragEnd={() => {
+                    setDraggedBlockId(null);
+                    setDragOverBlockId(null);
+                  }}
+                  onDrop={(e) => handleDrop(e, block.id)}
+                  onClick={() => {
+                    setSelectedBlockId(block.id);
+                    setPanelTab("blocks");
+                  }}
+                  className={`grid h-8 w-full place-items-center rounded-md text-sm transition ${
+                    selectedBlockId === block.id
+                      ? "bg-primary/20 text-primary"
+                      : "text-slate-500 hover:bg-white/10 hover:text-white"
+                  }`}
+                  title={BLOCK_META[block.type]?.label ?? block.type}
+                >
+                  {BLOCK_META[block.type]?.icon ?? "•"}
+                </button>
+              ))}
             </div>
           </aside>
         )}

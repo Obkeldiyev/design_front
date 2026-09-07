@@ -2,7 +2,7 @@
 /**
  * BlockSettings — rich right-panel property editor for each block type.
  */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -190,13 +190,31 @@ function IconField({ value, onChange }: { value: string; onChange: (value: strin
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  defaultOpen,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(
+    defaultOpen ??
+      ["Quick Style", "Content", "Header", "Branding", "Style", "Stats"].includes(title),
+  );
+
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
-        {title}
-      </p>
-      {children}
+    <div className="rounded-lg border border-border bg-background/45">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+      >
+        <span>{title}</span>
+        {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {open && <div className="space-y-3 border-t border-border p-3">{children}</div>}
     </div>
   );
 }
@@ -251,6 +269,52 @@ function QuickStyleSettings({
           )}
         </div>
       )}
+      <SelectField
+        label="Font Family"
+        value={c.fontFamily || ""}
+        options={[
+          { value: "", label: "Use site font" },
+          { value: "Inter", label: "Inter" },
+          { value: "system-ui", label: "System UI" },
+          { value: "Georgia", label: "Georgia" },
+          { value: "monospace", label: "Monospace" },
+        ]}
+        onChange={(v) => upd({ fontFamily: v || undefined })}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <SelectField
+          label="Weight"
+          value={String(c.fontWeight || "")}
+          options={[
+            { value: "", label: "Default" },
+            { value: "400", label: "Regular" },
+            { value: "500", label: "Medium" },
+            { value: "600", label: "Semibold" },
+            { value: "700", label: "Bold" },
+            { value: "800", label: "Extra bold" },
+          ]}
+          onChange={(v) => upd({ fontWeight: v || undefined })}
+        />
+        <SelectField
+          label="Case"
+          value={c.textTransform || ""}
+          options={[
+            { value: "", label: "Default" },
+            { value: "none", label: "Normal" },
+            { value: "uppercase", label: "Uppercase" },
+            { value: "capitalize", label: "Capitalize" },
+          ]}
+          onChange={(v) => upd({ textTransform: v || undefined })}
+        />
+      </div>
+      <SliderField
+        label="Letter spacing"
+        value={Number(c.letterSpacing || 0)}
+        min={0}
+        max={8}
+        step={0.5}
+        onChange={(v) => upd({ letterSpacing: v })}
+      />
     </Section>
   );
 }
