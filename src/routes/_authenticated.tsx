@@ -30,7 +30,9 @@ function AuthenticatedLayout() {
   const { t } = useTranslation();
   const initialized = useAuthStore((s) => s.initialized);
   const user = useAuthStore((s) => s.user);
+  const initError = useAuthStore((s) => s.initError);
   const init = useAuthStore((s) => s.init);
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
@@ -51,6 +53,36 @@ function AuthenticatedLayout() {
         <div className="flex flex-col items-center gap-3">
           <div className="h-7 w-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <span className="text-sm">{t("common.loading")}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && initError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background p-6 text-center">
+        <div className="max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm">
+          <h1 className="font-display text-xl font-semibold">{t("auth.session_check_failed")}</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {t("auth.session_check_failed_desc")}
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+              onClick={() => init()}
+            >
+              {t("auth.retry")}
+            </button>
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+              onClick={() => {
+                logout();
+                navigate({ to: "/login", search: { next: pathname } });
+              }}
+            >
+              {t("nav.logout")}
+            </button>
+          </div>
         </div>
       </div>
     );

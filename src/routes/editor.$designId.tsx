@@ -13,7 +13,7 @@ import { DesignAPI } from "@/lib/api/resources";
 import { useEditorStore } from "@/store/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
 import type * as fabricTypes from "fabric";
 import * as fabric from "fabric";
 import {
@@ -34,6 +34,8 @@ import {
   ZoomOut,
   Plus,
   Save,
+  Redo2,
+  Undo2,
 } from "lucide-react";
 import {
   addCircle,
@@ -43,7 +45,6 @@ import {
   addQR,
   addRect,
   addRoundedRect,
-  addStar,
   addText,
   addTriangle,
   bringForward,
@@ -57,7 +58,7 @@ import {
   sendBackward,
 } from "@/lib/editor/tools";
 import { toast } from "sonner";
-import { apiError } from "@/lib/api/client";
+import { apiError, tokenStore } from "@/lib/api/client";
 import { CARD_TEMPLATES } from "@/lib/card-templates";
 import {
   DropdownMenu,
@@ -68,10 +69,10 @@ import {
 
 // Lazy-load canvas + layers — Fabric.js requires browser APIs, must never run on SSR
 const FabricCanvas = lazy(() =>
-  import("@/components/editor/FabricCanvas").then((m) => ({ default: m.FabricCanvas }))
+  import("@/components/editor/FabricCanvas").then((m) => ({ default: m.FabricCanvas })),
 );
 const LayersPanel = lazy(() =>
-  import("@/components/editor/LayersPanel").then((m) => ({ default: m.LayersPanel }))
+  import("@/components/editor/LayersPanel").then((m) => ({ default: m.LayersPanel })),
 );
 
 export const Route = createFileRoute("/editor/$designId")({
@@ -82,11 +83,11 @@ export const Route = createFileRoute("/editor/$designId")({
 // ── Legacy template migration ─────────────────────────────────────────────
 
 const LEGACY_TEMPLATE_MATCHES: Array<{ marker: string; templateId: string }> = [
-  { marker: "ALEX MORGAN",    templateId: "c1" },
-  { marker: "SARAH CHEN",     templateId: "c2" },
-  { marker: "DR. EMILY NGO",  templateId: "c3" },
-  { marker: "La Bella Cucina",templateId: "c4" },
-  { marker: "NINA TORRES",    templateId: "c5" },
+  { marker: "ALEX MORGAN", templateId: "c1" },
+  { marker: "SARAH CHEN", templateId: "c2" },
+  { marker: "DR. EMILY NGO", templateId: "c3" },
+  { marker: "La Bella Cucina", templateId: "c4" },
+  { marker: "NINA TORRES", templateId: "c5" },
 ];
 
 function cloneDoc<T>(value: T): T {
@@ -104,8 +105,8 @@ function textContent(doc: unknown) {
 
 function repairLegacyTemplateDoc(doc: any) {
   const content = textContent(doc);
-  const match   = LEGACY_TEMPLATE_MATCHES.find((item) => content.includes(item.marker));
-  const tpl     = match ? CARD_TEMPLATES.find((item) => item.id === match.templateId) : null;
+  const match = LEGACY_TEMPLATE_MATCHES.find((item) => content.includes(item.marker));
+  const tpl = match ? CARD_TEMPLATES.find((item) => item.id === match.templateId) : null;
   return tpl ? cloneDoc(tpl.doc) : doc;
 }
 
@@ -113,7 +114,9 @@ function repairLegacyTemplateDoc(doc: any) {
 
 function EditorPage() {
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => { setIsClient(true); }, []);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (!isClient) {
     return (
@@ -127,11 +130,13 @@ function EditorPage() {
   }
 
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      }
+    >
       <Editor />
     </Suspense>
   );
@@ -144,35 +149,41 @@ function Editor() {
   const navigate = useNavigate();
 
   // Fabric canvas ref — set by FabricCanvas.onReady
-  const canvasRef      = useRef<fabricTypes.Canvas | null>(null);
+  const canvasRef = useRef<fabricTypes.Canvas | null>(null);
   const [canvasInstance, setCanvasInstance] = useState<fabricTypes.Canvas | null>(null);
 
   // Scroll container for the canvas area
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   // Hidden file input for image upload
-  const fileInputRef    = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [title,         setTitle]         = useState("");
-  const [qrData,        setQrData]        = useState("https://card24.uz");
-  const [activeObject,  setActiveObject]  = useState<fabricTypes.FabricObject | null>(null);
+  const [title, setTitle] = useState("");
+  const [qrData, setQrData] = useState("https://card24.uz");
+  const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
   const [objectVersion, setObjectVersion] = useState(0);
+  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
 
   // Store selectors
-  const doc          = useEditorStore((s) => s.doc);
-  const setDoc       = useEditorStore((s) => s.setDoc);
-  const resetDoc     = useEditorStore((s) => s.resetDoc);
+  const doc = useEditorStore((s) => s.doc);
+  const designKey = useEditorStore((s) => s.designKey);
+  const setDoc = useEditorStore((s) => s.setDoc);
+  const resetDoc = useEditorStore((s) => s.resetDoc);
   const activePageId = useEditorStore((s) => s.activePageId);
-  const setActivePage= useEditorStore((s) => s.setActivePage);
-  const addPage      = useEditorStore((s) => s.addPage);
-  const removePage   = useEditorStore((s) => s.removePage);
-  const zoom         = useEditorStore((s) => s.zoom);
-  const setZoom      = useEditorStore((s) => s.setZoom);
-  const saveStatus   = useEditorStore((s) => s.saveStatus);
-  const selectedIds  = useEditorStore((s) => s.selectedIds);
-  const markSaving   = useEditorStore((s) => s.markSaving);
-  const markSaved    = useEditorStore((s) => s.markSaved);
-  const markError    = useEditorStore((s) => s.markError);
-  const markDirty    = useEditorStore((s) => s.markDirty);
+  const setActivePage = useEditorStore((s) => s.setActivePage);
+  const addPage = useEditorStore((s) => s.addPage);
+  const removePage = useEditorStore((s) => s.removePage);
+  const zoom = useEditorStore((s) => s.zoom);
+  const setZoom = useEditorStore((s) => s.setZoom);
+  const saveStatus = useEditorStore((s) => s.saveStatus);
+  const selectedIds = useEditorStore((s) => s.selectedIds);
+  const markSaving = useEditorStore((s) => s.markSaving);
+  const markSaved = useEditorStore((s) => s.markSaved);
+  const markError = useEditorStore((s) => s.markError);
+  const markDirty = useEditorStore((s) => s.markDirty);
+  const historyRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
+  const isRestoringHistoryRef = useRef(false);
+  const historyTimerRef = useRef<number | null>(null);
 
   // ── Data fetch ─────────────────────────────────────────────────────────
   const query = useQuery({
@@ -198,13 +209,13 @@ function Editor() {
 
     setTitle(query.data.title);
 
-    const w = query.data.data?.canvas?.width  ?? 1050;
+    const w = query.data.data?.canvas?.width ?? 1050;
     const h = query.data.data?.canvas?.height ?? 600;
 
     // Initial zoom: fit canvas into available viewport
     // Left panel=256, right panel=288, padding=80, header=56
-    const availW = window.innerWidth  - 256 - 288 - 80;
-    const availH = window.innerHeight - 56  - 80;
+    const availW = window.innerWidth - 256 - 288 - 80;
+    const availH = window.innerHeight - 56 - 80;
     if (availW > 50 && availH > 50) {
       // Cap at 1.0 — never upscale beyond native size
       const fz = Math.max(0.15, Math.min(availW / w, availH / h, 1.0));
@@ -221,6 +232,85 @@ function Editor() {
     setActiveObject((c?.getActiveObject() as fabricTypes.FabricObject | undefined) ?? null);
     setObjectVersion((v) => v + 1);
   };
+
+  const updateHistoryState = useCallback(() => {
+    setHistoryState({
+      canUndo: historyIndexRef.current > 0,
+      canRedo:
+        historyIndexRef.current >= 0 && historyIndexRef.current < historyRef.current.length - 1,
+    });
+  }, []);
+
+  const getCanvasSnapshot = useCallback(() => {
+    const c = canvasRef.current ?? canvasInstance;
+    if (!c) return null;
+    const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON([
+      "id",
+      "meta",
+      "name",
+    ]);
+    return JSON.stringify(json);
+  }, [canvasInstance]);
+
+  const pushHistory = useCallback(() => {
+    if (isRestoringHistoryRef.current) return;
+    const snapshot = getCanvasSnapshot();
+    if (!snapshot) return;
+
+    const current = historyRef.current[historyIndexRef.current];
+    if (current === snapshot) return;
+
+    const next = historyRef.current.slice(0, historyIndexRef.current + 1);
+    next.push(snapshot);
+    historyRef.current = next.slice(-80);
+    historyIndexRef.current = historyRef.current.length - 1;
+    updateHistoryState();
+  }, [getCanvasSnapshot, updateHistoryState]);
+
+  const scheduleHistoryPush = useCallback(() => {
+    if (historyTimerRef.current) window.clearTimeout(historyTimerRef.current);
+    historyTimerRef.current = window.setTimeout(pushHistory, 120);
+  }, [pushHistory]);
+
+  const resetHistory = useCallback(() => {
+    const snapshot = getCanvasSnapshot();
+    historyRef.current = snapshot ? [snapshot] : [];
+    historyIndexRef.current = snapshot ? 0 : -1;
+    updateHistoryState();
+  }, [getCanvasSnapshot, updateHistoryState]);
+
+  const restoreHistory = useCallback(
+    async (direction: "undo" | "redo") => {
+      const c = canvasRef.current ?? canvasInstance;
+      if (!c) return;
+      const nextIndex =
+        direction === "undo" ? historyIndexRef.current - 1 : historyIndexRef.current + 1;
+      const snapshot = historyRef.current[nextIndex];
+      if (!snapshot) return;
+
+      isRestoringHistoryRef.current = true;
+      c.discardActiveObject();
+      const parsed = JSON.parse(snapshot);
+      const result = c.loadFromJSON(parsed);
+      const finish = () => {
+        historyIndexRef.current = nextIndex;
+        c.requestRenderAll();
+        refreshActiveObject();
+        updateHistoryState();
+        markDirty();
+        isRestoringHistoryRef.current = false;
+      };
+
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        await (result as Promise<unknown>).catch(() => undefined);
+      }
+      finish();
+    },
+    [canvasInstance, markDirty, updateHistoryState],
+  );
+
+  const undo = useCallback(() => restoreHistory("undo"), [restoreHistory]);
+  const redo = useCallback(() => restoreHistory("redo"), [restoreHistory]);
 
   // Listen to canvas selection / modification events
   useEffect(() => {
@@ -242,6 +332,20 @@ function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasInstance]);
 
+  useEffect(() => {
+    const c = canvasInstance;
+    if (!c) return;
+    const events = ["object:added", "object:removed", "object:modified", "text:changed"] as const;
+    const handler = () => scheduleHistoryPush();
+    events.forEach((event) => c.on(event, handler));
+    const timer = window.setTimeout(resetHistory, 250);
+    return () => {
+      events.forEach((event) => c.off(event, handler));
+      window.clearTimeout(timer);
+      if (historyTimerRef.current) window.clearTimeout(historyTimerRef.current);
+    };
+  }, [canvasInstance, activePageId, designKey, resetHistory, scheduleHistoryPush]);
+
   // Also refresh when selectedIds changes (e.g., reorder from layers panel)
   useEffect(() => {
     refreshActiveObject();
@@ -254,15 +358,24 @@ function Editor() {
       const c = canvasRef.current;
       if (!c || !doc || !activePageId) return;
       markSaving();
-      const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON(["id", "meta"]);
+      const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON([
+        "id",
+        "meta",
+      ]);
       const updatedPages = doc.pages.map((p) =>
         p.id === activePageId ? { ...p, fabric: json } : p,
       );
       const updatedDoc = { ...doc, pages: updatedPages };
       return DesignAPI.update(designId, { title, data: updatedDoc });
     },
-    onSuccess: () => { markSaved(); toast.success("Saved"); },
-    onError:   (e) => { markError(); toast.error(apiError(e)); },
+    onSuccess: () => {
+      markSaved();
+      toast.success("Saved");
+    },
+    onError: (e) => {
+      markError();
+      toast.error(apiError(e));
+    },
   });
 
   // Auto-save 1.5 s after last dirty mark
@@ -283,7 +396,7 @@ function Editor() {
       if (!c) return;
 
       const target = e.target as HTMLElement;
-      const tag    = target.tagName.toUpperCase();
+      const tag = target.tagName.toUpperCase();
       const isCanvas = tag === "CANVAS";
       if (!isCanvas && (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable)) return;
 
@@ -299,11 +412,19 @@ function Editor() {
         return;
       }
 
-      // Ctrl+Z — undo (deselect for now, Fabric v6 has no built-in history)
+      // Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
       if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
-        c.discardActiveObject();
-        c.requestRenderAll();
+        undo();
+        return;
+      }
+
+      if (
+        (ctrl && e.key.toLowerCase() === "y") ||
+        (ctrl && e.shiftKey && e.key.toLowerCase() === "z")
+      ) {
+        e.preventDefault();
+        redo();
         return;
       }
 
@@ -326,7 +447,7 @@ function Editor() {
           c.discardActiveObject();
           cloned.set({
             left: (cloned.left ?? 0) + 20,
-            top:  (cloned.top  ?? 0) + 20,
+            top: (cloned.top ?? 0) + 20,
           });
           (cloned as any).id = `obj-${Date.now()}`;
           c.add(cloned);
@@ -380,18 +501,28 @@ function Editor() {
         if (!obj || (obj as any).isEditing) return;
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        if (e.key === "ArrowLeft")  obj.set({ left: (obj.left  ?? 0) - step });
-        if (e.key === "ArrowRight") obj.set({ left: (obj.left  ?? 0) + step });
-        if (e.key === "ArrowUp")    obj.set({ top:  (obj.top   ?? 0) - step });
-        if (e.key === "ArrowDown")  obj.set({ top:  (obj.top   ?? 0) + step });
+        if (e.key === "ArrowLeft") obj.set({ left: (obj.left ?? 0) - step });
+        if (e.key === "ArrowRight") obj.set({ left: (obj.left ?? 0) + step });
+        if (e.key === "ArrowUp") obj.set({ top: (obj.top ?? 0) - step });
+        if (e.key === "ArrowDown") obj.set({ top: (obj.top ?? 0) + step });
         obj.setCoords();
         c.requestRenderAll();
         markDirty();
         return;
       }
 
-      if (e.key === "[") { e.preventDefault(); sendBackward(c);  markDirty(); return; }
-      if (e.key === "]") { e.preventDefault(); bringForward(c);  markDirty(); return; }
+      if (e.key === "[") {
+        e.preventDefault();
+        sendBackward(c);
+        markDirty();
+        return;
+      }
+      if (e.key === "]") {
+        e.preventDefault();
+        bringForward(c);
+        markDirty();
+        return;
+      }
 
       if (ctrl && (e.key === "=" || e.key === "+")) {
         e.preventDefault();
@@ -406,11 +537,14 @@ function Editor() {
       if (ctrl && e.key === "0") {
         e.preventDefault();
         if (doc) {
-          const aw = Math.max(200, window.innerWidth  - 256 - 288 - 80);
-          const ah = Math.max(200, window.innerHeight - 56  - 80);
-          setZoom(Math.max(0.15, parseFloat(
-            Math.min(aw / doc.canvas.width, ah / doc.canvas.height, 1).toFixed(2)
-          )));
+          const aw = Math.max(200, window.innerWidth - 256 - 288 - 80);
+          const ah = Math.max(200, window.innerHeight - 56 - 80);
+          setZoom(
+            Math.max(
+              0.15,
+              parseFloat(Math.min(aw / doc.canvas.width, ah / doc.canvas.height, 1).toFixed(2)),
+            ),
+          );
         }
         return;
       }
@@ -419,7 +553,7 @@ function Editor() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, doc, markDirty, setZoom, canvasInstance]);
+  }, [zoom, doc, markDirty, setZoom, canvasInstance, undo, redo]);
 
   // ── Center scroll after zoom / page / doc changes ───────────────────────
   useEffect(() => {
@@ -433,13 +567,20 @@ function Editor() {
     const t1 = setTimeout(center, 50);
     const t2 = setTimeout(center, 200);
     const t3 = setTimeout(center, 500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [zoom, doc?.canvas.width, doc?.canvas.height, activePageId]);
 
   // ── Page switch — snapshot current fabric state first ───────────────────
   const handlePageSwitch = (newId: string) => {
     const c = canvasRef.current;
-    if (!c || !doc || !activePageId) { setActivePage(newId); return; }
+    if (!c || !doc || !activePageId) {
+      setActivePage(newId);
+      return;
+    }
     const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON(["id", "meta"]);
     const pages = doc.pages.map((p) => (p.id === activePageId ? { ...p, fabric: json } : p));
     setDoc({ ...doc, pages });
@@ -450,10 +591,14 @@ function Editor() {
   const handleFileInput = async (file?: File) => {
     if (!file) return;
     try {
-      const fd   = new FormData();
+      const fd = new FormData();
       fd.append("file", file);
       const base = (import.meta.env.VITE_API_URL as string) || "http://localhost:9000";
-      const res  = await fetch(`${base}/upload`, { method: "POST", body: fd });
+      const res = await fetch(`${base}/upload`, {
+        method: "POST",
+        body: fd,
+        headers: tokenStore.access ? { Authorization: `Bearer ${tokenStore.access}` } : undefined,
+      });
       const data = await res.json();
       if (data?.url && canvasRef.current) {
         const url = base.replace(/\/$/, "") + data.url;
@@ -472,14 +617,19 @@ function Editor() {
 
     if (format === "pdf") {
       if (!doc) return;
-      const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON(["id", "meta"]);
+      const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON([
+        "id",
+        "meta",
+      ]);
       const updatedPages = doc.pages.map((p) =>
         p.id === activePageId ? { ...p, fabric: json as Record<string, unknown> } : p,
       );
       toast.promise(
         exportPDF(
           updatedPages as Array<{ fabric: Record<string, unknown> }>,
-          doc.canvas.width, doc.canvas.height, title
+          doc.canvas.width,
+          doc.canvas.height,
+          title,
         ),
         { loading: "Generating PDF…", success: "PDF downloaded", error: "PDF export failed" },
       );
@@ -509,7 +659,7 @@ function Editor() {
   }
 
   // Safe color for the <input type="color"> — gradients / images are not valid there
-  const canvasBg      = doc.canvas.background || "";
+  const canvasBg = doc.canvas.background || "";
   const isSimpleColor = /^(#|rgb|rgba|hsl|hsla|var\(|transparent)/i.test(canvasBg);
   const colorInputVal = isSimpleColor ? canvasBg : "#ffffff";
 
@@ -531,24 +681,58 @@ function Editor() {
           </Link>
           <Input
             value={title}
-            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              markDirty();
+            }}
             className="h-8 w-64 border-transparent bg-transparent text-base font-medium focus-visible:border-border"
             aria-label="Design title"
           />
           <span className="text-xs text-muted-foreground">
-            {saveStatus === "saved"  && "All changes saved"}
+            {saveStatus === "saved" && "All changes saved"}
             {saveStatus === "saving" && "Saving…"}
-            {saveStatus === "dirty"  && "Unsaved changes"}
-            {saveStatus === "error"  && "Save failed"}
+            {saveStatus === "dirty" && "Unsaved changes"}
+            {saveStatus === "error" && "Save failed"}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setZoom(zoom - 0.1)} aria-label="Zoom out">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={undo}
+            disabled={!historyState.canUndo}
+            title="Undo (Ctrl+Z)"
+            aria-label="Undo"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={redo}
+            disabled={!historyState.canRedo}
+            title="Redo (Ctrl+Y)"
+            aria-label="Redo"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <div className="mx-1 h-6 w-px bg-border" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setZoom(zoom - 0.1)}
+            aria-label="Zoom out"
+          >
             <ZoomOut className="h-4 w-4" />
           </Button>
           <span className="w-12 text-center text-xs tabular-nums">{Math.round(zoom * 100)}%</span>
-          <Button variant="ghost" size="sm" onClick={() => setZoom(zoom + 0.1)} aria-label="Zoom in">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setZoom(zoom + 0.1)}
+            aria-label="Zoom in"
+          >
             <ZoomIn className="h-4 w-4" />
           </Button>
           <div className="mx-1 h-6 w-px bg-border" />
@@ -557,13 +741,17 @@ function Editor() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm"><Download className="mr-1 h-4 w-4" /> Export</Button>
+              <Button size="sm">
+                <Download className="mr-1 h-4 w-4" /> Export
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => handleExport("png")}>PNG (2×)</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport("jpg")}>JPG (2×)</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport("svg")}>SVG</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>PDF (all pages)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                PDF (all pages)
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -571,7 +759,6 @@ function Editor() {
 
       {/* ── Body: left toolbar | canvas | right panel ─────────────────────── */}
       <div style={{ display: "flex", flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
-
         {/* Left toolbar ─────────────────────────────────────────────────── */}
         <aside
           className="flex w-64 flex-shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-card p-3"
@@ -583,18 +770,54 @@ function Editor() {
               Add element
             </p>
             <div className="grid grid-cols-3 gap-2">
-              <ToolBtn icon={Type}      label="Text"    onClick={() => canvasRef.current && addText(canvasRef.current)} />
-              <ToolBtn icon={Square}    label="Rect"    onClick={() => canvasRef.current && addRect(canvasRef.current)} />
-              <ToolBtn icon={Circle}    label="Circle"  onClick={() => canvasRef.current && addCircle(canvasRef.current)} />
-              <ToolBtn icon={Triangle}  label="Tri"     onClick={() => canvasRef.current && addTriangle(canvasRef.current)} />
-              <ToolBtn icon={Minus}     label="Line"    onClick={() => canvasRef.current && addLine(canvasRef.current)} />
-              <ToolBtn icon={Plus}      label="Ellipse" onClick={() => canvasRef.current && addEllipse(canvasRef.current)} />
-              <ToolBtn icon={ArrowLeft} label="Star"    onClick={() => canvasRef.current && addStar(canvasRef.current)} />
-              <ToolBtn icon={ImageIcon} label="Image"   onClick={() => {
-                const url = prompt("Image URL:");
-                if (url && canvasRef.current) addImageFromUrl(canvasRef.current, url);
-              }} />
-              <ToolBtn icon={ImageIcon} label="Upload"  onClick={() => fileInputRef.current?.click()} />
+              <ToolBtn
+                icon={Type}
+                label="Text"
+                onClick={() => canvasRef.current && addText(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Square}
+                label="Rect"
+                onClick={() => canvasRef.current && addRect(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Square}
+                label="Round"
+                onClick={() => canvasRef.current && addRoundedRect(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Circle}
+                label="Circle"
+                onClick={() => canvasRef.current && addCircle(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Triangle}
+                label="Tri"
+                onClick={() => canvasRef.current && addTriangle(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Minus}
+                label="Line"
+                onClick={() => canvasRef.current && addLine(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Plus}
+                label="Ellipse"
+                onClick={() => canvasRef.current && addEllipse(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={ImageIcon}
+                label="Image"
+                onClick={() => {
+                  const url = prompt("Image URL:");
+                  if (url && canvasRef.current) addImageFromUrl(canvasRef.current, url);
+                }}
+              />
+              <ToolBtn
+                icon={ImageIcon}
+                label="Upload"
+                onClick={() => fileInputRef.current?.click()}
+              />
             </div>
             <input
               ref={fileInputRef}
@@ -638,10 +861,46 @@ function Editor() {
               Selection
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <ToolBtn icon={Copy}       label="Duplicate" onClick={() => canvasRef.current && duplicateSelected(canvasRef.current)} />
-              <ToolBtn icon={Trash2}     label="Delete"    onClick={() => canvasRef.current && deleteSelected(canvasRef.current)} />
-              <ToolBtn icon={ChevronUp}  label="Forward"   onClick={() => canvasRef.current && bringForward(canvasRef.current)} />
-              <ToolBtn icon={ChevronDown}label="Back"      onClick={() => canvasRef.current && sendBackward(canvasRef.current)} />
+              <ToolBtn
+                icon={Copy}
+                label="Duplicate"
+                onClick={() => canvasRef.current && duplicateSelected(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={Trash2}
+                label="Delete"
+                onClick={() => canvasRef.current && deleteSelected(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={ChevronUp}
+                label="Forward"
+                onClick={() => canvasRef.current && bringForward(canvasRef.current)}
+              />
+              <ToolBtn
+                icon={ChevronDown}
+                label="Back"
+                onClick={() => canvasRef.current && sendBackward(canvasRef.current)}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-border bg-muted/35 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Shortcuts
+            </p>
+            <div className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+              <span>Undo / Redo</span>
+              <kbd className="font-mono">Ctrl Z / Y</kbd>
+              <span>Copy / Paste</span>
+              <kbd className="font-mono">Ctrl C / V</kbd>
+              <span>Duplicate</span>
+              <kbd className="font-mono">Ctrl D</kbd>
+              <span>Nudge</span>
+              <kbd className="font-mono">Arrows</kbd>
+              <span>Big nudge</span>
+              <kbd className="font-mono">Shift + Arrows</kbd>
+              <span>Save</span>
+              <kbd className="font-mono">Ctrl S</kbd>
             </div>
           </section>
 
@@ -664,9 +923,7 @@ function Editor() {
                 <div
                   key={p.id}
                   className={`flex items-center justify-between rounded-md border px-2 py-1.5 text-sm transition ${
-                    activePageId === p.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
+                    activePageId === p.id ? "border-primary bg-primary/5" : "border-border"
                   }`}
                 >
                   <button onClick={() => handlePageSwitch(p.id)} className="flex-1 text-left">
@@ -698,13 +955,13 @@ function Editor() {
         >
           <div
             style={{
-              display:        "flex",
-              alignItems:     "center",
+              display: "flex",
+              alignItems: "center",
               justifyContent: "center",
-              width:          "100%",
-              minHeight:      "100%",
-              padding:        "40px",
-              boxSizing:      "border-box",
+              width: "100%",
+              minHeight: "100%",
+              padding: "40px",
+              boxSizing: "border-box",
             }}
           >
             <FabricCanvas
@@ -730,7 +987,10 @@ function Editor() {
               key={objectVersion}
               canvas={canvasInstance}
               object={activeObject}
-              onDirty={() => { markDirty(); refreshActiveObject(); }}
+              onDirty={() => {
+                markDirty();
+                refreshActiveObject();
+              }}
             />
 
             {/* Canvas settings */}
@@ -750,7 +1010,10 @@ function Editor() {
                         const bg = e.target.value;
                         setDoc({ ...doc, canvas: { ...doc.canvas, background: bg } });
                         const c = canvasRef.current;
-                        if (c) { c.backgroundColor = bg; c.requestRenderAll(); }
+                        if (c) {
+                          c.backgroundColor = bg;
+                          c.requestRenderAll();
+                        }
                         markDirty();
                       }}
                       className="h-9 w-9 cursor-pointer rounded border border-border p-0.5"
@@ -811,7 +1074,10 @@ function Editor() {
                       step={1}
                       value={doc.canvas.borderRadius ?? 0}
                       onChange={(e) => {
-                        setDoc({ ...doc, canvas: { ...doc.canvas, borderRadius: +e.target.value } });
+                        setDoc({
+                          ...doc,
+                          canvas: { ...doc.canvas, borderRadius: +e.target.value },
+                        });
                         markDirty();
                       }}
                       className="h-2 flex-1 cursor-pointer accent-primary"
@@ -825,7 +1091,6 @@ function Editor() {
             </section>
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -850,15 +1115,16 @@ function ObjectInspector({
     );
   }
 
-  const anyObj      = object as any;
-  const objectType  = String(object.type ?? "object").toLowerCase();
-  const isText      = ["i-text", "textbox", "text"].includes(objectType);
-  const canFill     = !["image", "group", "activeSelection"].includes(objectType);
-  const canStroke   = !["image", "activeSelection"].includes(objectType);
-  const baseW       = Math.max(1, Number(object.width  ?? 1));
-  const baseH       = Math.max(1, Number(object.height ?? 1));
-  const visualW     = Math.round(baseW * Number(object.scaleX ?? 1));
-  const visualH     = Math.round(baseH * Number(object.scaleY ?? 1));
+  const anyObj = object as any;
+  const objectType = String(object.type ?? "object").toLowerCase();
+  const isText = ["i-text", "textbox", "text"].includes(objectType);
+  const canFill = !["image", "group", "activeSelection"].includes(objectType);
+  const canStroke = !["image", "activeSelection"].includes(objectType);
+  const baseW = Math.max(1, Number(object.width ?? 1));
+  const baseH = Math.max(1, Number(object.height ?? 1));
+  const visualW = Math.round(baseW * Number(object.scaleX ?? 1));
+  const visualH = Math.round(baseH * Number(object.scaleY ?? 1));
+  const maxRadius = Math.max(0, Math.round(Math.min(visualW, visualH) / 2));
 
   const safeHex = (v: unknown, fallback: string) =>
     typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
@@ -878,7 +1144,7 @@ function ObjectInspector({
   const setVisualSize = (key: "width" | "height", raw: string) => {
     const v = Number(raw);
     if (!Number.isFinite(v) || v <= 0) return;
-    if (key === "width")  apply({ scaleX: v / baseW });
+    if (key === "width") apply({ scaleX: v / baseW });
     if (key === "height") apply({ scaleY: v / baseH });
   };
 
@@ -886,7 +1152,9 @@ function ObjectInspector({
     <div className="space-y-3 border-b border-border pb-3">
       {/* Type badge */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Element</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Element
+        </p>
         <div className="mt-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-medium">
           {objectType}
         </div>
@@ -908,19 +1176,35 @@ function ObjectInspector({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">X</label>
-          <Input type="number" value={Math.round(object.left ?? 0)} onChange={(e) => setNum("left", e.target.value)} />
+          <Input
+            type="number"
+            value={Math.round(object.left ?? 0)}
+            onChange={(e) => setNum("left", e.target.value)}
+          />
         </div>
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Y</label>
-          <Input type="number" value={Math.round(object.top ?? 0)} onChange={(e) => setNum("top", e.target.value)} />
+          <Input
+            type="number"
+            value={Math.round(object.top ?? 0)}
+            onChange={(e) => setNum("top", e.target.value)}
+          />
         </div>
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Width</label>
-          <Input type="number" value={visualW} onChange={(e) => setVisualSize("width", e.target.value)} />
+          <Input
+            type="number"
+            value={visualW}
+            onChange={(e) => setVisualSize("width", e.target.value)}
+          />
         </div>
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Height</label>
-          <Input type="number" value={visualH} onChange={(e) => setVisualSize("height", e.target.value)} />
+          <Input
+            type="number"
+            value={visualH}
+            onChange={(e) => setVisualSize("height", e.target.value)}
+          />
         </div>
       </div>
 
@@ -928,7 +1212,11 @@ function ObjectInspector({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Rotate</label>
-          <Input type="number" value={Math.round(object.angle ?? 0)} onChange={(e) => setNum("angle", e.target.value)} />
+          <Input
+            type="number"
+            value={Math.round(object.angle ?? 0)}
+            onChange={(e) => setNum("angle", e.target.value)}
+          />
         </div>
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground">Opacity %</label>
@@ -989,17 +1277,22 @@ function ObjectInspector({
 
       {/* Corner radius — rect only */}
       {objectType === "rect" && (
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Corner Radius</label>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs text-muted-foreground">Corner Radius</label>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {Math.round(Number(anyObj.rx ?? 0))}px
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="range"
               min={0}
-              max={100}
+              max={Math.max(maxRadius, 80)}
               step={1}
               value={Number(anyObj.rx ?? 0)}
               onChange={(e) => {
-                const v = Number(e.target.value);
+                const v = Math.min(maxRadius, Number(e.target.value));
                 apply({ rx: v, ry: v });
               }}
               className="flex-1 h-2 cursor-pointer accent-primary"
@@ -1011,10 +1304,22 @@ function ObjectInspector({
               value={Math.round(Number(anyObj.rx ?? 0))}
               onChange={(e) => {
                 const v = Math.max(0, Number(e.target.value));
-                apply({ rx: v, ry: v });
+                apply({ rx: Math.min(maxRadius, v), ry: Math.min(maxRadius, v) });
               }}
               className="h-9 w-16 text-sm"
             />
+          </div>
+          <div className="grid grid-cols-4 gap-1">
+            {Array.from(new Set([0, 8, 16, 24, 32, maxRadius])).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => apply({ rx: value, ry: value })}
+                className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:border-primary hover:text-foreground"
+              >
+                {value === maxRadius ? "Pill" : value}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -1024,11 +1329,18 @@ function ObjectInspector({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Font size</label>
-            <Input type="number" value={Number(anyObj.fontSize ?? 16)} onChange={(e) => setNum("fontSize", e.target.value)} />
+            <Input
+              type="number"
+              value={Number(anyObj.fontSize ?? 16)}
+              onChange={(e) => setNum("fontSize", e.target.value)}
+            />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Weight</label>
-            <Input value={String(anyObj.fontWeight ?? "400")} onChange={(e) => apply({ fontWeight: e.target.value })} />
+            <Input
+              value={String(anyObj.fontWeight ?? "400")}
+              onChange={(e) => apply({ fontWeight: e.target.value })}
+            />
           </div>
         </div>
       )}

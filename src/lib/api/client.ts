@@ -66,8 +66,10 @@ async function refreshAccessToken(): Promise<string | null> {
       return access;
     }
     return null;
-  } catch {
-    tokenStore.clear();
+  } catch (error) {
+    if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) {
+      tokenStore.clear();
+    }
     return null;
   }
 }

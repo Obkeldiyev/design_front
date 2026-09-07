@@ -10,16 +10,27 @@ if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
   (fabric.FabricObject.customProperties as string[]).push("id", "name");
 }
 
+const SNAP_SIZE = 8;
+
+type FabricWithId = fabric.FabricObject & { id?: string; isEditing?: boolean };
+
+function selectedIdsFromEvent(e: { selected?: fabric.FabricObject[] }) {
+  return e.selected?.map((object) => (object as FabricWithId).id ?? object.get?.("id") ?? "") ?? [];
+}
+
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef   = useRef<fabric.Canvas | null>(null);
+  const fabricRef = useRef<fabric.Canvas | null>(null);
 
-  const doc          = useEditorStore((s) => s.doc);
+  const doc = useEditorStore((s) => s.doc);
   const activePageId = useEditorStore((s) => s.activePageId);
-  const designKey    = useEditorStore((s) => s.designKey);
-  const zoom         = useEditorStore((s) => s.zoom);
-  const markDirty    = useEditorStore((s) => s.markDirty);
-  const setSelected  = useEditorStore((s) => s.setSelected);
+  const designKey = useEditorStore((s) => s.designKey);
+  const zoom = useEditorStore((s) => s.zoom);
+  const markDirty = useEditorStore((s) => s.markDirty);
+  const setSelected = useEditorStore((s) => s.setSelected);
+  const canvasWidth = doc?.canvas.width;
+  const canvasHeight = doc?.canvas.height;
+  const canvasBackground = doc?.canvas.background;
 
   // Mount once
   useEffect(() => {
@@ -29,19 +40,42 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       preserveObjectStacking: true,
       selection: true,
       enableRetinaScaling: false,
+      centeredScaling: false,
+      uniformScaling: false,
       width: 1050,
       height: 600,
     });
+    fabric.FabricObject.ownDefaults = {
+      ...fabric.FabricObject.ownDefaults,
+      borderColor: "#2563eb",
+      cornerColor: "#2563eb",
+      cornerStrokeColor: "#ffffff",
+      cornerStyle: "circle",
+      transparentCorners: false,
+      padding: 2,
+    };
     fabricRef.current = c;
     c.on("object:modified", markDirty);
-    c.on("object:added",    markDirty);
-    c.on("object:removed",  markDirty);
-    c.on("selection:created", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
-    c.on("selection:updated", (e) => setSelected(e.selected?.map((o: any) => o.get?.("id") ?? o.id ?? "") ?? []));
+    c.on("object:added", markDirty);
+    c.on("object:removed", markDirty);
+    c.on("object:moving", (e) => {
+      const object = e.target as FabricWithId | undefined;
+      if (!object || object.isEditing) return;
+      object.set({
+        left: Math.round((object.left ?? 0) / SNAP_SIZE) * SNAP_SIZE,
+        top: Math.round((object.top ?? 0) / SNAP_SIZE) * SNAP_SIZE,
+      });
+    });
+    c.on("selection:created", (e) => setSelected(selectedIdsFromEvent(e)));
+    c.on("selection:updated", (e) => setSelected(selectedIdsFromEvent(e)));
     c.on("selection:cleared", () => setSelected([]));
     onReady?.(c);
     return () => {
-      try { c.dispose(); } catch (_) {}
+      try {
+        c.dispose();
+      } catch {
+        // Ignore disposal races during hot reload.
+      }
       fabricRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,12 +84,12 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   // Sync native size + background
   useEffect(() => {
     const c = fabricRef.current;
-    if (!c || !doc) return;
-    c.setDimensions({ width: doc.canvas.width, height: doc.canvas.height });
+    if (!c || canvasWidth == null || canvasHeight == null) return;
+    c.setDimensions({ width: canvasWidth, height: canvasHeight });
     c.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    setBg(c, doc.canvas.background || "");
+    setBg(c, canvasBackground || "");
     c.requestRenderAll();
-  }, [doc?.canvas.width, doc?.canvas.height, doc?.canvas.background]);
+  }, [canvasWidth, canvasHeight, canvasBackground]);
 
   // Clear on reset
   useEffect(() => {
@@ -75,9 +109,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const page = doc.pages.find((p) => p.id === activePageId);
     if (!page) return;
     const json = page.fabric as Record<string, unknown>;
-    const bg   = doc.canvas.background || "";
-    const w    = doc.canvas.width;
-    const h    = doc.canvas.height;
+    const bg = doc.canvas.background || "";
+    const w = doc.canvas.width;
+    const h = doc.canvas.height;
     const load = () => {
       c.setDimensions({ width: w, height: h });
       c.setViewportTransform([1, 0, 0, 1, 0, 0]);
@@ -88,7 +122,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         c.requestRenderAll();
         return;
       }
-      const loadJson = { ...json } as any;
+      const loadJson = { ...json } as Record<string, unknown>;
       delete loadJson.viewportTransform;
       const result = c.loadFromJSON(loadJson);
       const done = () => {
@@ -96,8 +130,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         c.setViewportTransform([1, 0, 0, 1, 0, 0]);
         c.requestRenderAll();
       };
-      if (result && typeof (result as any).then === "function") {
-        (result as any).then(done).catch(done);
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        (result as Promise<unknown>).then(done).catch(done);
       } else {
         done();
       }
@@ -108,37 +142,45 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   }, [activePageId, designKey]);
 
   if (!doc) {
-    return <div style={{ display: "none" }}><canvas ref={canvasElRef} /></div>;
+    return (
+      <div style={{ display: "none" }}>
+        <canvas ref={canvasElRef} />
+      </div>
+    );
   }
 
   const nativeW = doc.canvas.width;
   const nativeH = doc.canvas.height;
-  const radius  = (doc.canvas.borderRadius ?? 0) * zoom;
+  const radius = (doc.canvas.borderRadius ?? 0) * zoom;
   // Use Math.ceil to prevent sub-pixel clipping of the scaled inner canvas
   const scaledW = Math.ceil(nativeW * zoom);
   const scaledH = Math.ceil(nativeH * zoom);
 
   return (
-    <div style={{
-      position: "relative",
-      width: scaledW,
-      height: scaledH,
-      flexShrink: 0,
-      flexGrow: 0,
-      borderRadius: radius,
-      overflow: "hidden",
-      boxShadow: "0 4px 32px rgba(0,0,0,0.45)",
-    }}>
-      <div style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: nativeW,
-        height: nativeH,
-        transformOrigin: "top left",
-        transform: `scale(${zoom})`,
-        lineHeight: 0,
-      }}>
+    <div
+      style={{
+        position: "relative",
+        width: scaledW,
+        height: scaledH,
+        flexShrink: 0,
+        flexGrow: 0,
+        borderRadius: radius,
+        overflow: "hidden",
+        boxShadow: "0 4px 32px rgba(0,0,0,0.45)",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: nativeW,
+          height: nativeH,
+          transformOrigin: "top left",
+          transform: `scale(${zoom})`,
+          lineHeight: 0,
+        }}
+      >
         <canvas ref={canvasElRef} style={{ display: "block" }} />
       </div>
     </div>
@@ -149,5 +191,7 @@ function setBg(c: fabric.Canvas, bg: string) {
   try {
     c.backgroundColor = bg && /^(#|rgb|hsl|transparent)/i.test(bg) ? bg : "#ffffff";
     c.requestRenderAll();
-  } catch (_) {}
+  } catch {
+    // Invalid user-entered background values should not break the editor.
+  }
 }

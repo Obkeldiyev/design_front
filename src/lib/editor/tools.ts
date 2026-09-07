@@ -16,6 +16,7 @@ export function addText(canvas: fabric.Canvas) {
     fill: "#111111",
   });
   (t as fabric.Object).set("id", nextId("text"));
+  (t as fabric.Object).set("name", "Text");
   canvas.add(t);
   canvas.setActiveObject(t);
   canvas.requestRenderAll();
@@ -28,10 +29,11 @@ export function addRect(canvas: fabric.Canvas) {
     width: 180,
     height: 120,
     fill: "#6b8afd",
-    rx: 12,
-    ry: 12,
+    rx: 16,
+    ry: 16,
   });
   (r as fabric.Object).set("id", nextId("rect"));
+  (r as fabric.Object).set("name", "Rectangle");
   canvas.add(r);
   canvas.setActiveObject(r);
   canvas.requestRenderAll();
@@ -45,6 +47,7 @@ export function addCircle(canvas: fabric.Canvas) {
     fill: "#f59e0b",
   });
   (c as fabric.Object).set("id", nextId("circle"));
+  (c as fabric.Object).set("name", "Circle");
   canvas.add(c);
   canvas.setActiveObject(c);
   canvas.requestRenderAll();
@@ -59,6 +62,7 @@ export function addTriangle(canvas: fabric.Canvas) {
     fill: "#10b981",
   });
   (t as fabric.Object).set("id", nextId("tri"));
+  (t as fabric.Object).set("name", "Triangle");
   canvas.add(t);
   canvas.setActiveObject(t);
   canvas.requestRenderAll();
@@ -73,6 +77,7 @@ export function addEllipse(canvas: fabric.Canvas) {
     fill: "#f97316",
   });
   (e as fabric.Object).set("id", nextId("ellipse"));
+  (e as fabric.Object).set("name", "Ellipse");
   canvas.add(e);
   canvas.setActiveObject(e);
   canvas.requestRenderAll();
@@ -89,6 +94,7 @@ export function addRoundedRect(canvas: fabric.Canvas) {
     ry: 24,
   });
   (r as fabric.Object).set("id", nextId("rounded-rect"));
+  (r as fabric.Object).set("name", "Rounded rectangle");
   canvas.add(r);
   canvas.setActiveObject(r);
   canvas.requestRenderAll();
@@ -115,6 +121,7 @@ export function addStar(canvas: fabric.Canvas) {
     },
   );
   (s as fabric.Object).set("id", nextId("star"));
+  (s as fabric.Object).set("name", "Star");
   canvas.add(s);
   canvas.setActiveObject(s);
   canvas.requestRenderAll();
@@ -126,6 +133,7 @@ export function addLine(canvas: fabric.Canvas) {
     strokeWidth: 3,
   });
   (l as fabric.Object).set("id", nextId("line"));
+  (l as fabric.Object).set("name", "Line");
   canvas.add(l);
   canvas.setActiveObject(l);
   canvas.requestRenderAll();
@@ -138,6 +146,7 @@ export async function addImageFromUrl(canvas: fabric.Canvas, url: string) {
   const scale = Math.min(max / (img.width ?? max), max / (img.height ?? max), 1);
   img.scale(scale);
   (img as fabric.Object).set("id", nextId("image"));
+  (img as fabric.Object).set("name", "Image");
   canvas.add(img);
   canvas.setActiveObject(img);
   canvas.requestRenderAll();
@@ -155,6 +164,7 @@ export async function addImageFromFile(canvas: fabric.Canvas, file: File) {
         const scale = Math.min(max / (img.width ?? max), max / (img.height ?? max), 1);
         img.scale(scale);
         (img as fabric.Object).set("id", nextId("image"));
+        (img as fabric.Object).set("name", "Image");
         (img as fabric.Object).set("meta", { fileName: file.name });
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -178,6 +188,7 @@ export async function addQR(canvas: fabric.Canvas, data: string) {
   const img = await fabric.FabricImage.fromURL(dataUrl);
   img.set({ left: 100, top: 100 });
   (img as fabric.Object).set("id", nextId("qr"));
+  (img as fabric.Object).set("name", "QR code");
   (img as fabric.Object).set("meta", { qrData: data });
   canvas.add(img);
   canvas.setActiveObject(img);
@@ -219,7 +230,12 @@ export function duplicateSelected(canvas: fabric.Canvas) {
   });
 }
 
-export function exportPNG(canvas: fabric.Canvas, multiplier = 2, width = canvas.getWidth(), height = canvas.getHeight()): string {
+export function exportPNG(
+  canvas: fabric.Canvas,
+  multiplier = 2,
+  width = canvas.getWidth(),
+  height = canvas.getHeight(),
+): string {
   return canvas.toDataURL({
     format: "png",
     multiplier,
@@ -231,7 +247,12 @@ export function exportPNG(canvas: fabric.Canvas, multiplier = 2, width = canvas.
   });
 }
 
-export function exportJPG(canvas: fabric.Canvas, multiplier = 2, width = canvas.getWidth(), height = canvas.getHeight()): string {
+export function exportJPG(
+  canvas: fabric.Canvas,
+  multiplier = 2,
+  width = canvas.getWidth(),
+  height = canvas.getHeight(),
+): string {
   return canvas.toDataURL({
     format: "jpeg",
     multiplier,
@@ -309,15 +330,19 @@ export async function exportPDF(
     // Clear and load page
     await new Promise<void>((resolve) => {
       offscreen.clear();
-      if (!json || !Array.isArray(json.objects) || (json.objects as any[]).length === 0) {
+      const objects = json?.objects;
+      if (!Array.isArray(objects) || objects.length === 0) {
         offscreen.requestRenderAll();
         resolve();
         return;
       }
       const result = offscreen.loadFromJSON(json);
-      const finish = () => { offscreen.requestRenderAll(); resolve(); };
-      if (result && typeof (result as any).then === "function") {
-        (result as any).then(finish).catch(finish);
+      const finish = () => {
+        offscreen.requestRenderAll();
+        resolve();
+      };
+      if (result && typeof (result as PromiseLike<unknown>).then === "function") {
+        Promise.resolve(result).then(finish).catch(finish);
       } else {
         finish();
       }
@@ -334,7 +359,14 @@ export async function exportPDF(
     pdf.addImage(dataUrl, "JPEG", 0, 0, wMm, hMm);
   }
 
-  try { offscreen.dispose(); } catch (_) {}
+  try {
+    const disposed = offscreen.dispose();
+    if (disposed && typeof (disposed as PromiseLike<unknown>).then === "function") {
+      await disposed.catch(() => undefined);
+    }
+  } catch {
+    // Ignore cleanup races after the PDF data has already been produced.
+  }
 
   pdf.save(`${title || "design"}.pdf`);
 }

@@ -7,6 +7,7 @@ type AuthState = {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  initError: string | null;
   init: () => Promise<void>;
   login: (identifier: string, password: string) => Promise<void>;
   register: (data: {
@@ -27,11 +28,11 @@ function extractTokens(payload: Record<string, unknown>): {
     (payload.accessToken as string) ??
     (payload.access_token as string) ??
     (payload.token as string) ??
-    ((payload.tokens as Record<string, string> | undefined)?.accessToken);
+    (payload.tokens as Record<string, string> | undefined)?.accessToken;
   const refresh =
     (payload.refreshToken as string) ??
     (payload.refresh_token as string) ??
-    ((payload.tokens as Record<string, string> | undefined)?.refreshToken);
+    (payload.tokens as Record<string, string> | undefined)?.refreshToken;
   return { access, refresh };
 }
 
@@ -39,28 +40,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: false,
   initialized: false,
+  initError: null,
   init: async () => {
     // Already initialized (e.g. just logged in) — do nothing
-    if (get().initialized) return;
+    if (get().initialized && !get().initError) return;
 
     if (!tokenStore.access) {
-      set({ initialized: true });
+      set({ initialized: true, initError: null });
       return;
     }
     try {
       const user = await UserAPI.profile();
-      set({ user, initialized: true });
-    } catch (e: any) {
+      set({ user, initialized: true, initError: null });
+    } catch (e: unknown) {
       // Only clear token on actual auth failures (401/403)
       // — NOT on network errors or server errors so offline doesn't log the user out
-      const status = e?.response?.status ?? e?.status;
+      const status =
+        typeof e === "object" && e
+          ? ((e as { response?: { status?: number }; status?: number }).response?.status ??
+            (e as { status?: number }).status)
+          : undefined;
       if (status === 401 || status === 403) {
         tokenStore.clear();
-        set({ user: null, initialized: true });
+        set({ user: null, initialized: true, initError: null });
       } else {
-        // Network error / server down — keep token, mark initialized with no user
-        // The layout will redirect to login, user can retry
-        set({ user: null, initialized: true });
+        // Network/server errors should not delete a valid session.
+        set({ user: null, initialized: true, initError: "profile_unavailable" });
       }
     }
   },
@@ -78,17 +83,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       tokenStore.set(access, refresh);
 
       // Extract user from login response directly — avoids a second round-trip
-      const user =
-        (res.user as User | undefined) ??
-        (res.superAdmin as User | undefined) ??
-        null;
+      const user = (res.user as User | undefined) ?? (res.superAdmin as User | undefined) ?? null;
 
       if (user) {
-        set({ user, loading: false, initialized: true });
+        set({ user, loading: false, initialized: true, initError: null });
       } else {
         // Fallback: fetch profile (e.g. OAuth flows that don't return user inline)
         const fetched = await UserAPI.profile();
-        set({ user: fetched, loading: false, initialized: true });
+        set({ user: fetched, loading: false, initialized: true, initError: null });
       }
     } catch (e) {
       set({ loading: false });
@@ -104,10 +106,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         tokenStore.set(access, refresh);
         const user = (res.user as User | undefined) ?? null;
         if (user) {
-          set({ user, loading: false, initialized: true });
+          set({ user, loading: false, initialized: true, initError: null });
         } else {
           const fetched = await UserAPI.profile();
-          set({ user: fetched, loading: false, initialized: true });
+          set({ user: fetched, loading: false, initialized: true, initError: null });
         }
       } else {
         // Backend may require separate login after register
@@ -120,12 +122,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   logout: () => {
     tokenStore.clear();
-    set({ user: null });
+    set({ user: null, initError: null });
   },
   refreshUser: async () => {
     try {
       const user = await UserAPI.profile();
-      set({ user });
+      set({ user, initError: null });
     } catch {
       // ignore
     }

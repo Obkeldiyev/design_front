@@ -422,5 +422,10 @@
     "back": "Back",
     "next": "Next",
     "saved": "Saved"
+  },
+  "auth": {
+    "session_check_failed": "Could not check your session",
+    "session_check_failed_desc": "Your login token is still saved, but the account check failed. Retry before logging out.",
+    "retry": "Retry"
   }
 }

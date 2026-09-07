@@ -422,5 +422,10 @@
     "back": "Orqaga",
     "next": "Keyingi",
     "saved": "Saqlandi"
+  },
+  "auth": {
+    "session_check_failed": "Sessiyani tekshirib bo'lmadi",
+    "session_check_failed_desc": "Kirish tokeni saqlangan, lekin hisob tekshiruvi amalga oshmadi. Chiqishdan oldin qayta urinib ko'ring.",
+    "retry": "Qayta urinish"
   }
 }
