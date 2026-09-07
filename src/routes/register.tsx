@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth";
 import { toast } from "sonner";
 import { API_URL, apiError } from "@/lib/api/client";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const schema = z.object({
   firstName: z.string().min(1, "Required"),
@@ -97,7 +98,9 @@ function Register() {
         </form>
       </div>
       <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10 text-sidebar-foreground">
-        <div />
+        <Link to="/" className="font-display text-xl font-semibold">
+          <BrandLogo compact />
+        </Link>
         <div>
           <div className="font-display text-3xl font-semibold leading-tight">
             Built for entrepreneurs

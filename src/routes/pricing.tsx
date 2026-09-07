@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -57,7 +58,7 @@ function Pricing() {
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link to="/" className="font-display text-xl font-semibold">
-            card24
+            <BrandLogo compact />
           </Link>
           <Link to="/register">
             <Button size="sm">Get started</Button>
@@ -66,9 +67,7 @@ function Pricing() {
       </header>
       <div className="mx-auto max-w-6xl px-6 py-20">
         <div className="text-center">
-          <h1 className="font-display text-4xl font-bold md:text-5xl">
-            Simple, honest pricing.
-          </h1>
+          <h1 className="font-display text-4xl font-bold md:text-5xl">Simple, honest pricing.</h1>
           <p className="mt-3 text-muted-foreground">
             Start free. Upgrade when you need more power.
           </p>

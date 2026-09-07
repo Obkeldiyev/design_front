@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/auth";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/api/client";
 import { apiError } from "@/lib/api/client";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const schema = z.object({
   identifier: z.string().min(1, "Required"),
@@ -29,7 +30,11 @@ function Login() {
   const search = useSearch({ from: "/login" });
   const login = useAuthStore((s) => s.login);
   const loading = useAuthStore((s) => s.loading);
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -47,11 +52,13 @@ function Login() {
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10 text-sidebar-foreground">
         <Link to="/" className="font-display text-xl font-semibold">
-          card24
+          <BrandLogo compact />
         </Link>
         <div>
           <div className="font-display text-3xl font-semibold leading-tight">
-            One canvas engine.<br />Every brand surface.
+            One canvas engine.
+            <br />
+            Every brand surface.
           </div>
           <div className="mt-3 text-sm text-sidebar-foreground/70">
             Cards, QR pages, sites — all from the same JSON.
@@ -63,14 +70,18 @@ function Login() {
         <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-5">
           <div>
             <h1 className="font-display text-3xl font-bold">Welcome back</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Log in to your card24 account.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Log in to your card24 account.</p>
           </div>
           <div className="space-y-2">
             <Label>Email or username</Label>
-            <Input type="text" placeholder="you@example.com or username" {...register("identifier")} />
-            {errors.identifier && <p className="text-xs text-destructive">{errors.identifier.message}</p>}
+            <Input
+              type="text"
+              placeholder="you@example.com or username"
+              {...register("identifier")}
+            />
+            {errors.identifier && (
+              <p className="text-xs text-destructive">{errors.identifier.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label>Password</Label>

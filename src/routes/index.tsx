@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, QrCode, Globe, Layers, Zap } from "lucide-react";
+import { ArrowRight, QrCode, Globe, Layers, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,10 +33,7 @@ function Landing() {
       <header className="border-b border-border/60 backdrop-blur sticky top-0 z-40 bg-background/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <span className="font-display text-xl font-semibold tracking-tight">card24</span>
+            <BrandLogo compact />
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
             <Link to="/templates" className="text-sm text-muted-foreground hover:text-foreground">

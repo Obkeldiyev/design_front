@@ -83,6 +83,7 @@ function EditText({
   tag = "span",
   placeholder = "Click to edit…",
   editable = false,
+  style,
 }: {
   value: string;
   onSave: (v: string) => void;
@@ -90,14 +91,21 @@ function EditText({
   tag?: string;
   placeholder?: string;
   editable?: boolean;
+  style?: React.CSSProperties;
 }) {
   const Tag = tag as any;
-  if (!editable) return <Tag className={className}>{value}</Tag>;
+  if (!editable)
+    return (
+      <Tag className={className} style={style}>
+        {value}
+      </Tag>
+    );
   return (
     <Tag
       contentEditable
       suppressContentEditableWarning
       data-placeholder={placeholder}
+      style={style}
       onBlur={(e: React.FocusEvent<HTMLElement>) => onSave(e.currentTarget.textContent || "")}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
       onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
@@ -268,6 +276,7 @@ function NavbarBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const setLinks = (links: any[]) => upd({ links });
+  const accentColor = c.accentColor || theme.primaryColor;
   return (
     <nav
       style={{ backgroundColor: c.backgroundColor || "#fff", color: c.textColor || "#111827" }}
@@ -360,7 +369,7 @@ function NavbarBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
         )}
         {c.ctaText && (
           <span
-            style={{ backgroundColor: theme.primaryColor }}
+            style={{ backgroundColor: accentColor }}
             className="px-4 py-2 rounded text-sm font-semibold text-white"
           >
             <EditText
@@ -380,6 +389,7 @@ function NavbarBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
 function HeroBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
+  const accentColor = c.accentColor || c.buttonColor || theme.primaryColor;
   const bgStyle: React.CSSProperties = c.backgroundImage
     ? {
         backgroundImage: `linear-gradient(rgba(0,0,0,${c.overlayOpacity ?? 0.5}),rgba(0,0,0,${c.overlayOpacity ?? 0.5})),url(${c.backgroundImage})`,
@@ -513,7 +523,7 @@ function HeroBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
         >
           {c.buttonText && (
             <span
-              style={{ backgroundColor: theme.primaryColor }}
+              style={{ backgroundColor: accentColor }}
               className="px-7 py-3 rounded-lg font-semibold text-white shadow inline-block"
             >
               <EditText
@@ -550,6 +560,9 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
   const setItems = (items: any[]) => upd({ items });
   const textColor =
     c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
+  const cardBackground = c.cardBackground || "#ffffff";
+  const cardTextColor = readableTextColor(cardBackground, "#111827");
+  const accentColor = c.accentColor || theme.primaryColor;
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-20 px-8">
       <div className="max-w-6xl mx-auto">
@@ -583,7 +596,10 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
               onMove={(f, t) => setItems(moveItem(c.items, f, t))}
               onDelete={(idx) => setItems(c.items.filter((_: any, fi: number) => fi !== idx))}
             >
-              <div className="flex flex-col items-start gap-3 p-6 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+              <div
+                className="flex flex-col items-start gap-3 p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                style={{ backgroundColor: cardBackground }}
+              >
                 <EditText
                   value={item.icon || "⚡"}
                   onSave={(v) => {
@@ -593,6 +609,7 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
                   }}
                   editable={editable}
                   className="text-3xl"
+                  style={{ color: accentColor }}
                   placeholder="⚡"
                 />
                 <EditText
@@ -604,7 +621,8 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
                   }}
                   editable={editable}
                   tag="h3"
-                  className="text-lg font-semibold text-gray-900"
+                  className="text-lg font-semibold"
+                  style={{ color: cardTextColor }}
                   placeholder="Feature title"
                 />
                 <EditText
@@ -616,7 +634,8 @@ function FeaturesBlock({ block, theme, editable, onUpdate }: BlockRendererProps)
                   }}
                   editable={editable}
                   tag="p"
-                  className="text-sm text-gray-500 leading-relaxed"
+                  className="text-sm leading-relaxed opacity-75"
+                  style={{ color: cardTextColor }}
                   placeholder="Description…"
                 />
               </div>
@@ -648,6 +667,11 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const setItems = (items: any[]) => upd({ items });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#f8fafc", theme.textColor);
+  const cardBackground = c.cardBackground || "#ffffff";
+  const cardTextColor = readableTextColor(cardBackground, "#111827");
+  const accentColor = c.accentColor || theme.primaryColor || "#facc15";
   return (
     <section
       style={{ backgroundColor: c.backgroundColor || "#f8fafc" }}
@@ -655,7 +679,7 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
     >
       <div className="max-w-6xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -665,7 +689,7 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-lg text-center text-gray-500 mb-14">
+          <p className="text-lg text-center mb-14 opacity-75" style={{ color: textColor }}>
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}
@@ -684,13 +708,17 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
               onMove={(f, t) => setItems(moveItem(c.items, f, t))}
               onDelete={(idx) => setItems(c.items.filter((_: any, fi: number) => fi !== idx))}
             >
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <div
+                className="p-6 rounded-xl shadow-sm border border-gray-100"
+                style={{ backgroundColor: cardBackground }}
+              >
                 {item.rating && (
                   <div className="flex gap-0.5 mb-3">
                     {Array.from({ length: 5 }).map((_, si) => (
                       <span
                         key={si}
-                        className={si < item.rating ? "text-yellow-400" : "text-gray-200"}
+                        className={si < item.rating ? "" : "text-gray-200"}
+                        style={si < item.rating ? { color: accentColor } : undefined}
                       >
                         ★
                       </span>
@@ -706,7 +734,8 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
                   }}
                   editable={editable}
                   tag="p"
-                  className="text-gray-700 italic mb-4 leading-relaxed"
+                  className="italic mb-4 leading-relaxed"
+                  style={{ color: cardTextColor }}
                   placeholder="Review text…"
                 />
                 <div className="flex items-center gap-3">
@@ -731,7 +760,8 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
                       }}
                       editable={editable}
                       tag="p"
-                      className="font-semibold text-sm text-gray-900"
+                      className="font-semibold text-sm"
+                      style={{ color: cardTextColor }}
                       placeholder="Name"
                     />
                     <EditText
@@ -743,7 +773,8 @@ function TestimonialsBlock({ block, theme, editable, onUpdate }: BlockRendererPr
                       }}
                       editable={editable}
                       tag="p"
-                      className="text-xs text-gray-500"
+                      className="text-xs opacity-65"
+                      style={{ color: cardTextColor }}
                       placeholder="Role"
                     />
                   </div>
@@ -777,11 +808,21 @@ function TextBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const maxW =
     c.maxWidth === "2xl" ? "max-w-2xl" : c.maxWidth === "4xl" ? "max-w-4xl" : "max-w-3xl";
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
+  const bodySize =
+    c.fontSize === "base"
+      ? "text-base"
+      : c.fontSize === "xl"
+        ? "text-xl"
+        : c.fontSize === "2xl"
+          ? "text-2xl"
+          : "text-lg";
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-16 px-8">
       <div className={`${maxW} mx-auto`} style={{ textAlign: c.align || "left" }}>
         {(c.title || editable) && (
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl font-bold mb-6" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -796,7 +837,8 @@ function TextBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
           tag="div"
           editable={editable}
           placeholder="Start typing your content here…"
-          className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap"
+          className={`${bodySize} leading-relaxed whitespace-pre-wrap opacity-80`}
+          style={{ color: textColor }}
         />
       </div>
     </section>
@@ -808,6 +850,7 @@ function StatsBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const setItems = (items: any[]) => upd({ items });
+  const accentColor = c.accentColor || theme.primaryColor;
   return (
     <section
       style={{ backgroundColor: c.backgroundColor || "#0f172a", color: c.textColor || "#fff" }}
@@ -835,7 +878,7 @@ function StatsBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
               onDelete={(idx) => setItems(c.items.filter((_: any, fi: number) => fi !== idx))}
             >
               <div className="text-center">
-                <div style={{ color: theme.primaryColor }} className="text-5xl font-extrabold mb-2">
+                <div style={{ color: accentColor }} className="text-5xl font-extrabold mb-2">
                   <EditText
                     value={item.value || ""}
                     onSave={(v) => {
@@ -888,11 +931,13 @@ function GalleryBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
   const cols = c.columns === 2 ? "grid-cols-2" : c.columns === 4 ? "grid-cols-4" : "grid-cols-3";
   const gap = c.gap === "small" ? "gap-2" : c.gap === "large" ? "gap-6" : "gap-4";
   const setItems = (items: any[]) => upd({ items });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-16 px-8">
       <div className="max-w-6xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -902,7 +947,7 @@ function GalleryBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-center text-gray-500 mb-10">
+          <p className="text-center mb-10 opacity-75" style={{ color: textColor }}>
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}
@@ -979,11 +1024,16 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const cols = c.columns === 3 ? "grid-cols-3" : c.columns === 2 ? "grid-cols-2" : "grid-cols-4";
   const setMembers = (members: any[]) => upd({ members });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
+  const cardBackground = c.cardBackground || "transparent";
+  const cardTextColor =
+    cardBackground === "transparent" ? textColor : readableTextColor(cardBackground, textColor);
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-20 px-8">
       <div className="max-w-6xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -993,7 +1043,7 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-center text-gray-500 mb-14">
+          <p className="text-center mb-14 opacity-75" style={{ color: textColor }}>
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}
@@ -1012,7 +1062,10 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
               onMove={(f, t) => setMembers(moveItem(c.members, f, t))}
               onDelete={(idx) => setMembers(c.members.filter((_: any, fi: number) => fi !== idx))}
             >
-              <div className="text-center">
+              <div
+                className="text-center rounded-xl p-4"
+                style={{ backgroundColor: cardBackground }}
+              >
                 <ImageUpload
                   src={m.image || ""}
                   onUpload={(v) => {
@@ -1033,7 +1086,8 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
                   }}
                   editable={editable}
                   tag="h3"
-                  className="font-semibold text-gray-900"
+                  className="font-semibold"
+                  style={{ color: cardTextColor }}
                   placeholder="Name"
                 />
                 <EditText
@@ -1045,7 +1099,8 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
                   }}
                   editable={editable}
                   tag="p"
-                  className="text-sm text-gray-500 mb-2"
+                  className="text-sm mb-2 opacity-70"
+                  style={{ color: cardTextColor }}
                   placeholder="Role"
                 />
                 <EditText
@@ -1057,7 +1112,8 @@ function TeamBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
                   }}
                   editable={editable}
                   tag="p"
-                  className="text-xs text-gray-400 leading-relaxed"
+                  className="text-xs leading-relaxed opacity-55"
+                  style={{ color: cardTextColor }}
                   placeholder="Short bio…"
                 />
               </div>
@@ -1089,11 +1145,16 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const setPlans = (plans: any[]) => upd({ plans });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
+  const cardBackground = c.cardBackground || "#ffffff";
+  const cardTextColor = readableTextColor(cardBackground, "#111827");
+  const accentColor = c.accentColor || theme.primaryColor;
   return (
     <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-20 px-8">
       <div className="max-w-5xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3" style={{ color: textColor }}>
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -1103,7 +1164,7 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-center text-gray-500 mb-14">
+          <p className="text-center mb-14 opacity-75" style={{ color: textColor }}>
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}
@@ -1124,12 +1185,16 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
             >
               <div
                 className={`rounded-2xl p-8 flex flex-col gap-4 ${plan.featured ? "shadow-xl border-2 scale-105" : "border border-gray-200 shadow-sm"}`}
-                style={plan.featured ? { borderColor: theme.primaryColor } : {}}
+                style={{
+                  backgroundColor: cardBackground,
+                  borderColor: plan.featured ? accentColor : undefined,
+                  color: cardTextColor,
+                }}
               >
                 {plan.featured && (
                   <span
                     className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full text-white w-fit"
-                    style={{ backgroundColor: theme.primaryColor }}
+                    style={{ backgroundColor: accentColor }}
                   >
                     Most Popular
                   </span>
@@ -1144,7 +1209,8 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     }}
                     editable={editable}
                     tag="h3"
-                    className="text-xl font-bold text-gray-900"
+                    className="text-xl font-bold"
+                    style={{ color: cardTextColor }}
                     placeholder="Plan name"
                   />
                   <EditText
@@ -1156,7 +1222,8 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     }}
                     editable={editable}
                     tag="p"
-                    className="text-sm text-gray-500 mt-1"
+                    className="text-sm mt-1 opacity-70"
+                    style={{ color: cardTextColor }}
                     placeholder="Description"
                   />
                 </div>
@@ -1170,7 +1237,8 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     }}
                     editable={editable}
                     tag="span"
-                    className="text-4xl font-extrabold text-gray-900"
+                    className="text-4xl font-extrabold"
+                    style={{ color: cardTextColor }}
                     placeholder="$0"
                   />
                   <EditText
@@ -1182,14 +1250,19 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     }}
                     editable={editable}
                     tag="span"
-                    className="text-gray-500"
+                    className="opacity-65"
+                    style={{ color: cardTextColor }}
                     placeholder="/mo"
                   />
                 </div>
                 <ul className="flex flex-col gap-2 flex-1">
                   {(plan.features || []).map((f: string, fi: number) => (
-                    <li key={fi} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span style={{ color: theme.primaryColor }}>✓</span>
+                    <li
+                      key={fi}
+                      className="flex items-center gap-2 text-sm opacity-80"
+                      style={{ color: cardTextColor }}
+                    >
+                      <span style={{ color: accentColor }}>✓</span>
                       <EditText
                         value={f || ""}
                         onSave={(v) => {
@@ -1238,7 +1311,11 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                 </ul>
                 <a
                   href="#"
-                  style={plan.featured ? { backgroundColor: theme.primaryColor } : {}}
+                  style={
+                    plan.featured
+                      ? { backgroundColor: accentColor }
+                      : { color: cardTextColor, borderColor: `${cardTextColor}40` }
+                  }
                   className={`mt-auto text-center py-3 px-6 rounded-lg font-semibold hover:opacity-90 ${plan.featured ? "text-white" : "border-2 border-gray-300 text-gray-700"}`}
                 >
                   <EditText
@@ -1289,6 +1366,8 @@ function PricingBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
 function CtaBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
+  const accentColor = c.accentColor || c.buttonColor || theme.primaryColor || "#ffffff";
+  const accentTextColor = readableTextColor(accentColor, "#111827");
   return (
     <section
       style={{ backgroundColor: c.backgroundColor || "#6366f1", color: c.textColor || "#fff" }}
@@ -1315,12 +1394,16 @@ function CtaBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
         )}
         <div className="flex gap-3 flex-wrap justify-center">
           {c.buttonText && (
-            <span className="px-8 py-3 bg-white text-gray-900 rounded-lg font-semibold shadow inline-block">
+            <span
+              className="px-8 py-3 rounded-lg font-semibold shadow inline-block"
+              style={{ backgroundColor: accentColor, color: accentTextColor }}
+            >
               <EditText
                 value={c.buttonText}
                 onSave={(v) => upd({ buttonText: v })}
                 editable={editable}
-                className="text-gray-900 font-semibold"
+                className="font-semibold"
+                style={{ color: accentTextColor }}
                 placeholder="Button"
               />
             </span>
@@ -1347,11 +1430,19 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
   const setFields = (fields: any[]) => upd({ fields });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#ffffff", theme.textColor);
+  const fieldBackground = c.cardBackground || "#ffffff";
+  const fieldTextColor = readableTextColor(fieldBackground, "#111827");
+  const accentColor = c.accentColor || c.buttonColor || theme.primaryColor;
   return (
-    <section style={{ backgroundColor: c.backgroundColor || "#fff" }} className="w-full py-20 px-8">
+    <section
+      style={{ backgroundColor: c.backgroundColor || "#fff", color: textColor }}
+      className="w-full py-20 px-8"
+    >
       <div className="max-w-2xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">
+          <h2 className="text-4xl font-bold text-center mb-3">
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}
@@ -1361,7 +1452,7 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
           </h2>
         )}
         {(c.subtitle || editable) && (
-          <p className="text-center text-gray-500 mb-10">
+          <p className="text-center mb-10 opacity-75">
             <EditText
               value={c.subtitle || ""}
               onSave={(v) => upd({ subtitle: v })}
@@ -1391,7 +1482,8 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     }}
                     editable={editable}
                     tag="label"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium"
+                    style={{ color: textColor }}
                     placeholder="Field label"
                   />
                   {editable && (
@@ -1418,6 +1510,7 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     placeholder={field.placeholder}
                     rows={4}
                     className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none"
+                    style={{ backgroundColor: fieldBackground, color: fieldTextColor }}
                     onFocus={(e) => e.stopPropagation()}
                   />
                 ) : (
@@ -1425,6 +1518,7 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                     type={field.type || "text"}
                     placeholder={field.placeholder}
                     className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2"
+                    style={{ backgroundColor: fieldBackground, color: fieldTextColor }}
                     onFocus={(e) => e.stopPropagation()}
                   />
                 )}
@@ -1452,7 +1546,7 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
             </button>
           )}
           <button
-            style={{ backgroundColor: theme.primaryColor }}
+            style={{ backgroundColor: accentColor }}
             className="w-full py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity mt-2"
             onClick={(e) => editable && e.stopPropagation()}
           >
@@ -1468,7 +1562,7 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
         </div>
         {/* Contact info editable */}
         {(c.email || c.phone || c.address || editable) && (
-          <div className="mt-8 space-y-2 text-center text-sm text-gray-500">
+          <div className="mt-8 space-y-2 text-center text-sm opacity-75">
             {(c.email || editable) && (
               <div className="flex items-center justify-center gap-2">
                 <span>✉</span>
@@ -1477,7 +1571,8 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                   onSave={(v) => upd({ email: v })}
                   editable={editable}
                   tag="span"
-                  className="text-gray-500"
+                  className=""
+                  style={{ color: textColor }}
                   placeholder="your@email.com"
                 />
               </div>
@@ -1490,7 +1585,8 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                   onSave={(v) => upd({ phone: v })}
                   editable={editable}
                   tag="span"
-                  className="text-gray-500"
+                  className=""
+                  style={{ color: textColor }}
                   placeholder="+1 (555) 000-0000"
                 />
               </div>
@@ -1503,7 +1599,8 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
                   onSave={(v) => upd({ address: v })}
                   editable={editable}
                   tag="span"
-                  className="text-gray-500"
+                  className=""
+                  style={{ color: textColor }}
                   placeholder="123 Main St, City"
                 />
               </div>
@@ -1519,14 +1616,16 @@ function ContactBlock({ block, theme, editable, onUpdate }: BlockRendererProps) 
 function VideoBlock({ block, theme, editable, onUpdate }: BlockRendererProps) {
   const c = block.content;
   const upd = (p: any) => onUpdate?.({ ...c, ...p });
+  const textColor =
+    c.textColor || readableTextColor(c.backgroundColor || "#0f172a", theme.textColor);
   return (
     <section
-      style={{ backgroundColor: c.backgroundColor || "#0f172a" }}
+      style={{ backgroundColor: c.backgroundColor || "#0f172a", color: textColor }}
       className="w-full py-16 px-8"
     >
       <div className="max-w-4xl mx-auto">
         {(c.title || editable) && (
-          <h2 className="text-3xl font-bold text-center text-white mb-8">
+          <h2 className="text-3xl font-bold text-center mb-8">
             <EditText
               value={c.title || ""}
               onSave={(v) => upd({ title: v })}

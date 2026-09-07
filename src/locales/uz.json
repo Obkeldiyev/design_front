@@ -50,6 +50,13 @@
     "no_analytics_title": "Hali analitika yo'q",
     "no_analytics_desc": "Nashrdan keyin odamlar kartalar, saytlar yoki QR-kodlarni ochganda analitika paydo bo'ladi.",
     "publish_first": "Nashr qilinadigan kontent yaratish",
+    "start_here_title": "Shu yerdan boshlang",
+    "start_here_subtitle": "Bo'sh hisobdan ommaviy havolagacha borish uchun shu to'rt qadamni bajaring.",
+    "next_step_title": "Keyingi qadam",
+    "next_step_done": "Asosiy ishlar tayyor",
+    "next_step_done_desc": "Analitikani oching yoki oxirgi loyihangizni yaxshilashda davom eting.",
+    "progress_label": "{{done}} / {{total}} tayyor",
+    "open_step": "Ochish",
     "actions": {
       "create_card": "Vizit karta yaratish",
       "create_website": "Sayt yaratish",
@@ -98,6 +105,22 @@
       "qr": "QR-kod yaratish",
       "publish": "Karta yoki saytni nashr qilish",
       "share": "Ulashish va birinchi skanni olish"
+    },
+    "workflow": {
+      "profile_desc": "Ommaviy sahifalarni nashr qilishdan oldin ism va hisob ma'lumotlarini qo'shing.",
+      "business_desc": "Kartalar, saytlar va QR-kodlar qayta ishlatadigan brend profilini yarating.",
+      "card_desc": "Shablon tanlang, kartani tahrirlang, keyin saqlang yoki nashr qiling.",
+      "website_desc": "Brendingiz uchun seksiyalardan iborat saytni dasturlashsiz yarating.",
+      "qr_desc": "Karta, sayt, kontaktlar yoki havolani ochadigan QR-kod yarating.",
+      "publish_desc": "Qoralamalarni oching, tekshiring va mijozlar ko'radigan loyihani nashr qiling.",
+      "share_desc": "Havolalarni ulashing va skan faolligini analitikada ko'ring.",
+      "open_profile": "Profilni ochish",
+      "open_business": "Kompaniya qo'shish",
+      "open_card": "Karta yaratish",
+      "open_website": "Sayt yaratish",
+      "open_qr": "QR yaratish",
+      "open_publish": "Qoralamalarni ochish",
+      "open_analytics": "Analitikani ko'rish"
     },
     "feature_value": {
       "card_title": "Raqamli vizit karta:",

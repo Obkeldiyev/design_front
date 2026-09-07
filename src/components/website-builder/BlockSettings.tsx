@@ -201,6 +201,60 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function QuickStyleSettings({
+  block,
+  theme,
+  onUpdate,
+}: {
+  block: Block;
+  theme: WebsiteTheme;
+  onUpdate: (c: any) => void;
+}) {
+  const c = block.content;
+  const upd = (p: any) => onUpdate({ ...c, ...p });
+  const hasCards = ["features", "testimonials", "gallery", "team", "pricing", "contact"].includes(
+    block.type,
+  );
+  const hasAccent = ["navbar", "hero", "features", "stats", "cta", "contact", "pricing"].includes(
+    block.type,
+  );
+
+  return (
+    <Section title="Quick Style">
+      <div className="grid grid-cols-2 gap-2">
+        <ColorField
+          label="Background"
+          value={c.backgroundColor || theme.backgroundColor || "#ffffff"}
+          onChange={(v) => upd({ backgroundColor: v })}
+        />
+        <ColorField
+          label="Text"
+          value={c.textColor || theme.textColor || "#111827"}
+          onChange={(v) => upd({ textColor: v })}
+        />
+      </div>
+      {(hasCards || hasAccent) && (
+        <div className="grid grid-cols-2 gap-2">
+          {hasCards && (
+            <ColorField
+              label="Cards"
+              value={c.cardBackground || "#ffffff"}
+              onChange={(v) => upd({ cardBackground: v })}
+            />
+          )}
+          {hasAccent && (
+            <ColorField
+              label="Accent"
+              value={c.accentColor || theme.primaryColor || "#6366f1"}
+              onChange={(v) => upd({ accentColor: v })}
+            />
+          )}
+        </div>
+      )}
+    </Section>
+  );
+}
+
 function CommonDesignSettings({ block, onUpdate }: { block: Block; onUpdate: (c: any) => void }) {
   const c = block.content;
   const upd = (p: any) => onUpdate({ ...c, ...p });
@@ -826,6 +880,17 @@ function TextSettings({ block, onUpdate }: { block: Block; onUpdate: (c: any) =>
             { value: "4xl", label: "Wide" },
           ]}
           onChange={(v) => upd({ maxWidth: v })}
+        />
+        <SelectField
+          label="Text Size"
+          value={c.fontSize || "large"}
+          options={[
+            { value: "base", label: "Small" },
+            { value: "large", label: "Comfortable" },
+            { value: "xl", label: "Large" },
+            { value: "2xl", label: "Extra large" },
+          ]}
+          onChange={(v) => upd({ fontSize: v })}
         />
         <ColorField
           label="Background Color"
@@ -1555,6 +1620,7 @@ export function BlockSettings({ block, theme, onUpdate, onThemeUpdate }: BlockSe
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <p className="text-sm font-semibold capitalize">{block.type} Settings</p>
+      <QuickStyleSettings block={block} theme={theme} onUpdate={upd} />
       {block.type === "navbar" && <NavbarSettings block={block} onUpdate={upd} />}
       {block.type === "hero" && <HeroSettings block={block} onUpdate={upd} />}
       {block.type === "features" && <FeaturesSettings block={block} onUpdate={upd} />}

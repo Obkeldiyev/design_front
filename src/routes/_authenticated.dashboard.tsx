@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuthStore } from "@/store/auth";
 import {
+  ArrowRight,
   BarChart3,
   Briefcase,
   CheckCircle2,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Design, QRCodeRecord, Website } from "@/lib/api/types";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - card24" }] }),
@@ -52,6 +54,15 @@ type RecentProject = {
   updatedAt?: string;
   to: string;
   params?: Record<string, string>;
+};
+
+type OnboardingStep = {
+  icon: typeof Layers;
+  label: string;
+  description: string;
+  done: boolean;
+  to: string;
+  action: string;
 };
 
 function StatCard({ icon: Icon, label, value, description }: StatCardProps) {
@@ -121,6 +132,75 @@ function ShortcutCard({ shortcut, priorityLabel }: { shortcut: Shortcut; priorit
   );
 }
 
+function NextStepCard({
+  step,
+  title,
+  progressLabel,
+  openLabel,
+}: {
+  step: OnboardingStep;
+  title: string;
+  progressLabel: string;
+  openLabel: string;
+}) {
+  const Icon = step.icon;
+
+  return (
+    <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            {progressLabel}
+          </p>
+          <h2 className="mt-1 font-display text-lg font-semibold tracking-normal">{title}</h2>
+          <p className="mt-1 text-sm font-semibold">{step.label}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{step.description}</p>
+        </div>
+      </div>
+      <Button asChild className="mt-4 w-full">
+        <Link to={step.to}>
+          {step.action || openLabel}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+function WorkflowStepCard({ step, index }: { step: OnboardingStep; index: number }) {
+  const Icon = step.icon;
+
+  return (
+    <Link
+      to={step.to}
+      className={[
+        "group rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md",
+        step.done ? "border-emerald-200 dark:border-emerald-900" : "border-border",
+      ].join(" ")}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-md ${
+            step.done
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+              : "bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground"
+          }`}
+        >
+          {step.done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-muted-foreground">{index + 1}</p>
+          <h3 className="mt-1 text-sm font-semibold">{step.label}</h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.description}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function StatusBadge({ status }: { status?: string }) {
   const normalized = status ?? "DRAFT";
   const cls =
@@ -158,16 +238,75 @@ function Dashboard() {
     websiteItems.filter((item) => item.status === "PUBLISHED").length;
   const hasPublishedContent = publishedCount > 0 || totalQrScans > 0;
 
-  const onboarding = [
-    { label: t("dashboard.onboarding.profile"), done: Boolean(user?.firstName && user?.lastName) },
-    { label: t("dashboard.onboarding.business"), done: businessItems.length > 0 },
-    { label: t("dashboard.onboarding.card"), done: designItems.length > 0 },
-    { label: t("dashboard.onboarding.website"), done: websiteItems.length > 0 },
-    { label: t("dashboard.onboarding.qr"), done: qrItems.length > 0 },
-    { label: t("dashboard.onboarding.publish"), done: publishedCount > 0 },
-    { label: t("dashboard.onboarding.share"), done: totalQrScans > 0 },
+  const onboarding: OnboardingStep[] = [
+    {
+      icon: Settings,
+      label: t("dashboard.onboarding.profile"),
+      description: t("dashboard.workflow.profile_desc"),
+      done: Boolean(user?.firstName && user?.lastName),
+      to: "/settings",
+      action: t("dashboard.workflow.open_profile"),
+    },
+    {
+      icon: Briefcase,
+      label: t("dashboard.onboarding.business"),
+      description: t("dashboard.workflow.business_desc"),
+      done: businessItems.length > 0,
+      to: "/businesses/new",
+      action: t("dashboard.workflow.open_business"),
+    },
+    {
+      icon: Layers,
+      label: t("dashboard.onboarding.card"),
+      description: t("dashboard.workflow.card_desc"),
+      done: designItems.length > 0,
+      to: "/designs/new",
+      action: t("dashboard.workflow.open_card"),
+    },
+    {
+      icon: Globe,
+      label: t("dashboard.onboarding.website"),
+      description: t("dashboard.workflow.website_desc"),
+      done: websiteItems.length > 0,
+      to: "/websites/new",
+      action: t("dashboard.workflow.open_website"),
+    },
+    {
+      icon: QrCode,
+      label: t("dashboard.onboarding.qr"),
+      description: t("dashboard.workflow.qr_desc"),
+      done: qrItems.length > 0,
+      to: "/qr/new",
+      action: t("dashboard.workflow.open_qr"),
+    },
+    {
+      icon: Copy,
+      label: t("dashboard.onboarding.publish"),
+      description: t("dashboard.workflow.publish_desc"),
+      done: publishedCount > 0,
+      to: designItems.length > 0 ? "/designs" : "/websites",
+      action: t("dashboard.workflow.open_publish"),
+    },
+    {
+      icon: Share2,
+      label: t("dashboard.onboarding.share"),
+      description: t("dashboard.workflow.share_desc"),
+      done: totalQrScans > 0,
+      to: "/analytics",
+      action: t("dashboard.workflow.open_analytics"),
+    },
   ];
   const completedSteps = onboarding.filter((item) => item.done).length;
+  const nextStep =
+    onboarding.find((item) => !item.done) ??
+    ({
+      icon: BarChart3,
+      label: t("dashboard.next_step_done"),
+      description: t("dashboard.next_step_done_desc"),
+      done: true,
+      to: "/analytics",
+      action: t("dashboard.workflow.open_analytics"),
+    } satisfies OnboardingStep);
 
   const shortcuts: Array<{ category: string; items: Shortcut[] }> = [
     {
@@ -296,6 +435,7 @@ function Dashboard() {
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
+            <BrandLogo className="mb-5" imageClassName="h-12 w-12" />
             <div className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3.5 w-3.5" />
               {t("dashboard.welcome_badge")}
@@ -308,22 +448,16 @@ function Dashboard() {
             </p>
             <p className="mt-2 text-sm font-medium text-foreground">{t("dashboard.next_action")}</p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-            <Button asChild size="lg">
-              <Link to="/designs/new">
-                <Plus className="h-4 w-4" /> {t("dashboard.actions.create_card")}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link to="/websites/new">
-                <Globe className="h-4 w-4" /> {t("dashboard.actions.create_website")}
-              </Link>
-            </Button>
-            <Button asChild variant="secondary" size="lg">
-              <Link to="/qr/new">
-                <QrCode className="h-4 w-4" /> {t("dashboard.actions.create_qr")}
-              </Link>
-            </Button>
+          <div className="w-full lg:max-w-sm">
+            <NextStepCard
+              step={nextStep}
+              title={t("dashboard.next_step_title")}
+              progressLabel={t("dashboard.progress_label", {
+                done: completedSteps,
+                total: onboarding.length,
+              })}
+              openLabel={t("dashboard.open_step")}
+            />
           </div>
         </div>
       </section>
@@ -365,6 +499,20 @@ function Dashboard() {
           value={totalQrScans}
           description={t("dashboard.stat_desc.scans")}
         />
+      </section>
+
+      <section>
+        <div className="flex flex-col gap-1">
+          <h2 className="font-display text-xl font-semibold tracking-normal">
+            {t("dashboard.start_here_title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("dashboard.start_here_subtitle")}</p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {onboarding.slice(1, 5).map((step, index) => (
+            <WorkflowStepCard key={step.label} step={step} index={index} />
+          ))}
+        </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_360px]">

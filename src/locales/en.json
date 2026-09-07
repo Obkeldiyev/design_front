@@ -50,6 +50,13 @@
     "no_analytics_title": "No analytics yet",
     "no_analytics_desc": "Analytics appear after you publish and people open your cards, websites, or QR codes.",
     "publish_first": "Create publishable content",
+    "start_here_title": "Start here",
+    "start_here_subtitle": "Follow these four steps to go from empty account to a shareable public presence.",
+    "next_step_title": "Next step",
+    "next_step_done": "Everything important is ready",
+    "next_step_done_desc": "Open analytics or continue improving your latest project.",
+    "progress_label": "{{done}} of {{total}} done",
+    "open_step": "Open",
     "actions": {
       "create_card": "Create Business Card",
       "create_website": "Create Website",
@@ -98,6 +105,22 @@
       "qr": "Generate a QR code",
       "publish": "Publish a card or website",
       "share": "Share and collect the first scan"
+    },
+    "workflow": {
+      "profile_desc": "Add your name and account details before publishing public pages.",
+      "business_desc": "Create the brand profile that cards, sites, and QR codes can reuse.",
+      "card_desc": "Pick a template, edit the card, then save or publish it.",
+      "website_desc": "Build a section-based site for your brand without coding.",
+      "qr_desc": "Create a QR code that opens your card, website, contact details, or link.",
+      "publish_desc": "Open your drafts, review them, and publish the one customers should see.",
+      "share_desc": "Share your links and watch scan activity appear in analytics.",
+      "open_profile": "Open profile",
+      "open_business": "Add business",
+      "open_card": "Create card",
+      "open_website": "Create website",
+      "open_qr": "Create QR",
+      "open_publish": "Open drafts",
+      "open_analytics": "View analytics"
     },
     "feature_value": {
       "card_title": "Digital Business Card:",
