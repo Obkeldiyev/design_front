@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * editor.$designId.tsx
  *
@@ -329,7 +330,6 @@ function Editor() {
     EVENTS.forEach((ev) => c.on(ev, refresh));
     refresh();
     return () => EVENTS.forEach((ev) => c.off(ev, refresh));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasInstance]);
 
   useEffect(() => {
@@ -964,12 +964,24 @@ function Editor() {
               boxSizing: "border-box",
             }}
           >
-            <FabricCanvas
-              onReady={(c) => {
-                canvasRef.current = c;
-                setCanvasInstance(c);
-              }}
-            />
+            <div className="relative">
+              <FabricCanvas
+                onReady={(c) => {
+                  canvasRef.current = c;
+                  setCanvasInstance(c);
+                }}
+              />
+              <RectCornerOverlay
+                key={`radius-${objectVersion}`}
+                canvas={canvasInstance}
+                object={activeObject}
+                zoom={zoom}
+                onDirty={() => {
+                  markDirty();
+                  refreshActiveObject();
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -1344,6 +1356,71 @@ function ObjectInspector({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RectCornerOverlay({
+  canvas,
+  object,
+  zoom,
+  onDirty,
+}: {
+  canvas: fabricTypes.Canvas | null;
+  object: fabricTypes.FabricObject | null;
+  zoom: number;
+  onDirty: () => void;
+}) {
+  if (!canvas || !object || String(object.type ?? "").toLowerCase() !== "rect") return null;
+
+  const anyObj = object as any;
+  const rect = object.getBoundingRect();
+  const visualW = Math.max(1, rect.width);
+  const visualH = Math.max(1, rect.height);
+  const maxRadius = Math.max(0, Math.round(Math.min(visualW, visualH) / 2));
+  const radius = Math.min(maxRadius, Math.round(Number(anyObj.rx ?? 0)));
+  const left = Math.round((rect.left + rect.width) * zoom + 12);
+  const top = Math.max(8, Math.round(rect.top * zoom - 10));
+
+  const applyRadius = (value: number) => {
+    const next = Math.max(0, Math.min(maxRadius, value));
+    object.set({ rx: next, ry: next });
+    object.setCoords();
+    canvas.requestRenderAll();
+    onDirty();
+  };
+
+  return (
+    <div
+      className="absolute z-20 w-44 rounded-lg border border-border bg-card p-2 shadow-xl"
+      style={{ left, top }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="font-semibold text-foreground">Corners</span>
+        <span className="tabular-nums text-muted-foreground">{radius}px</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={Math.max(maxRadius, 1)}
+        value={radius}
+        onChange={(e) => applyRadius(Number(e.target.value))}
+        className="h-2 w-full cursor-pointer accent-primary"
+      />
+      <div className="mt-2 grid grid-cols-4 gap-1">
+        {[0, 8, 16, maxRadius].map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => applyRadius(value)}
+            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-muted-foreground hover:border-primary hover:text-foreground"
+          >
+            {value === maxRadius ? "Pill" : value}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

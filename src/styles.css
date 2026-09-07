@@ -115,7 +115,10 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -123,7 +126,78 @@
 
 .grid-bg {
   background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--foreground) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--foreground) 6%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 32px 32px;
+}
+
+.card24-site-block > :is(section, nav, footer) {
+  padding-top: var(--site-py) !important;
+  padding-bottom: var(--site-py) !important;
+  padding-left: var(--site-px) !important;
+  padding-right: var(--site-px) !important;
+}
+
+.card24-site-block :is(.rounded-xl, .rounded-2xl) {
+  border-radius: var(--site-card-radius);
+}
+
+.card24-site-block img {
+  border-radius: var(--site-image-radius);
+  object-fit: var(--site-image-fit);
+  object-position: var(--site-image-position);
+}
+
+.card24-site-block :is(a, button, [class*="rounded-lg"][class*="px-"]) {
+  border-radius: var(--site-button-radius);
+}
+
+@keyframes card24-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card24-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes card24-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes card24-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

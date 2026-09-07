@@ -1,24 +1,41 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  ArrowLeft, Eye, Monitor, Smartphone, Tablet,
-  Save, ChevronUp, ChevronDown, Trash2, Copy,
-  Plus, Palette, Settings2, GripVertical, ExternalLink, Globe,
+  ArrowLeft,
+  Eye,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Save,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  Copy,
+  Plus,
+  Palette,
+  Settings2,
+  GripVertical,
+  ExternalLink,
+  Globe,
   CheckCircle,
+  Redo2,
+  Undo2,
+  Image as ImageIcon,
 } from "lucide-react";
 
 // Lazy-load BlockRenderer — it contains canvas/DOM-heavy code that breaks SSR
 import { lazy, Suspense } from "react";
 const BlockRenderer = lazy(() =>
-  import("@/components/website-builder/BlockRenderer").then((m) => ({ default: m.BlockRenderer }))
+  import("@/components/website-builder/BlockRenderer").then((m) => ({ default: m.BlockRenderer })),
 );
 const BlockSettings = lazy(() =>
-  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.BlockSettings }))
+  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.BlockSettings })),
 );
 const ThemeSettings = lazy(() =>
-  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.ThemeSettings }))
+  import("@/components/website-builder/BlockSettings").then((m) => ({ default: m.ThemeSettings })),
 );
 import type { Block, BlockType, WebsiteTheme } from "@/lib/website-blocks";
 import { BLOCK_META, DEFAULT_THEME, createBlock } from "@/lib/website-blocks";
@@ -35,7 +52,9 @@ export const Route = createFileRoute("/_authenticated/websites/$id/edit")({
 // Client-only wrapper — prevents SSR for drag-drop and canvas code
 function WebsiteBuilderPage() {
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => { setIsClient(true); }, []);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   if (!isClient) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -44,14 +63,21 @@ function WebsiteBuilderPage() {
     );
   }
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      }
+    >
       <WebsiteBuilder />
     </Suspense>
   );
 }
 
 type Viewport = "desktop" | "tablet" | "mobile";
-type PanelTab = "blocks" | "theme";
+type PanelTab = "blocks" | "theme" | "assets";
+type WebsiteSnapshot = { title: string; blocks: Block[]; theme: WebsiteTheme };
 
 const VIEWPORT_WIDTHS: Record<Viewport, string> = {
   desktop: "100%",
@@ -75,8 +101,76 @@ function WebsiteBuilder() {
   const [panelTab, setPanelTab] = useState<PanelTab>("blocks");
   const [preview, setPreview] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
+  const historyRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
+  const historyTimerRef = useRef<number | null>(null);
+  const isRestoringHistoryRef = useRef(false);
 
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) ?? null;
+  const selectedBlockIndex = selectedBlock
+    ? blocks.findIndex((b) => b.id === selectedBlock.id)
+    : -1;
+
+  const serializeSnapshot = useCallback(
+    (snapshot?: WebsiteSnapshot) => JSON.stringify(snapshot ?? { title, blocks, theme }),
+    [blocks, theme, title],
+  );
+
+  const updateHistoryState = useCallback(() => {
+    setHistoryState({
+      canUndo: historyIndexRef.current > 0,
+      canRedo:
+        historyIndexRef.current >= 0 && historyIndexRef.current < historyRef.current.length - 1,
+    });
+  }, []);
+
+  const resetHistory = useCallback(
+    (snapshot: WebsiteSnapshot) => {
+      historyRef.current = [serializeSnapshot(snapshot)];
+      historyIndexRef.current = 0;
+      updateHistoryState();
+    },
+    [serializeSnapshot, updateHistoryState],
+  );
+
+  const pushHistory = useCallback(() => {
+    if (isRestoringHistoryRef.current) return;
+    const snapshot = serializeSnapshot();
+    const current = historyRef.current[historyIndexRef.current];
+    if (current === snapshot) return;
+
+    const next = historyRef.current.slice(0, historyIndexRef.current + 1);
+    next.push(snapshot);
+    historyRef.current = next.slice(-80);
+    historyIndexRef.current = historyRef.current.length - 1;
+    updateHistoryState();
+  }, [serializeSnapshot, updateHistoryState]);
+
+  const restoreHistory = useCallback(
+    (direction: "undo" | "redo") => {
+      const nextIndex =
+        direction === "undo" ? historyIndexRef.current - 1 : historyIndexRef.current + 1;
+      const snapshot = historyRef.current[nextIndex];
+      if (!snapshot) return;
+
+      const parsed = JSON.parse(snapshot) as WebsiteSnapshot;
+      isRestoringHistoryRef.current = true;
+      setTitle(parsed.title);
+      setBlocks(parsed.blocks);
+      setTheme(parsed.theme);
+      setSelectedBlockId((current) =>
+        current && parsed.blocks.some((block) => block.id === current) ? current : null,
+      );
+      setSaveStatus("idle");
+      historyIndexRef.current = nextIndex;
+      updateHistoryState();
+      window.setTimeout(() => {
+        isRestoringHistoryRef.current = false;
+      }, 0);
+    },
+    [updateHistoryState],
+  );
 
   // ── Data loading ──────────────────────────────────────────────────────────
   // Track the updatedAt of the last server data we loaded so we can detect
@@ -87,7 +181,7 @@ function WebsiteBuilder() {
     queryKey: ["website", id],
     queryFn: () => WebsiteAPI.get(id),
     enabled: !!id && id !== "new",
-    staleTime: 0,            // always fetch fresh on mount
+    staleTime: 0, // always fetch fresh on mount
     refetchOnWindowFocus: false,
   });
 
@@ -98,16 +192,21 @@ function WebsiteBuilder() {
 
     // Use updatedAt + id as the unique key for this server snapshot
     const key = `${w.id}:${w.updatedAt ?? ""}`;
-    if (loadedDataKey.current === key) return;  // same data — skip
+    if (loadedDataKey.current === key) return; // same data — skip
     loadedDataKey.current = key;
 
-    setTitle(w.title || "My Website");
-    setSubdomain(w.subdomain ?? null);
     const cfg = w.config as any;
-    setBlocks(Array.isArray(cfg?.blocks) ? cfg.blocks : []);
-    setTheme(cfg?.theme ? { ...DEFAULT_THEME, ...cfg.theme } : DEFAULT_THEME);
+    const nextTitle = w.title || "My Website";
+    const nextBlocks = Array.isArray(cfg?.blocks) ? cfg.blocks : [];
+    const nextTheme = cfg?.theme ? { ...DEFAULT_THEME, ...cfg.theme } : DEFAULT_THEME;
+
+    setTitle(nextTitle);
+    setSubdomain(w.subdomain ?? null);
+    setBlocks(nextBlocks);
+    setTheme(nextTheme);
+    resetHistory({ title: nextTitle, blocks: nextBlocks, theme: nextTheme });
     setSaveStatus("idle");
-  }, [websiteQuery.data]);
+  }, [resetHistory, websiteQuery.data]);
 
   // Reset loaded key when id changes so new website always hydrates
   useEffect(() => {
@@ -145,20 +244,63 @@ function WebsiteBuilder() {
     },
   });
 
+  useEffect(() => {
+    if (isRestoringHistoryRef.current) return;
+    if (historyTimerRef.current) window.clearTimeout(historyTimerRef.current);
+    historyTimerRef.current = window.setTimeout(pushHistory, 180);
+    return () => {
+      if (historyTimerRef.current) window.clearTimeout(historyTimerRef.current);
+    };
+  }, [blocks, pushHistory, theme, title]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const tag = target.tagName.toUpperCase();
+      if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+
+      if (e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        restoreHistory("undo");
+      }
+      if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
+        e.preventDefault();
+        restoreHistory("redo");
+      }
+      if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        save.mutate();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [restoreHistory, save]);
+
   // ── Block operations ──────────────────────────────────────────────────────
-  const addBlock = useCallback((type: BlockType) => {
+  const insertBlock = useCallback((type: BlockType, index = Number.POSITIVE_INFINITY) => {
     const b = createBlock(type);
-    b.order = blocks.length;
-    setBlocks((prev) => [...prev, b]);
+    setBlocks((prev) => {
+      const next = [...prev];
+      const at = Math.max(0, Math.min(index, next.length));
+      next.splice(at, 0, b);
+      return next.map((block, i) => ({ ...block, order: i }));
+    });
     setSelectedBlockId(b.id);
+    setPanelTab("blocks");
     setTimeout(() => {
-      document.getElementById(`block-${b.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`block-${b.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
-  }, [blocks.length]);
+  }, []);
+
+  const addBlock = useCallback((type: BlockType) => insertBlock(type), [insertBlock]);
 
   const deleteBlock = useCallback((blockId: string) => {
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
-    setSelectedBlockId((cur) => cur === blockId ? null : cur);
+    setSelectedBlockId((cur) => (cur === blockId ? null : cur));
   }, []);
 
   const duplicateBlock = useCallback((blockId: string) => {
@@ -192,18 +334,25 @@ function WebsiteBuilder() {
   }, []);
 
   const updateBlock = useCallback((blockId: string, content: Record<string, any>) => {
-    setBlocks((prev) => prev.map((b) => b.id === blockId ? { ...b, content } : b));
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, content } : b)));
   }, []);
 
   const toggleVisibility = useCallback((blockId: string) => {
-    setBlocks((prev) => prev.map((b) => b.id === blockId ? { ...b, visible: !b.visible } : b));
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, visible: !b.visible } : b)));
   }, []);
 
   // ── Drag and drop ─────────────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, blockId: string) => {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", blockId);
+    e.dataTransfer.setData("application/card24-block-id", blockId);
     setDraggedBlockId(blockId);
+  };
+
+  const handlePaletteDragStart = (e: React.DragEvent, type: BlockType) => {
+    e.dataTransfer.effectAllowed = "copy";
+    e.dataTransfer.setData("application/card24-new-block", type);
+    e.dataTransfer.setData("text/plain", `new:${type}`);
   };
 
   const handleDragOver = (e: React.DragEvent, blockId: string) => {
@@ -214,7 +363,10 @@ function WebsiteBuilder() {
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    const fromId = e.dataTransfer.getData("text/plain") || draggedBlockId;
+    const fromId =
+      e.dataTransfer.getData("application/card24-block-id") ||
+      e.dataTransfer.getData("text/plain") ||
+      draggedBlockId;
     setDraggedBlockId(null);
     setDragOverBlockId(null);
     if (!fromId || fromId === targetId) return;
@@ -227,6 +379,60 @@ function WebsiteBuilder() {
       next.splice(toIdx, 0, moved);
       return next.map((b, i) => ({ ...b, order: i }));
     });
+  };
+
+  const handleDropAtIndex = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const newType = e.dataTransfer.getData("application/card24-new-block") as BlockType;
+    if (newType && BLOCK_META[newType]) {
+      insertBlock(newType, index);
+      setDraggedBlockId(null);
+      setDragOverBlockId(null);
+      return;
+    }
+
+    const fromId =
+      e.dataTransfer.getData("application/card24-block-id") ||
+      e.dataTransfer.getData("text/plain") ||
+      draggedBlockId;
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+    if (!fromId) return;
+
+    setBlocks((prev) => {
+      const fromIdx = prev.findIndex((b) => b.id === fromId);
+      if (fromIdx === -1) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      const at = Math.max(0, Math.min(index > fromIdx ? index - 1 : index, next.length));
+      next.splice(at, 0, moved);
+      return next.map((b, i) => ({ ...b, order: i }));
+    });
+  };
+
+  const addFeatureWithIcon = (icon: string) => {
+    if (selectedBlock?.type === "features") {
+      const content = selectedBlock.content;
+      updateBlock(selectedBlock.id, {
+        ...content,
+        items: [...(content.items || []), { icon, title: "New feature", description: "" }],
+      });
+      return;
+    }
+
+    const block = createBlock("features");
+    block.content = {
+      ...block.content,
+      items: [{ icon, title: "New feature", description: "" }],
+    };
+    setBlocks((prev) => {
+      const at = selectedBlockIndex >= 0 ? selectedBlockIndex + 1 : prev.length;
+      const next = [...prev];
+      next.splice(at, 0, block);
+      return next.map((b, i) => ({ ...b, order: i }));
+    });
+    setSelectedBlockId(block.id);
+    setPanelTab("blocks");
   };
 
   const visibleBlocks = blocks.filter((b) => b.visible || !preview);
@@ -249,7 +455,10 @@ function WebsiteBuilder() {
       {/* Header */}
       <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 flex-shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/websites" className="rounded p-1.5 text-muted-foreground hover:bg-muted flex-shrink-0">
+          <Link
+            to="/websites"
+            className="rounded p-1.5 text-muted-foreground hover:bg-muted flex-shrink-0"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <Input
@@ -280,12 +489,36 @@ function WebsiteBuilder() {
               className={`p-1.5 rounded-md transition-colors ${viewport === v ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               title={v}
             >
-              {v === "desktop" ? <Monitor className="h-4 w-4" /> : v === "tablet" ? <Tablet className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
+              {v === "desktop" ? (
+                <Monitor className="h-4 w-4" />
+              ) : v === "tablet" ? (
+                <Tablet className="h-4 w-4" />
+              ) : (
+                <Smartphone className="h-4 w-4" />
+              )}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => restoreHistory("undo")}
+            disabled={!historyState.canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => restoreHistory("redo")}
+            disabled={!historyState.canRedo}
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
           <button
             onClick={() => setPreview(!preview)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${preview ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
@@ -300,11 +533,18 @@ function WebsiteBuilder() {
             className="gap-1.5"
           >
             {saveStatus === "saved" ? (
-              <><CheckCircle className="h-3.5 w-3.5" /> Saved</>
+              <>
+                <CheckCircle className="h-3.5 w-3.5" /> Saved
+              </>
             ) : save.isPending ? (
-              <><div className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Saving…</>
+              <>
+                <div className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />{" "}
+                Saving…
+              </>
             ) : (
-              <><Save className="h-3.5 w-3.5" /> Save</>
+              <>
+                <Save className="h-3.5 w-3.5" /> Save
+              </>
             )}
           </Button>
         </div>
@@ -327,12 +567,20 @@ function WebsiteBuilder() {
               >
                 <Palette className="h-3.5 w-3.5" /> Theme
               </button>
+              <button
+                onClick={() => setPanelTab("assets")}
+                className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${panelTab === "assets" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <ImageIcon className="h-3.5 w-3.5" /> Assets
+              </button>
             </div>
 
             {panelTab === "blocks" && (
               <div className="flex flex-col flex-1 overflow-hidden">
                 <div className="p-3 border-b border-border">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Add Section</p>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                    Add Section
+                  </p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {(Object.keys(BLOCK_META) as BlockType[]).map((type) => {
                       const meta = BLOCK_META[type];
@@ -340,6 +588,8 @@ function WebsiteBuilder() {
                         <button
                           key={type}
                           onClick={() => addBlock(type)}
+                          draggable
+                          onDragStart={(e) => handlePaletteDragStart(e, type)}
                           className="flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-background hover:border-primary hover:bg-primary/5 transition-colors text-center"
                         >
                           <span className="text-lg leading-none">{meta.icon}</span>
@@ -351,9 +601,13 @@ function WebsiteBuilder() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground px-1 mb-1.5">Layers</p>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground px-1 mb-1.5">
+                    Layers
+                  </p>
                   {blocks.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">No sections yet</p>
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No sections yet
+                    </p>
                   ) : (
                     <div className="space-y-1">
                       {blocks.map((block) => (
@@ -362,19 +616,28 @@ function WebsiteBuilder() {
                           draggable
                           onDragStart={(e) => handleDragStart(e, block.id)}
                           onDragOver={(e) => handleDragOver(e, block.id)}
-                          onDragEnd={() => { setDraggedBlockId(null); setDragOverBlockId(null); }}
+                          onDragEnd={() => {
+                            setDraggedBlockId(null);
+                            setDragOverBlockId(null);
+                          }}
                           onDrop={(e) => handleDrop(e, block.id)}
                           onClick={() => setSelectedBlockId(block.id)}
                           className={[
                             "flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer text-xs transition-all",
-                            selectedBlockId === block.id ? "bg-primary/10 border border-primary text-primary" : "hover:bg-muted/60 border border-transparent",
+                            selectedBlockId === block.id
+                              ? "bg-primary/10 border border-primary text-primary"
+                              : "hover:bg-muted/60 border border-transparent",
                             draggedBlockId === block.id ? "opacity-40" : "",
                             dragOverBlockId === block.id ? "border-t-2 border-t-primary" : "",
                           ].join(" ")}
                         >
                           <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0 cursor-grab" />
-                          <span className="flex-1 truncate font-medium capitalize">{BLOCK_META[block.type]?.label ?? block.type}</span>
-                          {!block.visible && <span className="text-muted-foreground text-xs opacity-50">●</span>}
+                          <span className="flex-1 truncate font-medium capitalize">
+                            {BLOCK_META[block.type]?.label ?? block.type}
+                          </span>
+                          {!block.visible && (
+                            <span className="text-muted-foreground text-xs opacity-50">●</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -386,6 +649,32 @@ function WebsiteBuilder() {
             {panelTab === "theme" && (
               <div className="flex-1 overflow-y-auto">
                 <ThemeSettings theme={theme} onUpdate={setTheme} />
+              </div>
+            )}
+
+            {panelTab === "assets" && (
+              <div className="flex-1 overflow-y-auto p-3 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                    Icons
+                  </p>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {["⚡", "✓", "★", "→", "☎", "✉", "#", "$", "▶", "＋"].map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={() => addFeatureWithIcon(icon)}
+                        className="grid h-9 place-items-center rounded-md border border-border bg-background text-lg hover:border-primary hover:bg-primary/5"
+                        title="Add icon feature"
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/35 p-3 text-xs text-muted-foreground">
+                  Drag sections into the page, drop images on upload areas, and tune
+                  animation/radius from settings.
+                </div>
               </div>
             )}
           </aside>
@@ -423,36 +712,45 @@ function WebsiteBuilder() {
               </div>
             ) : (
               <div>
+                {!preview && <DropZone index={0} onDropAtIndex={handleDropAtIndex} />}
                 {(preview ? visibleBlocks : blocks).map((block, idx) => (
-                  <VisualBlock
-                    key={block.id}
-                    block={block}
-                    theme={theme}
-                    isSelected={selectedBlockId === block.id}
-                    isHovered={hoveredBlockId === block.id}
-                    isDragging={draggedBlockId === block.id}
-                    isDragOver={dragOverBlockId === block.id}
-                    preview={preview}
-                    isFirst={idx === 0}
-                    isLast={idx === (preview ? visibleBlocks : blocks).length - 1}
-                    onSelect={() => { setSelectedBlockId(block.id); setPanelTab("blocks"); }}
-                    onHover={(on) => setHoveredBlockId(on ? block.id : null)}
-                    onUpdate={(content) => updateBlock(block.id, content)}
-                    onDelete={() => deleteBlock(block.id)}
-                    onDuplicate={() => duplicateBlock(block.id)}
-                    onMoveUp={() => moveBlock(block.id, "up")}
-                    onMoveDown={() => moveBlock(block.id, "down")}
-                    onToggleVisibility={() => toggleVisibility(block.id)}
-                    onDragStart={(e) => handleDragStart(e, block.id)}
-                    onDragOver={(e) => handleDragOver(e, block.id)}
-                    onDrop={(e) => handleDrop(e, block.id)}
-                  />
+                  <div key={block.id}>
+                    <VisualBlock
+                      block={block}
+                      theme={theme}
+                      isSelected={selectedBlockId === block.id}
+                      isHovered={hoveredBlockId === block.id}
+                      isDragging={draggedBlockId === block.id}
+                      isDragOver={dragOverBlockId === block.id}
+                      preview={preview}
+                      isFirst={idx === 0}
+                      isLast={idx === (preview ? visibleBlocks : blocks).length - 1}
+                      onSelect={() => {
+                        setSelectedBlockId(block.id);
+                        setPanelTab("blocks");
+                      }}
+                      onHover={(on) => setHoveredBlockId(on ? block.id : null)}
+                      onUpdate={(content) => updateBlock(block.id, content)}
+                      onDelete={() => deleteBlock(block.id)}
+                      onDuplicate={() => duplicateBlock(block.id)}
+                      onMoveUp={() => moveBlock(block.id, "up")}
+                      onMoveDown={() => moveBlock(block.id, "down")}
+                      onToggleVisibility={() => toggleVisibility(block.id)}
+                      onDragStart={(e) => handleDragStart(e, block.id)}
+                      onDragOver={(e) => handleDragOver(e, block.id)}
+                      onDrop={(e) => handleDrop(e, block.id)}
+                    />
+                    {!preview && <DropZone index={idx + 1} onDropAtIndex={handleDropAtIndex} />}
+                  </div>
                 ))}
                 {/* Add section button at the bottom */}
                 {!preview && (
                   <div className="flex justify-center py-6">
                     <button
-                      onClick={() => { addBlock("hero"); setPanelTab("blocks"); }}
+                      onClick={() => {
+                        addBlock("hero");
+                        setPanelTab("blocks");
+                      }}
                       className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors bg-white/80"
                     >
                       <Plus className="h-4 w-4" /> Add section
@@ -470,7 +768,9 @@ function WebsiteBuilder() {
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border flex-shrink-0">
               <Settings2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold">
-                {selectedBlock ? `${BLOCK_META[selectedBlock.type]?.label ?? selectedBlock.type} Settings` : "Site Settings"}
+                {selectedBlock
+                  ? `${BLOCK_META[selectedBlock.type]?.label ?? selectedBlock.type} Settings`
+                  : "Site Settings"}
               </span>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -514,9 +814,26 @@ interface VisualBlockProps {
 }
 
 function VisualBlock({
-  block, theme, isSelected, isHovered, isDragging, isDragOver, preview,
-  isFirst, isLast, onSelect, onHover, onUpdate, onDelete, onDuplicate,
-  onMoveUp, onMoveDown, onToggleVisibility, onDragStart, onDragOver, onDrop,
+  block,
+  theme,
+  isSelected,
+  isHovered,
+  isDragging,
+  isDragOver,
+  preview,
+  isFirst,
+  isLast,
+  onSelect,
+  onHover,
+  onUpdate,
+  onDelete,
+  onDuplicate,
+  onMoveUp,
+  onMoveDown,
+  onToggleVisibility,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: VisualBlockProps) {
   const showOverlay = !preview && (isSelected || isHovered);
 
@@ -529,20 +846,37 @@ function VisualBlock({
         "relative group/block",
         isDragging ? "opacity-30" : "",
         !block.visible && !preview ? "opacity-50" : "",
-      ].filter(Boolean).join(" ")}
-      onMouseEnter={(e) => { if (!preview) { e.stopPropagation(); onHover(true); } }}
-      onMouseLeave={(e) => { if (!preview) { e.stopPropagation(); onHover(false); } }}
-      onClick={(e) => { if (!preview) { e.stopPropagation(); onSelect(); } }}
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onMouseEnter={(e) => {
+        if (!preview) {
+          e.stopPropagation();
+          onHover(true);
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!preview) {
+          e.stopPropagation();
+          onHover(false);
+        }
+      }}
+      onClick={(e) => {
+        if (!preview) {
+          e.stopPropagation();
+          onSelect();
+        }
+      }}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
       {/* Hover/select border */}
       {showOverlay && (
-        <div className={`absolute inset-0 pointer-events-none z-10 ${
-          isSelected
-            ? "ring-2 ring-primary ring-inset"
-            : "ring-1 ring-primary/40 ring-inset"
-        }`} />
+        <div
+          className={`absolute inset-0 pointer-events-none z-10 ${
+            isSelected ? "ring-2 ring-primary ring-inset" : "ring-1 ring-primary/40 ring-inset"
+          }`}
+        />
       )}
 
       {/* Drop indicator */}
@@ -572,10 +906,20 @@ function VisualBlock({
 
           <div className="w-px h-4 bg-white/30 mx-0.5" />
 
-          <button onClick={onMoveUp} disabled={isFirst} className="p-1 rounded hover:bg-white/20 disabled:opacity-30" title="Move up">
+          <button
+            onClick={onMoveUp}
+            disabled={isFirst}
+            className="p-1 rounded hover:bg-white/20 disabled:opacity-30"
+            title="Move up"
+          >
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
-          <button onClick={onMoveDown} disabled={isLast} className="p-1 rounded hover:bg-white/20 disabled:opacity-30" title="Move down">
+          <button
+            onClick={onMoveDown}
+            disabled={isLast}
+            className="p-1 rounded hover:bg-white/20 disabled:opacity-30"
+            title="Move down"
+          >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
 
@@ -604,6 +948,47 @@ function VisualBlock({
         editable={isSelected && !preview}
         onUpdate={onUpdate}
       />
+    </div>
+  );
+}
+
+function DropZone({
+  index,
+  onDropAtIndex,
+}: {
+  index: number;
+  onDropAtIndex: (event: React.DragEvent, index: number) => void;
+}) {
+  const [active, setActive] = useState(false);
+
+  return (
+    <div
+      className={[
+        "relative flex h-3 items-center justify-center transition-all",
+        active ? "h-12 bg-primary/5" : "hover:h-8",
+      ].join(" ")}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setActive(true);
+      }}
+      onDragLeave={() => setActive(false)}
+      onDrop={(event) => {
+        setActive(false);
+        onDropAtIndex(event, index);
+      }}
+    >
+      <div
+        className={[
+          "h-px w-full transition-all",
+          active ? "h-0.5 bg-primary" : "bg-transparent",
+        ].join(" ")}
+      />
+      {active && (
+        <span className="absolute rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
+          Drop section here
+        </span>
+      )}
     </div>
   );
 }
