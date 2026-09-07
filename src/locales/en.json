@@ -17,7 +17,7 @@
   },
   "dashboard": {
     "title": "Welcome back, {{name}}.",
-    "subtitle": "Here's what's happening with your brand.",
+    "subtitle": "Create cards, websites, QR codes, and shareable contact pages from one place.",
     "new_design": "New card",
     "businesses": "Businesses",
     "designs": "Business Cards",
@@ -30,7 +30,90 @@
     "no_designs": "No cards yet.",
     "create_first": "Create your first",
     "your_businesses": "Your businesses",
-    "add_business": "Add business"
+    "add_business": "Add business",
+    "fallback_name": "there",
+    "welcome_badge": "Your Card24 workspace",
+    "next_action": "Recommended next step: create or continue the item closest to publishing.",
+    "priority": "Create New",
+    "total_scans": "QR scans",
+    "shortcuts_title": "Shortcuts",
+    "shortcuts_subtitle": "Clear entry points for the work people use most often.",
+    "recent_projects": "Recent Projects",
+    "recent_projects_subtitle": "Continue editing drafts or review published work.",
+    "continue_editing": "Continue editing",
+    "updated": "Updated",
+    "empty_recent_title": "No recent projects yet",
+    "empty_recent_desc": "Create a digital business card, website, or QR code and it will appear here for quick access.",
+    "onboarding_title": "Onboarding Checklist",
+    "onboarding_subtitle": "Finish these steps to make your first public share ready.",
+    "feature_value_title": "What each feature gives you",
+    "no_analytics_title": "No analytics yet",
+    "no_analytics_desc": "Analytics appear after you publish and people open your cards, websites, or QR codes.",
+    "publish_first": "Create publishable content",
+    "actions": {
+      "create_card": "Create Business Card",
+      "create_website": "Create Website",
+      "create_qr": "Create QR Code"
+    },
+    "stat_desc": {
+      "businesses": "Brands and contact profiles under your account.",
+      "cards": "Digital business cards and printable card designs.",
+      "websites": "Personal and business websites you can publish.",
+      "qr": "Saved QR codes linked to your content or contacts.",
+      "scans": "Real scans recorded from saved QR codes."
+    },
+    "shortcut_groups": {
+      "business_cards": "Business Cards",
+      "websites": "Personal Website",
+      "growth": "QR Codes and Analytics",
+      "account": "Contacts and Account"
+    },
+    "shortcuts": {
+      "create_card": "Create Business Card",
+      "create_card_desc": "Build a professional card with contact details, services, and links.",
+      "my_cards": "My Business Cards",
+      "my_cards_desc": "Open, edit, preview, publish, or duplicate your existing cards.",
+      "create_website": "Create Personal Website",
+      "create_website_desc": "Start a section-based website from a ready-made template.",
+      "edit_website": "Edit My Website",
+      "edit_website_desc": "Continue website drafts, update content, or open a public page.",
+      "create_qr": "Create QR Code",
+      "create_qr_desc": "Generate a scannable code for a card, website, contact, or link.",
+      "my_qr": "My QR Codes",
+      "my_qr_desc": "Rename, test, copy, download, duplicate, or delete saved QR codes.",
+      "analytics": "View Statistics",
+      "analytics_desc": "See views, visits, scans, and engagement once content is published.",
+      "contacts": "Manage Contacts",
+      "contacts_desc": "Keep business contact information ready for cards and sharing.",
+      "templates": "Templates",
+      "templates_desc": "Pick a design style instead of starting from a blank page.",
+      "settings": "Account Settings",
+      "settings_desc": "Update your profile, language, and account preferences."
+    },
+    "onboarding": {
+      "profile": "Complete your profile",
+      "business": "Create your first business",
+      "card": "Create your first business card",
+      "website": "Create a personal or business website",
+      "qr": "Generate a QR code",
+      "publish": "Publish a card or website",
+      "share": "Share and collect the first scan"
+    },
+    "feature_value": {
+      "card_title": "Digital Business Card:",
+      "card_desc": "share your contact details, company information, social links, and services through one page.",
+      "website_title": "Personal Website:",
+      "website_desc": "publish a simple site for yourself or your business without programming.",
+      "qr_title": "QR Code:",
+      "qr_desc": "let visitors open your card, website, contact details, or link by scanning.",
+      "analytics_title": "Analytics:",
+      "analytics_desc": "understand which cards, websites, and QR codes people actually use."
+    },
+    "project_types": {
+      "card": "Business card",
+      "website": "Website",
+      "qr": "QR code"
+    }
   },
   "websites": {
     "title": "Websites",
@@ -60,7 +143,11 @@
     "create": "Create website",
     "no_subdomain": "No subdomain set",
     "edit": "Edit",
-    "view": "View"
+    "view": "View",
+    "deleted": "Website deleted",
+    "delete_title": "Delete this website?",
+    "delete_desc": "This permanently removes the website and its public link will stop working.",
+    "delete_confirm": "Delete Website"
   },
   "designs": {
     "title": "Business Cards",
@@ -134,7 +221,37 @@
       "address": "Address",
       "saving": "Saving...",
       "save": "Save",
-      "create": "Create"
+      "create": "Create",
+      "description_placeholder": "What do customers need to know about this business?",
+      "address_placeholder": "City, street, office",
+      "save_draft": "Save Draft",
+      "live_preview": "Live Preview",
+      "preview_title": "Preview and save",
+      "preview_desc": "Review how this business profile will appear before saving. You can come back and edit it later.",
+      "preview_name": "Business name",
+      "preview_industry": "Industry or service type",
+      "privacy_note": "Contact details are shown only where you choose to use this business profile.",
+      "progress": "Step {{current}} of {{total}}",
+      "steps": {
+        "basic": "Basic Information",
+        "contact": "Contact Information",
+        "preview": "Preview and Save"
+      },
+      "help": {
+        "name": "This name appears on your business cards, websites, and public links.",
+        "slug": "This creates a readable public URL for this business.",
+        "industry": "Helps templates and descriptions feel more relevant to your field.",
+        "logo": "Your logo helps visitors recognize your brand.",
+        "description": "A short benefit-focused description helps visitors understand what you offer.",
+        "phone": "Visitors can use this number to contact you directly. You can hide it from public pages later.",
+        "email": "Used for contact buttons and visitor messages where enabled.",
+        "website": "Use a secure URL so visitors trust the link.",
+        "address": "Shown on cards or websites when you choose to display a location."
+      },
+      "errors": {
+        "file_type": "This file format is not supported.",
+        "file_size": "The uploaded image exceeds the maximum file size."
+      }
     }
   },
   "qr": {
@@ -160,7 +277,76 @@
       "EMAIL": "Email",
       "LOCATION": "Location (lat,lng)",
       "VCARD": "vCard text",
-      "CUSTOM": "Custom text"
+      "CUSTOM": "Custom text",
+      "BUSINESS_CARD": "Business Card",
+      "PERSONAL_WEBSITE": "Personal Website",
+      "EXTERNAL_WEBSITE": "External Website",
+      "WIFI": "Wi-Fi Network",
+      "SOCIAL_MEDIA": "Social Media Profile",
+      "PLAIN_TEXT": "Plain Text"
+    },
+    "new_subtitle": "Choose what the QR code should open, validate the destination, preview it, then save or download.",
+    "name": "QR code name",
+    "name_placeholder": "Spring promo card",
+    "save": "Save QR Code",
+    "saving": "Saving...",
+    "saved": "QR code saved",
+    "deleted": "QR code deleted",
+    "copied": "Link copied",
+    "copy": "Copy Link",
+    "open": "Open",
+    "duplicate": "Duplicate",
+    "scans": "scans",
+    "test": "Test QR Code",
+    "preview": "Preview",
+    "result_title": "What this QR code will open",
+    "result_desc": "Scan tests and downloads use this exact destination. Invalid or empty destinations cannot be saved.",
+    "error": "Could not load QR codes.",
+    "empty_title": "No QR codes yet",
+    "empty_subtitle": "Create a QR code to open a business card, website, contact detail, social profile, location, or text.",
+    "delete_title": "Delete this QR code?",
+    "delete_desc": "This permanently removes the saved QR code and its stored scan statistics.",
+    "delete_confirm": "Delete QR Code",
+    "help": {
+      "name": "A clear name helps you find this code later.",
+      "destination": "This is the destination visitors open after scanning."
+    },
+    "errors": {
+      "required": "Enter a destination before generating a QR code.",
+      "https": "Enter a valid website URL beginning with https://.",
+      "url": "Enter a valid website URL.",
+      "email": "Enter a valid email address.",
+      "phone": "This phone number is incomplete.",
+      "telegram": "Enter a valid Telegram username.",
+      "location": "Enter latitude and longitude separated by a comma."
+    },
+    "type_help": {
+      "BUSINESS_CARD": "Open a published digital business card.",
+      "PERSONAL_WEBSITE": "Open your personal or business website.",
+      "EXTERNAL_WEBSITE": "Open any secure external website.",
+      "PHONE": "Start a phone call from supported devices.",
+      "EMAIL": "Open a new email message.",
+      "WIFI": "Share a Wi-Fi network name.",
+      "TELEGRAM": "Open a Telegram profile or channel.",
+      "WHATSAPP": "Open WhatsApp chat with a phone number.",
+      "SOCIAL_MEDIA": "Open a social media profile link.",
+      "LOCATION": "Open map coordinates.",
+      "PLAIN_TEXT": "Show plain text after scanning.",
+      "VCARD": "Share contact data in vCard format."
+    },
+    "placeholders": {
+      "BUSINESS_CARD": "https://card24.uz/card/your-card",
+      "PERSONAL_WEBSITE": "https://card24.uz/site/your-site",
+      "EXTERNAL_WEBSITE": "https://example.com",
+      "PHONE": "+998901234567",
+      "EMAIL": "hello@example.com",
+      "WIFI": "Office WiFi",
+      "TELEGRAM": "@username",
+      "WHATSAPP": "+998901234567",
+      "SOCIAL_MEDIA": "https://instagram.com/username",
+      "LOCATION": "41.3111, 69.2797",
+      "PLAIN_TEXT": "Thank you for scanning",
+      "VCARD": "BEGIN:VCARD..."
     }
   },
   "analytics": {
@@ -231,6 +417,10 @@
     "error": "Something went wrong.",
     "published": "Published",
     "draft": "Draft",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "optional": "optional",
+    "back": "Back",
+    "next": "Next",
+    "saved": "Saved"
   }
 }

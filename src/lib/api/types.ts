@@ -29,11 +29,7 @@ export type Business = {
 };
 
 export type DesignType =
-  | "BUSINESS_CARD"
-  | "DIGITAL_CARD"
-  | "WEBSITE_TEMPLATE"
-  | "QR_CODE"
-  | "MARKETING_ASSET";
+  "BUSINESS_CARD" | "DIGITAL_CARD" | "WEBSITE_TEMPLATE" | "QR_CODE" | "MARKETING_ASSET";
 
 export type DesignStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
@@ -74,6 +70,12 @@ export type Website = {
 };
 
 export type QRType =
+  | "BUSINESS_CARD"
+  | "PERSONAL_WEBSITE"
+  | "EXTERNAL_WEBSITE"
+  | "WIFI"
+  | "SOCIAL_MEDIA"
+  | "PLAIN_TEXT"
   | "WEBSITE"
   | "TELEGRAM"
   | "WHATSAPP"
@@ -85,10 +87,13 @@ export type QRType =
 
 export type QRCodeRecord = {
   id: string;
+  ownerId?: string | null;
   businessId?: string | null;
   title?: string | null;
   slug: string;
   type: QRType;
   data: Record<string, unknown>;
   scanCount: number;
+  createdAt?: string;
+  updatedAt?: string;
 };

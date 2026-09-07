@@ -26,7 +26,11 @@ function Register() {
   const navigate = useNavigate();
   const registerUser = useAuthStore((s) => s.register);
   const loading = useAuthStore((s) => s.loading);
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -46,9 +50,7 @@ function Register() {
         <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-5">
           <div>
             <h1 className="font-display text-3xl font-bold">Create your account</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              60 seconds. No credit card.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">60 seconds. No credit card.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -88,7 +90,7 @@ function Register() {
           </a>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link to="/login" search={{ next: undefined }} className="text-primary hover:underline">
               Log in
             </Link>
           </div>
@@ -98,7 +100,9 @@ function Register() {
         <div />
         <div>
           <div className="font-display text-3xl font-semibold leading-tight">
-            Built for entrepreneurs<br />who don't have time to design.
+            Built for entrepreneurs
+            <br />
+            who don't have time to design.
           </div>
         </div>
         <div className="text-xs text-sidebar-foreground/50">© card24</div>

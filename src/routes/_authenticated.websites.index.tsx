@@ -3,8 +3,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WebsiteAPI } from "@/lib/api/resources";
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Globe, ExternalLink, Pencil, Trash2,
-  Clock, CheckCircle2, FileText, Ban,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Globe,
+  ExternalLink,
+  Pencil,
+  Trash2,
+  Clock,
+  CheckCircle2,
+  FileText,
+  Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiError } from "@/lib/api/client";
@@ -35,14 +53,29 @@ function WebsitesIndex() {
 
   const remove = useMutation({
     mutationFn: (id: string) => WebsiteAPI.remove(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["websites"] }); toast.success("Deleted"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["websites"] });
+      toast.success(t("websites.deleted"));
+    },
     onError: (e) => toast.error(apiError(e)),
   });
 
   const STATUS: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
-    PUBLISHED: { label: t("common.published"), icon: <CheckCircle2 className="h-3 w-3" />, cls: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400" },
-    DRAFT:     { label: t("common.draft"),     icon: <FileText className="h-3 w-3" />,     cls: "bg-muted text-muted-foreground" },
-    DISABLED:  { label: t("common.disabled"),  icon: <Ban className="h-3 w-3" />,           cls: "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400" },
+    PUBLISHED: {
+      label: t("common.published"),
+      icon: <CheckCircle2 className="h-3 w-3" />,
+      cls: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
+    },
+    DRAFT: {
+      label: t("common.draft"),
+      icon: <FileText className="h-3 w-3" />,
+      cls: "bg-muted text-muted-foreground",
+    },
+    DISABLED: {
+      label: t("common.disabled"),
+      icon: <Ban className="h-3 w-3" />,
+      cls: "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400",
+    },
   };
 
   return (
@@ -54,7 +87,10 @@ function WebsitesIndex() {
           <p className="mt-1 text-muted-foreground">{t("websites.subtitle")}</p>
         </div>
         <Link to="/websites/new">
-          <Button size="lg"><Plus className="mr-2 h-4 w-4" />{t("websites.new")}</Button>
+          <Button size="lg">
+            <Plus className="mr-2 h-4 w-4" />
+            {t("websites.new")}
+          </Button>
         </Link>
       </div>
 
@@ -62,7 +98,10 @@ function WebsitesIndex() {
       {isLoading && (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-5 animate-pulse space-y-3">
+            <div
+              key={i}
+              className="rounded-2xl border border-border bg-card p-5 animate-pulse space-y-3"
+            >
               <div className="h-5 bg-muted rounded w-1/2" />
               <div className="h-3 bg-muted rounded w-2/3" />
               <div className="h-8 bg-muted rounded mt-4" />
@@ -83,9 +122,14 @@ function WebsitesIndex() {
         <div className="rounded-2xl border-2 border-dashed border-border p-16 text-center">
           <Globe className="mx-auto h-10 w-10 text-muted-foreground/40" />
           <h2 className="mt-4 text-xl font-semibold">{t("websites.empty_title")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground max-w-xs mx-auto">{t("websites.empty_subtitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground max-w-xs mx-auto">
+            {t("websites.empty_subtitle")}
+          </p>
           <Link to="/websites/new" className="mt-5 inline-block">
-            <Button size="lg"><Plus className="mr-2 h-4 w-4" />{t("websites.create")}</Button>
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              {t("websites.create")}
+            </Button>
           </Link>
         </div>
       )}
@@ -97,7 +141,10 @@ function WebsitesIndex() {
             const status = STATUS[w.status] ?? STATUS.DRAFT;
             const liveUrl = siteUrl(w.subdomain, w.customDomain);
             return (
-              <div key={w.id} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+              <div
+                key={w.id}
+                className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+              >
                 <div className="h-2 w-full bg-gradient-to-r from-primary to-primary/40" />
                 <div className="p-5 flex flex-col flex-1 gap-3">
                   <div className="flex items-start justify-between gap-2">
@@ -110,40 +157,73 @@ function WebsitesIndex() {
                         </p>
                       )}
                     </div>
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${status.cls}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${status.cls}`}
+                    >
                       {status.icon} {status.label}
                     </span>
                   </div>
 
                   {liveUrl ? (
-                    <a href={liveUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate">
+                    <a
+                      href={liveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
+                    >
                       <Globe className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="truncate">{liveUrl.replace(/^https?:\/\//, "")}</span>
                       <ExternalLink className="h-3 w-3 flex-shrink-0" />
                     </a>
                   ) : (
-                    <p className="text-xs text-muted-foreground italic">{t("websites.no_subdomain")}</p>
+                    <p className="text-xs text-muted-foreground italic">
+                      {t("websites.no_subdomain")}
+                    </p>
                   )}
 
                   <div className="flex gap-2 mt-auto pt-2">
                     <Link to="/websites/$id/edit" params={{ id: w.id }} className="flex-1">
                       <Button size="sm" className="w-full gap-1.5">
-                        <Pencil className="h-3.5 w-3.5" />{t("websites.edit")}
+                        <Pencil className="h-3.5 w-3.5" />
+                        {t("websites.edit")}
                       </Button>
                     </Link>
                     {liveUrl && (
                       <a href={liveUrl} target="_blank" rel="noopener noreferrer">
                         <Button size="sm" variant="outline" className="gap-1.5">
-                          <ExternalLink className="h-3.5 w-3.5" />{t("websites.view")}
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          {t("websites.view")}
                         </Button>
                       </a>
                     )}
-                    <Button size="sm" variant="ghost"
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => { if (confirm(`Delete "${w.title}"?`)) remove.mutate(w.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("websites.delete_title")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("websites.delete_desc")}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => remove.mutate(w.id)}
+                          >
+                            {t("websites.delete_confirm")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </div>
@@ -151,12 +231,16 @@ function WebsitesIndex() {
           })}
 
           {/* Add new */}
-          <Link to="/websites/new"
-            className="rounded-2xl border-2 border-dashed border-border hover:border-primary/40 transition-colors flex flex-col items-center justify-center gap-2 min-h-[180px] group">
+          <Link
+            to="/websites/new"
+            className="rounded-2xl border-2 border-dashed border-border hover:border-primary/40 transition-colors flex flex-col items-center justify-center gap-2 min-h-[180px] group"
+          >
             <div className="h-10 w-10 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
               <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-            <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">{t("websites.new")}</span>
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
+              {t("websites.new")}
+            </span>
           </Link>
         </div>
       )}

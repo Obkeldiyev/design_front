@@ -35,9 +35,7 @@ function Landing() {
             <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
             </div>
-            <span className="font-display text-xl font-semibold tracking-tight">
-              card24
-            </span>
+            <span className="font-display text-xl font-semibold tracking-tight">card24</span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
             <Link to="/templates" className="text-sm text-muted-foreground hover:text-foreground">
@@ -50,7 +48,7 @@ function Landing() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
-            <Link to="/login">
+            <Link to="/login" search={{ next: undefined }}>
               <Button variant="ghost" size="sm">
                 {t("nav.login")}
               </Button>
@@ -77,9 +75,7 @@ function Landing() {
                 {t("landing.title_b")}
               </span>
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
-              {t("landing.subtitle")}
-            </p>
+            <p className="mt-6 text-lg text-muted-foreground">{t("landing.subtitle")}</p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Link to="/register">
                 <Button size="lg" className="h-12 px-6">
@@ -115,9 +111,7 @@ function Landing() {
             <h2 className="font-display text-3xl font-bold md:text-4xl">
               {t("landing.section_title")}
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              {t("landing.section_sub")}
-            </p>
+            <p className="mt-3 text-muted-foreground">{t("landing.section_sub")}</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {[
@@ -140,7 +134,9 @@ function Landing() {
           <div className="flex items-center gap-6">
             <Link to="/pricing">{t("nav.pricing")}</Link>
             <Link to="/templates">{t("nav.templates")}</Link>
-            <Link to="/login">{t("nav.login")}</Link>
+            <Link to="/login" search={{ next: undefined }}>
+              {t("nav.login")}
+            </Link>
             <LanguageSwitcher compact />
             <ThemeToggle />
           </div>

@@ -17,7 +17,7 @@
   },
   "dashboard": {
     "title": "Xush kelibsiz, {{name}}.",
-    "subtitle": "Brendingizda nima bo'lyapti.",
+    "subtitle": "Kartalar, saytlar, QR-kodlar va kontakt sahifalarini bir joyda yarating.",
     "new_design": "Yangi karta",
     "businesses": "Kompaniyalar",
     "designs": "Vizit kartalar",
@@ -30,7 +30,90 @@
     "no_designs": "Hali karta yo'q.",
     "create_first": "Birinchisini yarating",
     "your_businesses": "Sizning kompaniyalaringiz",
-    "add_business": "Kompaniya qo'shish"
+    "add_business": "Kompaniya qo'shish",
+    "fallback_name": "do'stim",
+    "welcome_badge": "Card24 ish maydoningiz",
+    "next_action": "Tavsiya: nashrga eng yaqin ishni yarating yoki davom ettiring.",
+    "priority": "Yaratish",
+    "total_scans": "QR skanlar",
+    "shortcuts_title": "Tezkor amallar",
+    "shortcuts_subtitle": "Eng ko'p ishlatiladigan funksiyalar uchun aniq kirishlar.",
+    "recent_projects": "Oxirgi loyihalar",
+    "recent_projects_subtitle": "Qoralamalarni davom ettiring yoki nashr qilingan ishlarni tekshiring.",
+    "continue_editing": "Davom ettirish",
+    "updated": "Yangilandi",
+    "empty_recent_title": "Hali loyiha yo'q",
+    "empty_recent_desc": "Raqamli vizit karta, sayt yoki QR-kod yarating, ular tezkor kirish uchun shu yerda ko'rinadi.",
+    "onboarding_title": "Boshlash ro'yxati",
+    "onboarding_subtitle": "Birinchi ommaviy havolani tayyorlash uchun shu bosqichlarni bajaring.",
+    "feature_value_title": "Funksiyalar foydasi",
+    "no_analytics_title": "Hali analitika yo'q",
+    "no_analytics_desc": "Nashrdan keyin odamlar kartalar, saytlar yoki QR-kodlarni ochganda analitika paydo bo'ladi.",
+    "publish_first": "Nashr qilinadigan kontent yaratish",
+    "actions": {
+      "create_card": "Vizit karta yaratish",
+      "create_website": "Sayt yaratish",
+      "create_qr": "QR-kod yaratish"
+    },
+    "stat_desc": {
+      "businesses": "Hisobingizdagi brendlar va kontakt profillari.",
+      "cards": "Raqamli va chop etiladigan vizit kartalar.",
+      "websites": "Nashr qilish mumkin bo'lgan shaxsiy va biznes saytlar.",
+      "qr": "Kontent va kontaktlarga bog'langan QR-kodlar.",
+      "scans": "Saqlangan QR-kodlarning haqiqiy skanlari."
+    },
+    "shortcut_groups": {
+      "business_cards": "Vizit kartalar",
+      "websites": "Shaxsiy sayt",
+      "growth": "QR-kodlar va analitika",
+      "account": "Kontaktlar va hisob"
+    },
+    "shortcuts": {
+      "create_card": "Vizit karta yaratish",
+      "create_card_desc": "Kontaktlar, xizmatlar va havolalar bilan professional karta yarating.",
+      "my_cards": "Mening vizit kartalarim",
+      "my_cards_desc": "Kartalarni oching, tahrirlang, nashr qiling yoki nusxalang.",
+      "create_website": "Shaxsiy sayt yaratish",
+      "create_website_desc": "Tayyor shablondan seksiyali sayt boshlang.",
+      "edit_website": "Saytimni tahrirlash",
+      "edit_website_desc": "Qoralamalarni davom ettiring, kontentni yangilang yoki ommaviy sahifani oching.",
+      "create_qr": "QR-kod yaratish",
+      "create_qr_desc": "Karta, sayt, kontakt yoki havola uchun skanerlanadigan kod yarating.",
+      "my_qr": "Mening QR-kodlarim",
+      "my_qr_desc": "QR-kodlarni nomlang, tekshiring, nusxalang, yuklab oling yoki o'chiring.",
+      "analytics": "Statistika",
+      "analytics_desc": "Nashrdan keyin ko'rishlar, tashriflar va skanlarni ko'ring.",
+      "contacts": "Kontaktlarni boshqarish",
+      "contacts_desc": "Kartalar va ulashish uchun biznes kontaktlarni tayyor saqlang.",
+      "templates": "Shablonlar",
+      "templates_desc": "Bo'sh sahifadan boshlamasdan dizayn uslubini tanlang.",
+      "settings": "Hisob sozlamalari",
+      "settings_desc": "Profil, til va hisob sozlamalarini yangilang."
+    },
+    "onboarding": {
+      "profile": "Profilni to'ldirish",
+      "business": "Birinchi kompaniyani yaratish",
+      "card": "Birinchi vizit kartani yaratish",
+      "website": "Sayt yaratish",
+      "qr": "QR-kod yaratish",
+      "publish": "Karta yoki saytni nashr qilish",
+      "share": "Ulashish va birinchi skanni olish"
+    },
+    "feature_value": {
+      "card_title": "Raqamli vizit karta:",
+      "card_desc": "kontaktlar, kompaniya ma'lumoti, ijtimoiy havolalar va xizmatlarni bitta sahifada ulashing.",
+      "website_title": "Shaxsiy sayt:",
+      "website_desc": "dasturlashsiz o'zingiz yoki biznesingiz uchun oddiy sayt nashr qiling.",
+      "qr_title": "QR-kod:",
+      "qr_desc": "skan qilinganda karta, sayt, kontaktlar yoki havolani ochadi.",
+      "analytics_title": "Analitika:",
+      "analytics_desc": "odamlar qaysi karta, sayt va QR-kodlardan foydalanayotganini ko'rsatadi."
+    },
+    "project_types": {
+      "card": "Vizit karta",
+      "website": "Sayt",
+      "qr": "QR-kod"
+    }
   },
   "websites": {
     "title": "Saytlar",
@@ -60,7 +143,11 @@
     "create": "Sayt yaratish",
     "no_subdomain": "Subdomen belgilanmagan",
     "edit": "Tahrirlash",
-    "view": "Ko'rish"
+    "view": "Ko'rish",
+    "deleted": "Sayt o'chirildi",
+    "delete_title": "Bu saytni o'chirish?",
+    "delete_desc": "Sayt butunlay o'chiriladi va ommaviy havola ishlamay qoladi.",
+    "delete_confirm": "Saytni o'chirish"
   },
   "designs": {
     "title": "Vizit kartalar",
@@ -134,7 +221,37 @@
       "address": "Manzil",
       "saving": "Saqlanmoqda...",
       "save": "Saqlash",
-      "create": "Yaratish"
+      "create": "Yaratish",
+      "description_placeholder": "Mijozlar bu kompaniya haqida nimani bilishi kerak?",
+      "address_placeholder": "Shahar, ko'cha, ofis",
+      "save_draft": "Qoralama saqlash",
+      "live_preview": "Jonli ko'rish",
+      "preview_title": "Ko'rib chiqish va saqlash",
+      "preview_desc": "Saqlashdan oldin profil qanday ko'rinishini tekshiring. Keyinroq tahrirlash mumkin.",
+      "preview_name": "Kompaniya nomi",
+      "preview_industry": "Soha yoki xizmat turi",
+      "privacy_note": "Kontaktlar faqat siz tanlagan sahifalarda ko'rsatiladi.",
+      "progress": "{{total}} dan {{current}}-qadam",
+      "steps": {
+        "basic": "Asosiy ma'lumot",
+        "contact": "Kontakt ma'lumotlari",
+        "preview": "Ko'rish va saqlash"
+      },
+      "help": {
+        "name": "Bu nom kartalar, saytlar va ommaviy havolalarda ko'rinadi.",
+        "slug": "Kompaniya uchun tushunarli ommaviy URL yaratadi.",
+        "industry": "Shablon va matnlarni sohangizga moslashtirishga yordam beradi.",
+        "logo": "Logotip tashrifchilarga brendingizni tanishga yordam beradi.",
+        "description": "Qisqa foydali tavsif nima taklif qilishingizni tushuntiradi.",
+        "phone": "Tashrifchilar bevosita bog'lanishi mumkin. Keyinroq raqamni yashirish mumkin.",
+        "email": "Kontakt tugmalari va xabarlar uchun ishlatiladi.",
+        "website": "Ishonch uchun xavfsiz URL ishlating.",
+        "address": "Lokatsiyani yoqsangiz karta yoki saytlarda ko'rsatiladi."
+      },
+      "errors": {
+        "file_type": "Bu fayl formati qo'llab-quvvatlanmaydi.",
+        "file_size": "Yuklangan rasm maksimal hajmdan katta."
+      }
     }
   },
   "qr": {
@@ -160,7 +277,76 @@
       "EMAIL": "Email",
       "LOCATION": "Joylashuv (lat,lng)",
       "VCARD": "vCard matni",
-      "CUSTOM": "Ixtiyoriy matn"
+      "CUSTOM": "Ixtiyoriy matn",
+      "BUSINESS_CARD": "Vizit karta",
+      "PERSONAL_WEBSITE": "Shaxsiy sayt",
+      "EXTERNAL_WEBSITE": "Tashqi sayt",
+      "WIFI": "Wi-Fi tarmog'i",
+      "SOCIAL_MEDIA": "Ijtimoiy profil",
+      "PLAIN_TEXT": "Oddiy matn"
+    },
+    "new_subtitle": "QR-kod nima ochishini tanlang, manzilni tekshiring, ko'rib chiqing, keyin saqlang yoki yuklab oling.",
+    "name": "QR-kod nomi",
+    "name_placeholder": "Bahorgi promo karta",
+    "save": "QR-kodni saqlash",
+    "saving": "Saqlanmoqda...",
+    "saved": "QR-kod saqlandi",
+    "deleted": "QR-kod o'chirildi",
+    "copied": "Havola nusxalandi",
+    "copy": "Havolani nusxalash",
+    "open": "Ochish",
+    "duplicate": "Nusxalash",
+    "scans": "skan",
+    "test": "QR-kodni tekshirish",
+    "preview": "Ko'rish",
+    "result_title": "Bu QR-kod nimani ochadi",
+    "result_desc": "Test va yuklab olish aynan shu manzildan foydalanadi. Bo'sh yoki noto'g'ri manzil saqlanmaydi.",
+    "error": "QR-kodlarni yuklab bo'lmadi.",
+    "empty_title": "Hali QR-kod yo'q",
+    "empty_subtitle": "Vizit karta, sayt, kontakt, ijtimoiy profil, joylashuv yoki matn uchun QR-kod yarating.",
+    "delete_title": "Bu QR-kodni o'chirish?",
+    "delete_desc": "Saqlangan QR-kod va uning skan statistikasi butunlay o'chiriladi.",
+    "delete_confirm": "QR-kodni o'chirish",
+    "help": {
+      "name": "Aniq nom kodni keyinroq topishga yordam beradi.",
+      "destination": "Skan qilgandan keyin tashrifchilarda shu ochiladi."
+    },
+    "errors": {
+      "required": "QR-kod yaratishdan oldin manzil kiriting.",
+      "https": "https:// bilan boshlanadigan sayt URL kiriting.",
+      "url": "To'g'ri sayt URL kiriting.",
+      "email": "To'g'ri email kiriting.",
+      "phone": "Bu telefon raqami to'liq emas.",
+      "telegram": "To'g'ri Telegram username kiriting.",
+      "location": "Kenglik va uzunlikni vergul bilan kiriting."
+    },
+    "type_help": {
+      "BUSINESS_CARD": "Nashr qilingan raqamli vizit kartani ochadi.",
+      "PERSONAL_WEBSITE": "Shaxsiy yoki biznes saytingizni ochadi.",
+      "EXTERNAL_WEBSITE": "Har qanday xavfsiz tashqi saytni ochadi.",
+      "PHONE": "Mos qurilmalarda qo'ng'iroqni boshlaydi.",
+      "EMAIL": "Yangi email xabarini ochadi.",
+      "WIFI": "Wi-Fi tarmoq nomini ulashadi.",
+      "TELEGRAM": "Telegram profil yoki kanalini ochadi.",
+      "WHATSAPP": "Telefon raqami bo'yicha WhatsApp chat ochadi.",
+      "SOCIAL_MEDIA": "Ijtimoiy profil havolasini ochadi.",
+      "LOCATION": "Xarita koordinatalarini ochadi.",
+      "PLAIN_TEXT": "Skan qilingandan keyin oddiy matn ko'rsatadi.",
+      "VCARD": "vCard kontakt ma'lumotlarini ulashadi."
+    },
+    "placeholders": {
+      "BUSINESS_CARD": "https://card24.uz/card/your-card",
+      "PERSONAL_WEBSITE": "https://card24.uz/site/your-site",
+      "EXTERNAL_WEBSITE": "https://example.com",
+      "PHONE": "+998901234567",
+      "EMAIL": "hello@example.com",
+      "WIFI": "Office WiFi",
+      "TELEGRAM": "@username",
+      "WHATSAPP": "+998901234567",
+      "SOCIAL_MEDIA": "https://instagram.com/username",
+      "LOCATION": "41.3111, 69.2797",
+      "PLAIN_TEXT": "Skan uchun rahmat",
+      "VCARD": "BEGIN:VCARD..."
     }
   },
   "analytics": {
@@ -231,6 +417,10 @@
     "error": "Xato yuz berdi.",
     "published": "Nashr etilgan",
     "draft": "Qoralama",
-    "disabled": "O'chirilgan"
+    "disabled": "O'chirilgan",
+    "optional": "ixtiyoriy",
+    "back": "Orqaga",
+    "next": "Keyingi",
+    "saved": "Saqlandi"
   }
 }

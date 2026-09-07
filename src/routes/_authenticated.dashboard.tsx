@@ -1,33 +1,142 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BusinessAPI, DesignAPI } from "@/lib/api/resources";
+import { BusinessAPI, DesignAPI, QRAPI, WebsiteAPI } from "@/lib/api/resources";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAuthStore } from "@/store/auth";
-import { Layers, Briefcase, QrCode, Globe, Plus } from "lucide-react";
+import {
+  BarChart3,
+  Briefcase,
+  CheckCircle2,
+  Contact,
+  Copy,
+  FileText,
+  Globe,
+  Layers,
+  Palette,
+  Plus,
+  QrCode,
+  Settings,
+  Share2,
+  Sparkles,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { Design, QRCodeRecord, Website } from "@/lib/api/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — card24" }] }),
+  head: () => ({ meta: [{ title: "Dashboard - card24" }] }),
   component: Dashboard,
 });
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
+type StatCardProps = {
   icon: typeof Layers;
   label: string;
   value: string | number;
-}) {
+  description: string;
+};
+
+type Shortcut = {
+  icon: typeof Layers;
+  label: string;
+  description: string;
+  to: string;
+  primary?: boolean;
+  disabled?: boolean;
+};
+
+type RecentProject = {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  updatedAt?: string;
+  to: string;
+  params?: Record<string, string>;
+};
+
+function StatCard({ icon: Icon, label, value, description }: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">{label}</div>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-medium text-muted-foreground">{label}</div>
+          <div className="mt-2 font-display text-3xl font-semibold">{value}</div>
+        </div>
+        <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
       </div>
-      <div className="mt-2 font-display text-3xl font-semibold">{value}</div>
+      <p className="mt-3 text-xs leading-5 text-muted-foreground">{description}</p>
     </div>
+  );
+}
+
+function ShortcutCard({ shortcut, priorityLabel }: { shortcut: Shortcut; priorityLabel: string }) {
+  const Icon = shortcut.icon;
+
+  if (shortcut.disabled) {
+    return (
+      <div className="min-h-[132px] rounded-lg border border-dashed border-border bg-muted/35 p-4 opacity-70">
+        <div className="flex h-full flex-col gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-md bg-background text-muted-foreground">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold">{shortcut.label}</h3>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{shortcut.description}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={shortcut.to}
+      className={[
+        "group block min-h-[132px] rounded-lg border bg-card p-4 shadow-sm transition",
+        "hover:-translate-y-0.5 hover:border-primary hover:shadow-md",
+        "active:translate-y-0 active:bg-muted/70",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        shortcut.primary ? "border-primary/35 bg-primary/5" : "border-border",
+      ].join(" ")}
+    >
+      <div className="flex h-full flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+            <Icon className="h-5 w-5" />
+          </div>
+          {shortcut.primary && (
+            <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+              {priorityLabel}
+            </span>
+          )}
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold">{shortcut.label}</h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{shortcut.description}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  const normalized = status ?? "DRAFT";
+  const cls =
+    normalized === "PUBLISHED" || normalized === "SAVED"
+      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      : normalized === "ARCHIVED" || normalized === "DISABLED"
+        ? "bg-destructive/10 text-destructive"
+        : "bg-muted text-muted-foreground";
+
+  return <span className={`rounded-md px-2 py-1 text-xs font-medium ${cls}`}>{normalized}</span>;
+}
+
+function formatDate(value?: string) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(
+    new Date(value),
   );
 }
 
@@ -36,80 +145,412 @@ function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const businesses = useQuery({ queryKey: ["businesses"], queryFn: BusinessAPI.list });
   const designs = useQuery({ queryKey: ["designs"], queryFn: DesignAPI.list });
+  const websites = useQuery({ queryKey: ["websites"], queryFn: WebsiteAPI.list });
+  const qrCodes = useQuery({ queryKey: ["qrCodes"], queryFn: QRAPI.list, retry: false });
 
   const businessItems = Array.isArray(businesses.data) ? businesses.data : [];
   const designItems = Array.isArray(designs.data) ? designs.data : [];
+  const websiteItems = Array.isArray(websites.data) ? websites.data : [];
+  const qrItems = Array.isArray(qrCodes.data) ? qrCodes.data : [];
+  const totalQrScans = qrItems.reduce((sum, item) => sum + (item.scanCount ?? 0), 0);
+  const publishedCount =
+    designItems.filter((item) => item.status === "PUBLISHED").length +
+    websiteItems.filter((item) => item.status === "PUBLISHED").length;
+  const hasPublishedContent = publishedCount > 0 || totalQrScans > 0;
+
+  const onboarding = [
+    { label: t("dashboard.onboarding.profile"), done: Boolean(user?.firstName && user?.lastName) },
+    { label: t("dashboard.onboarding.business"), done: businessItems.length > 0 },
+    { label: t("dashboard.onboarding.card"), done: designItems.length > 0 },
+    { label: t("dashboard.onboarding.website"), done: websiteItems.length > 0 },
+    { label: t("dashboard.onboarding.qr"), done: qrItems.length > 0 },
+    { label: t("dashboard.onboarding.publish"), done: publishedCount > 0 },
+    { label: t("dashboard.onboarding.share"), done: totalQrScans > 0 },
+  ];
+  const completedSteps = onboarding.filter((item) => item.done).length;
+
+  const shortcuts: Array<{ category: string; items: Shortcut[] }> = [
+    {
+      category: t("dashboard.shortcut_groups.business_cards"),
+      items: [
+        {
+          icon: Plus,
+          label: t("dashboard.shortcuts.create_card"),
+          description: t("dashboard.shortcuts.create_card_desc"),
+          to: "/designs/new",
+          primary: true,
+        },
+        {
+          icon: Layers,
+          label: t("dashboard.shortcuts.my_cards"),
+          description: t("dashboard.shortcuts.my_cards_desc"),
+          to: "/designs",
+        },
+        {
+          icon: Palette,
+          label: t("dashboard.shortcuts.templates"),
+          description: t("dashboard.shortcuts.templates_desc"),
+          to: "/templates",
+        },
+      ],
+    },
+    {
+      category: t("dashboard.shortcut_groups.websites"),
+      items: [
+        {
+          icon: Globe,
+          label: t("dashboard.shortcuts.create_website"),
+          description: t("dashboard.shortcuts.create_website_desc"),
+          to: "/websites/new",
+          primary: true,
+        },
+        {
+          icon: FileText,
+          label: t("dashboard.shortcuts.edit_website"),
+          description: t("dashboard.shortcuts.edit_website_desc"),
+          to: "/websites",
+        },
+      ],
+    },
+    {
+      category: t("dashboard.shortcut_groups.growth"),
+      items: [
+        {
+          icon: QrCode,
+          label: t("dashboard.shortcuts.create_qr"),
+          description: t("dashboard.shortcuts.create_qr_desc"),
+          to: "/qr/new",
+          primary: true,
+        },
+        {
+          icon: Share2,
+          label: t("dashboard.shortcuts.my_qr"),
+          description: t("dashboard.shortcuts.my_qr_desc"),
+          to: "/qr",
+        },
+        {
+          icon: BarChart3,
+          label: t("dashboard.shortcuts.analytics"),
+          description: t("dashboard.shortcuts.analytics_desc"),
+          to: "/analytics",
+          disabled: !hasPublishedContent,
+        },
+      ],
+    },
+    {
+      category: t("dashboard.shortcut_groups.account"),
+      items: [
+        {
+          icon: Contact,
+          label: t("dashboard.shortcuts.contacts"),
+          description: t("dashboard.shortcuts.contacts_desc"),
+          to: "/businesses",
+        },
+        {
+          icon: Settings,
+          label: t("dashboard.shortcuts.settings"),
+          description: t("dashboard.shortcuts.settings_desc"),
+          to: "/settings",
+        },
+      ],
+    },
+  ];
+
+  const recentProjects: RecentProject[] = [
+    ...designItems.map((item: Design) => ({
+      id: item.id,
+      title: item.title,
+      type: t("dashboard.project_types.card"),
+      status: item.status,
+      updatedAt: item.updatedAt,
+      to: "/editor/$designId",
+      params: { designId: item.id },
+    })),
+    ...websiteItems.map((item: Website) => ({
+      id: item.id,
+      title: item.title,
+      type: t("dashboard.project_types.website"),
+      status: item.status,
+      updatedAt: item.updatedAt,
+      to: "/websites/$id/edit",
+      params: { id: item.id },
+    })),
+    ...qrItems.map((item: QRCodeRecord) => ({
+      id: item.id,
+      title: item.title ?? item.slug,
+      type: t("dashboard.project_types.qr"),
+      status: "SAVED",
+      updatedAt: item.updatedAt,
+      to: "/qr",
+    })),
+  ]
+    .sort((a, b) => new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime())
+    .slice(0, 6);
+
+  const anyLoading =
+    businesses.isLoading || designs.isLoading || websites.isLoading || qrCodes.isLoading;
+  const anyError = businesses.isError || designs.isError || websites.isError;
 
   return (
-    <div className="mx-auto max-w-7xl p-6 md:p-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">
-            {t("dashboard.title", { name: user?.firstName ?? "there" })}
-          </h1>
-          <p className="mt-1 text-muted-foreground">{t("dashboard.subtitle")}</p>
-        </div>
-        <Link to="/designs/new">
-          <Button><Plus className="mr-1 h-4 w-4" /> {t("dashboard.new_design")}</Button>
-        </Link>
-      </div>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Briefcase} label={t("dashboard.businesses")} value={businessItems.length} />
-        <StatCard icon={Layers} label={t("dashboard.designs")} value={designItems.length} />
-        <StatCard icon={QrCode} label={t("dashboard.qr_codes")} value={0} />
-        <StatCard icon={Globe} label={t("dashboard.websites")} value={0} />
-      </div>
-
-      <div className="mt-10 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">{t("dashboard.recent_designs")}</h2>
-            <Link to="/designs" className="text-sm text-muted-foreground hover:text-foreground">{t("dashboard.view_all")}</Link>
-          </div>
-          {designs.isLoading && <div className="py-12 text-center text-sm text-muted-foreground">{t("dashboard.loading")}</div>}
-          {designs.isError && <div className="py-12 text-center text-sm text-destructive">{t("dashboard.backend_error")}</div>}
-          {designs.data && designs.data.length === 0 && (
-            <div className="rounded-lg border border-dashed border-border p-10 text-center">
-              <div className="text-sm text-muted-foreground">{t("dashboard.no_designs")}</div>
-              <Link to="/designs/new" className="mt-3 inline-block">
-                <Button size="sm"><Plus className="mr-1 h-4 w-4" /> {t("dashboard.create_first")}</Button>
-              </Link>
+    <div className="mx-auto max-w-7xl space-y-8 p-4 sm:p-6 md:p-10">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t("dashboard.welcome_badge")}
             </div>
-          )}
-          {designItems.length > 0 && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {designItems.slice(0, 6).map((d) => (
-                <Link key={d.id} to="/editor/$designId" params={{ designId: d.id }}
-                  className="group rounded-xl border border-border bg-background p-4 hover:border-primary">
-                  <div className="aspect-[7/4] rounded-md" style={{ background: d.data?.canvas?.background ?? "linear-gradient(135deg, var(--muted), var(--accent))" }} />
-                  <div className="mt-3 text-sm font-medium">{d.title}</div>
-                  <div className="text-xs text-muted-foreground">{d.type}</div>
-                </Link>
+            <h1 className="mt-4 font-display text-3xl font-bold tracking-normal md:text-4xl">
+              {t("dashboard.title", { name: user?.firstName ?? t("dashboard.fallback_name") })}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground md:text-base">
+              {t("dashboard.subtitle")}
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">{t("dashboard.next_action")}</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+            <Button asChild size="lg">
+              <Link to="/designs/new">
+                <Plus className="h-4 w-4" /> {t("dashboard.actions.create_card")}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/websites/new">
+                <Globe className="h-4 w-4" /> {t("dashboard.actions.create_website")}
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <Link to="/qr/new">
+                <QrCode className="h-4 w-4" /> {t("dashboard.actions.create_qr")}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {anyError && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {t("dashboard.backend_error")}
+        </div>
+      )}
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <StatCard
+          icon={Briefcase}
+          label={t("dashboard.businesses")}
+          value={businessItems.length}
+          description={t("dashboard.stat_desc.businesses")}
+        />
+        <StatCard
+          icon={Layers}
+          label={t("dashboard.designs")}
+          value={designItems.length}
+          description={t("dashboard.stat_desc.cards")}
+        />
+        <StatCard
+          icon={Globe}
+          label={t("dashboard.websites")}
+          value={websiteItems.length}
+          description={t("dashboard.stat_desc.websites")}
+        />
+        <StatCard
+          icon={QrCode}
+          label={t("dashboard.qr_codes")}
+          value={qrItems.length}
+          description={t("dashboard.stat_desc.qr")}
+        />
+        <StatCard
+          icon={BarChart3}
+          label={t("dashboard.total_scans")}
+          value={totalQrScans}
+          description={t("dashboard.stat_desc.scans")}
+        />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-6">
+          <div>
+            <div>
+              <h2 className="font-display text-xl font-semibold tracking-normal">
+                {t("dashboard.shortcuts_title")}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("dashboard.shortcuts_subtitle")}
+              </p>
+            </div>
+            <div className="mt-5 space-y-6">
+              {shortcuts.map((group) => (
+                <div key={group.category}>
+                  <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
+                    {group.category}
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {group.items.map((shortcut) => (
+                      <ShortcutCard
+                        key={shortcut.label}
+                        shortcut={shortcut}
+                        priorityLabel={t("dashboard.priority")}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg font-semibold">{t("dashboard.your_businesses")}</h2>
-          <div className="mt-4 space-y-3">
-            {businessItems.slice(0, 5).map((b) => (
-              <Link key={b.id} to="/businesses/$id" params={{ id: b.id }}
-                className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-primary">
-                <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary font-semibold">{b.name[0]}</div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{b.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">{b.industry ?? "—"}</div>
-                </div>
-              </Link>
-            ))}
-            <Link to="/businesses/new" className="block">
-              <Button variant="outline" size="sm" className="w-full"><Plus className="mr-1 h-4 w-4" /> {t("dashboard.add_business")}</Button>
-            </Link>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-semibold tracking-normal">
+                  {t("dashboard.recent_projects")}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("dashboard.recent_projects_subtitle")}
+                </p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/designs">{t("dashboard.view_all")}</Link>
+              </Button>
+            </div>
+
+            {anyLoading && (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                {t("dashboard.loading")}
+              </div>
+            )}
+
+            {!anyLoading && recentProjects.length === 0 && (
+              <div className="mt-5 rounded-lg border border-dashed border-border p-8 text-center">
+                <FileText className="mx-auto h-9 w-9 text-muted-foreground" />
+                <h3 className="mt-3 font-display text-lg font-semibold">
+                  {t("dashboard.empty_recent_title")}
+                </h3>
+                <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">
+                  {t("dashboard.empty_recent_desc")}
+                </p>
+                <Button asChild className="mt-4">
+                  <Link to="/designs/new">
+                    <Plus className="h-4 w-4" /> {t("dashboard.create_first")}
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {recentProjects.length > 0 && (
+              <div className="mt-5 divide-y divide-border rounded-lg border border-border">
+                {recentProjects.map((project) => (
+                  <Link
+                    key={`${project.type}-${project.id}`}
+                    to={project.to}
+                    params={project.params}
+                    className="flex flex-col gap-3 p-4 transition hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-semibold">{project.title}</h3>
+                        <StatusBadge status={project.status} />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {project.type}
+                        {project.updatedAt
+                          ? ` - ${t("dashboard.updated")} ${formatDate(project.updatedAt)}`
+                          : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold text-primary">
+                      {t("dashboard.continue_editing")}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+
+        <aside className="space-y-6">
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-semibold tracking-normal">
+                  {t("dashboard.onboarding_title")}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("dashboard.onboarding_subtitle")}
+                </p>
+              </div>
+              <span className="text-sm font-semibold">
+                {completedSteps}/{onboarding.length}
+              </span>
+            </div>
+            <Progress className="mt-4" value={(completedSteps / onboarding.length) * 100} />
+            <div className="mt-5 space-y-3">
+              {onboarding.map((item) => (
+                <div key={item.label} className="flex items-center gap-3 text-sm">
+                  <span
+                    className={`grid h-6 w-6 place-items-center rounded-md ${item.done ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}
+                  >
+                    {item.done ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <span className="h-2 w-2 rounded-full bg-current" />
+                    )}
+                  </span>
+                  <span className={item.done ? "text-foreground" : "text-muted-foreground"}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <h2 className="font-display text-xl font-semibold tracking-normal">
+              {t("dashboard.feature_value_title")}
+            </h2>
+            <div className="mt-4 space-y-4 text-sm leading-6 text-muted-foreground">
+              <p>
+                <strong className="text-foreground">
+                  {t("dashboard.feature_value.card_title")}
+                </strong>{" "}
+                {t("dashboard.feature_value.card_desc")}
+              </p>
+              <p>
+                <strong className="text-foreground">
+                  {t("dashboard.feature_value.website_title")}
+                </strong>{" "}
+                {t("dashboard.feature_value.website_desc")}
+              </p>
+              <p>
+                <strong className="text-foreground">{t("dashboard.feature_value.qr_title")}</strong>{" "}
+                {t("dashboard.feature_value.qr_desc")}
+              </p>
+              <p>
+                <strong className="text-foreground">
+                  {t("dashboard.feature_value.analytics_title")}
+                </strong>{" "}
+                {t("dashboard.feature_value.analytics_desc")}
+              </p>
+            </div>
+          </div>
+
+          {!hasPublishedContent && (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-5">
+              <BarChart3 className="h-8 w-8 text-muted-foreground" />
+              <h2 className="mt-3 font-display text-lg font-semibold">
+                {t("dashboard.no_analytics_title")}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {t("dashboard.no_analytics_desc")}
+              </p>
+              <Button asChild variant="outline" className="mt-4">
+                <Link to="/designs/new">
+                  <Copy className="h-4 w-4" /> {t("dashboard.publish_first")}
+                </Link>
+              </Button>
+            </div>
+          )}
+        </aside>
+      </section>
     </div>
   );
 }

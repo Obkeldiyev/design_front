@@ -3,6 +3,13 @@ import type { CanvasDoc } from "@/lib/api/types";
 import { generateId } from "@/lib/uuid";
 
 export type SaveStatus = "saved" | "saving" | "dirty" | "error";
+type FabricObject = { id?: string };
+type FabricLike = { objects?: FabricObject[] };
+
+function getFabricObjects(fabric: unknown) {
+  const maybeFabric = fabric as FabricLike | null | undefined;
+  return Array.isArray(maybeFabric?.objects) ? maybeFabric.objects : null;
+}
 
 type EditorState = {
   doc: CanvasDoc | null;
@@ -68,8 +75,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const pages = doc.pages.filter((p) => p.id !== id);
     set({
       doc: { ...doc, pages },
-      activePageId:
-        get().activePageId === id ? (pages[0]?.id ?? null) : get().activePageId,
+      activePageId: get().activePageId === id ? (pages[0]?.id ?? null) : get().activePageId,
       saveStatus: "dirty",
     });
   },
@@ -84,24 +90,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const activePageId = get().activePageId;
     if (!doc || !activePageId) return;
     const page = doc.pages.find((p) => p.id === activePageId);
-    if (!page || !Array.isArray(page.fabric?.objects)) return;
-    
-    const objects = [...page.fabric.objects];
+    const pageObjects = getFabricObjects(page?.fabric);
+    if (!page || !pageObjects) return;
+
+    const objects = [...pageObjects];
     const idx = objects.findIndex((o) => o.id === id);
     if (idx === -1) return;
-    
+
     let newIdx = idx;
     if (direction === "up" && idx < objects.length - 1) newIdx = idx + 1;
     else if (direction === "down" && idx > 0) newIdx = idx - 1;
     else if (direction === "top") newIdx = objects.length - 1;
     else if (direction === "bottom") newIdx = 0;
-    
+
     if (newIdx === idx) return;
-    
+
     const moved = objects.splice(idx, 1)[0];
     objects.splice(newIdx, 0, moved);
-    
-    const newPage = { ...page, fabric: { ...page.fabric, objects } };
+
+    const newPage = { ...page, fabric: { ...(page.fabric as object), objects } };
     const pages = doc.pages.map((p) => (p.id === activePageId ? newPage : p));
     set({ doc: { ...doc, pages }, saveStatus: "dirty" });
   },
@@ -110,7 +117,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const activePageId = get().activePageId;
     if (!doc || !activePageId) return -1;
     const page = doc.pages.find((p) => p.id === activePageId);
-    if (!page || !Array.isArray(page.fabric?.objects)) return -1;
-    return page.fabric.objects.findIndex((o) => o.id === id);
+    const pageObjects = getFabricObjects(page?.fabric);
+    if (!pageObjects) return -1;
+    return pageObjects.findIndex((o) => o.id === id);
   },
 }));

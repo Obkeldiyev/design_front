@@ -23,7 +23,7 @@ function OAuthCallback() {
       tokenStore.set(access, search.refreshToken);
       refreshUser().then(() => navigate({ to: "/dashboard" }));
     } else {
-      navigate({ to: "/login" });
+      navigate({ to: "/login", search: { next: undefined } });
     }
   }, [search, navigate, refreshUser]);
 
