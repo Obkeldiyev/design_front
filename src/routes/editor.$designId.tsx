@@ -916,47 +916,6 @@ function Editor() {
               <kbd className="font-mono">Ctrl S</kbd>
             </div>
           </section>
-
-          {/* Pages */}
-          <section>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Pages
-              </p>
-              <button
-                onClick={addPage}
-                className="rounded-md p-1 text-slate-400 hover:bg-white/10 hover:text-white"
-                aria-label="Add page"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {doc.pages.map((p, i) => (
-                <div
-                  key={p.id}
-                  className={`flex items-center justify-between rounded-md border px-2 py-1.5 text-sm transition ${
-                    activePageId === p.id
-                      ? "border-primary bg-primary/10 text-white"
-                      : "border-white/10 bg-white/[0.03] text-slate-300"
-                  }`}
-                >
-                  <button onClick={() => handlePageSwitch(p.id)} className="flex-1 text-left">
-                    {p.name || `Page ${i + 1}`}
-                  </button>
-                  {doc.pages.length > 1 && (
-                    <button
-                      onClick={() => removePage(p.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label="Remove page"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
         </aside>
 
         {/* Canvas area ──────────────────────────────────────────────────── */}
@@ -978,8 +937,10 @@ function Editor() {
           <div
             style={{
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
+              gap: "18px",
               width: "100%",
               minHeight: "100%",
               padding: "40px",
@@ -1002,6 +963,50 @@ function Editor() {
                   refreshActiveObject();
                 }}
               />
+            </div>
+            <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-xl border border-sky-300/10 bg-[#070b18]/90 p-2 shadow-[0_18px_50px_rgba(2,8,28,0.35)]">
+              {doc.pages.map((p, i) => {
+                const label = i === 0 ? "Front" : i === 1 ? "Back" : p.name || `Page ${i + 1}`;
+                return (
+                  <div
+                    key={p.id}
+                    className={`group flex min-w-28 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                      activePageId === p.id
+                        ? "border-primary bg-primary/15 text-white"
+                        : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-sky-300/40 hover:text-white"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handlePageSwitch(p.id)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <span className="block font-semibold">{label}</span>
+                      <span className="mt-0.5 block text-[10px] text-slate-500">
+                        {doc.canvas.width} x {doc.canvas.height}
+                      </span>
+                    </button>
+                    {doc.pages.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePage(p.id)}
+                        className="rounded p-1 text-slate-500 opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100"
+                        aria-label={`Remove ${label}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={addPage}
+                className="flex min-w-28 items-center justify-center gap-2 rounded-lg border border-dashed border-sky-300/30 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-primary hover:bg-primary/10 hover:text-white"
+              >
+                <Plus className="h-4 w-4" />
+                Add page
+              </button>
             </div>
           </div>
         </div>
