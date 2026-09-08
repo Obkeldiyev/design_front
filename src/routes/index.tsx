@@ -53,10 +53,20 @@ function Landing() {
   const init = useAuthStore((s) => s.init);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     if (!initialized) init();
   }, [init, initialized]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("card24-landing-theme");
+    if (saved === "light" || saved === "dark") setTheme(saved);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("card24-landing-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -112,7 +122,7 @@ function Landing() {
   const startLabel = user ? "Open dashboard" : "Start creating";
 
   return (
-    <div className="card24-landing" id="top">
+    <div className={`card24-landing theme-${theme}`} id="top">
       <LandingStyles />
 
       <nav className={`landing-nav ${scrolled ? "scrolled" : ""} ${menuOpen ? "menu-open" : ""}`}>
@@ -132,6 +142,17 @@ function Landing() {
             </li>
           </ul>
           <div className="nav-actions">
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              <span className="theme-toggle-track">
+                <i />
+              </span>
+              <b>{theme === "dark" ? "Light" : "Dark"}</b>
+            </button>
             {!user && (
               <Link
                 className="landing-btn landing-btn-ghost landing-btn-sm"
@@ -167,6 +188,16 @@ function Landing() {
               Log in
             </Link>
           )}
+          <button
+            className="theme-toggle mobile"
+            type="button"
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+          >
+            <span className="theme-toggle-track">
+              <i />
+            </span>
+            <b>{theme === "dark" ? "Light mode" : "Dark mode"}</b>
+          </button>
           <StartLink className="landing-btn landing-btn-primary" user={user}>
             {startLabel}
           </StartLink>
@@ -482,6 +513,111 @@ function FeatureIcon({ name }: { name: string }) {
   );
 }
 
+function toolIcon(name: string) {
+  if (name === "select") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6.5 3.5l11.5 9-4.9.9 2.8 5.4-2.7 1.3-2.7-5.5-3.9 3.4z" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (name === "text") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (name === "image") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect
+          x="3"
+          y="4.5"
+          width="18"
+          height="15"
+          rx="2.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M3.5 17l5-5 3.5 3 4-4 4.5 4.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  if (name === "shape") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
+        <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+  if (name === "qr") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.8" />
+        <rect
+          x="14.5"
+          y="3"
+          width="6.5"
+          height="6.5"
+          rx="1"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <rect
+          x="3"
+          y="14.5"
+          width="6.5"
+          height="6.5"
+          rx="1"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M14.5 14.5h2.6v2.6h-2.6zM18.4 14.5h2.6v2.6h-2.6zM14.5 18.4h2.6v2.6h-2.6zM18.4 18.4h2.6v2.6h-2.6z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+  if (name === "animate") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M5 17.5c3.8-7.4 7.5-7.4 11.2 0M14 5l5 4-5 4M19 9H8"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 3l8.5 4.5L12 12 3.5 7.5zM4.5 12.5L12 16.5l7.5-4M4.5 16.5L12 20.5l7.5-4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function QrGrid({ id }: { id?: string }) {
   return (
     <div className="card-qr" id={id}>
@@ -495,7 +631,7 @@ function QrGrid({ id }: { id?: string }) {
 function BusinessCardMock({ editor = false }: { editor?: boolean }) {
   return (
     <div className="business-card">
-      <div className="card-brand">
+      <div className="card-brand" id={editor ? "edBrand" : undefined}>
         <i />
         card24
       </div>
@@ -528,6 +664,13 @@ function EditorPreview() {
         </div>
         <div className="editor-tab">
           <span>business-card-01 · Card24 Studio</span>
+          <div className="editor-modes" aria-hidden="true">
+            <button className="active" type="button">
+              Card
+            </button>
+            <button type="button">Website</button>
+            <button type="button">QR</button>
+          </div>
         </div>
         <div className="editor-actions">
           <button className="editor-btn" type="button">
@@ -541,7 +684,7 @@ function EditorPreview() {
 
       <div className="editor-body">
         <div className="editor-toolbar">
-          {["select", "text", "image", "shape", "qr", "layers"].map((tool, index) => (
+          {["select", "text", "image", "shape", "qr", "animate", "layers"].map((tool, index) => (
             <button
               key={tool}
               className={`editor-tool ${index === 0 ? "active" : ""}`}
@@ -549,22 +692,43 @@ function EditorPreview() {
               data-tool={tool}
               title={tool}
             >
-              {tool.slice(0, 1).toUpperCase()}
+              {toolIcon(tool)}
             </button>
           ))}
         </div>
         <div className="editor-canvas">
-          <div className="editor-selection" id="edSel">
-            {["tl", "tr", "bl", "br", "t", "b", "l", "r"].map((handle) => (
-              <span key={handle} className={`editor-h h-${handle}`} />
-            ))}
-            <span className="editor-label">Business card · 85 × 55 mm</span>
-            <BusinessCardMock editor />
+          <div className="editor-canvas-inner">
+            <div className="editor-contextbar" aria-hidden="true">
+              <span>Move</span>
+              <span>Position</span>
+              <span>Effects</span>
+              <span>Animate</span>
+            </div>
+            <div className="editor-selection" id="edSel">
+              {["tl", "tr", "bl", "br", "t", "b", "l", "r"].map((handle) => (
+                <span key={handle} className={`editor-h h-${handle}`} />
+              ))}
+              <span className="editor-label">Business card · 85 x 55 mm</span>
+              <BusinessCardMock editor />
+            </div>
+            <div className="editor-pages" aria-hidden="true">
+              <button className="active" type="button">
+                <span />
+                Front
+              </button>
+              <button type="button">
+                <span />
+                Back
+              </button>
+              <button className="add" type="button">
+                + Add page
+              </button>
+            </div>
           </div>
         </div>
         <aside className="editor-props">
           <div className="editor-prop">
-            <div className="editor-prop-label">Accent</div>
+            <div className="editor-prop-label">Brand color</div>
             <div className="editor-swatches">
               {["#2f6bff", "#38d7ff", "#8b5cf6", "#2dd4bf", "#e8ecff"].map((color, index) => (
                 <button
@@ -579,8 +743,16 @@ function EditorPreview() {
             </div>
           </div>
           <div className="editor-prop">
-            <div className="editor-prop-label">Font</div>
+            <div className="editor-prop-label">Typography</div>
             <div className="editor-pill">Inter · SemiBold</div>
+            <div className="editor-button-row">
+              <button className="active" type="button">
+                B
+              </button>
+              <button type="button">I</button>
+              <button type="button">Aa</button>
+              <button type="button">16</button>
+            </div>
           </div>
           <div className="editor-prop">
             <div className="editor-prop-label">Corner radius</div>
@@ -598,6 +770,57 @@ function EditorPreview() {
               <span className="editor-slider-val" id="edVal">
                 24px
               </span>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Layout</div>
+            <div className="editor-button-row wide">
+              <button className="active" type="button">
+                Left
+              </button>
+              <button type="button">Center</button>
+              <button type="button">Right</button>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Animation</div>
+            <div className="editor-pill">Soft float · 0.8s</div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Assets</div>
+            <div className="editor-asset-grid">
+              <button type="button">Logo</button>
+              <button type="button">Photo</button>
+              <button type="button">Icon</button>
+              <button type="button">QR</button>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Layers</div>
+            <div className="editor-layer-list">
+              <span>Alex Morgan</span>
+              <span>QR code</span>
+              <span>Blue card</span>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Options</div>
+            <div className="editor-toggle-row">
+              <span>QR code</span>
+              <button className="editor-toggle on" id="tglQr" type="button" aria-label="Toggle QR">
+                <i />
+              </button>
+            </div>
+            <div className="editor-toggle-row">
+              <span>Show logo</span>
+              <button
+                className="editor-toggle on"
+                id="tglLogo"
+                type="button"
+                aria-label="Toggle logo"
+              >
+                <i />
+              </button>
             </div>
           </div>
         </aside>
@@ -637,6 +860,10 @@ function initEditorPreview() {
   const selection = document.getElementById("edSel");
   const cards = Array.from(document.querySelectorAll<HTMLElement>(".business-card"));
   const name = document.getElementById("edName");
+  const qrEl = document.getElementById("edQr");
+  const brand = document.getElementById("edBrand");
+  const toggleQr = document.getElementById("tglQr");
+  const toggleLogo = document.getElementById("tglLogo");
   const share = document.getElementById("edShare");
   const toast = document.getElementById("edToast");
   let timer = 0;
@@ -661,6 +888,11 @@ function initEditorPreview() {
     toast?.classList.add("show");
     window.setTimeout(() => toast?.classList.remove("show"), 2100);
   };
+  const toggleState = (button: HTMLElement | null, target: HTMLElement | null) => {
+    if (!button || !target) return;
+    button.classList.toggle("on");
+    target.classList.toggle("off", !button.classList.contains("on"));
+  };
   const moveCursor = (target?: Element | null) => {
     if (!cursor || !target) return;
     const r = target.getBoundingClientRect();
@@ -674,6 +906,8 @@ function initEditorPreview() {
 
   swatches.forEach((item, index) => item.addEventListener("click", () => setAccent(index)));
   range?.addEventListener("input", () => setRadius(Number(range.value)));
+  toggleQr?.addEventListener("click", () => toggleState(toggleQr, qrEl));
+  toggleLogo?.addEventListener("click", () => toggleState(toggleLogo, brand));
   share?.addEventListener("click", showToast);
 
   const loop = async () => {
@@ -695,6 +929,11 @@ function initEditorPreview() {
       moveCursor(range);
       setRadius(9);
       await sleep(1500);
+      moveCursor(toggleQr);
+      toggleState(toggleQr, qrEl);
+      await sleep(950);
+      toggleState(toggleQr, qrEl);
+      await sleep(850);
       moveCursor(share);
       showToast();
       await sleep(2200);
@@ -735,9 +974,11 @@ function initHeroScene() {
   try {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if ("outputEncoding" in renderer && THREE.sRGBEncoding)
+      renderer.outputEncoding = THREE.sRGBEncoding;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    camera.position.set(0, 0, 7.4);
+    camera.position.set(0, 0, 8.15);
     const world = new THREE.Group();
     scene.add(world);
 
@@ -757,6 +998,7 @@ function initHeroScene() {
         metalness: 0.45,
         roughness: 0.3,
         clearcoat: 0.9,
+        clearcoatRoughness: 0.25,
         emissive: 0x123a86,
         emissiveIntensity: 0.5,
       }),
@@ -764,17 +1006,62 @@ function initHeroScene() {
     card.add(body);
 
     const texture = new THREE.CanvasTexture(drawCardTexture());
+    texture.minFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    if ("encoding" in texture && THREE.sRGBEncoding) texture.encoding = THREE.sRGBEncoding;
     const face = new THREE.Mesh(
       new THREE.PlaneGeometry(3.4, 2.14),
       new THREE.MeshStandardMaterial({
         map: texture,
         emissiveMap: texture,
         emissive: 0xffffff,
-        emissiveIntensity: 0.25,
+        emissiveIntensity: 0.44,
+        roughness: 0.22,
+        metalness: 0.1,
       }),
     );
-    face.position.z = 0.09;
+    face.position.z = 0.105;
     card.add(face);
+
+    const frameTexture = new THREE.CanvasTexture(drawFrameTexture());
+    frameTexture.minFilter = THREE.LinearFilter;
+    frameTexture.generateMipmaps = false;
+    const frameMat = new THREE.MeshBasicMaterial({
+      map: frameTexture,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+    });
+    const cardFrame = new THREE.Mesh(new THREE.PlaneGeometry(3.54, 2.28), frameMat);
+    cardFrame.position.z = 0.112;
+    card.add(cardFrame);
+
+    const edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(body.geometry, 25),
+      new THREE.LineBasicMaterial({ color: 0x8fe8ff, transparent: true, opacity: 0.55 }),
+    );
+    edge.position.z = 0.015;
+    card.add(edge);
+
+    const qrMesh = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({ color: 0x0d2145, roughness: 0.45, metalness: 0.2 }),
+      qrCells.size,
+    );
+    const dummy = new THREE.Object3D();
+    let qrIndex = 0;
+    qrCells.forEach((cell) => {
+      const x = cell % 13;
+      const y = Math.floor(cell / 13);
+      dummy.position.set(0.99 + x * 0.045, 0.28 - y * 0.045, 0.13);
+      dummy.scale.set(0.035, 0.035, 0.018);
+      dummy.updateMatrix();
+      qrMesh.setMatrixAt(qrIndex, dummy.matrix);
+      qrIndex += 1;
+    });
+    card.add(qrMesh);
 
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({
@@ -804,31 +1091,48 @@ function initHeroScene() {
     frosted.rotation.set(-0.03, -0.42, 0.1);
     world.add(frosted);
 
-    const panelMat = new THREE.MeshBasicMaterial({
-      color: 0x0a1024,
-      transparent: true,
-      opacity: 0.78,
-      side: THREE.DoubleSide,
-    });
+    const makePanel = (
+      width: number,
+      height: number,
+      draw: (ctx: CanvasRenderingContext2D, width: number, height: number) => void,
+    ) => {
+      const panelTexture = new THREE.CanvasTexture(
+        drawPanelTexture(width * 220, height * 220, draw),
+      );
+      panelTexture.minFilter = THREE.LinearFilter;
+      panelTexture.generateMipmaps = false;
+      if ("encoding" in panelTexture && THREE.sRGBEncoding)
+        panelTexture.encoding = THREE.sRGBEncoding;
+      return new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshBasicMaterial({
+          map: panelTexture,
+          transparent: true,
+          opacity: 0.96,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        }),
+      );
+    };
     const panels = [
       {
-        mesh: new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.2), panelMat),
-        x: -2.15,
-        y: 1.5,
-        z: -2,
+        mesh: makePanel(1.8, 1.2, drawWebPanel),
+        x: -2.0,
+        y: 1.42,
+        z: -1.85,
         ry: 0.42,
       },
       {
-        mesh: new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.15), panelMat.clone()),
-        x: 2.3,
+        mesh: makePanel(0.95, 1.18, drawQrPanel),
+        x: 2.2,
         y: -1.35,
         z: -1.1,
         ry: -0.38,
       },
       {
-        mesh: new THREE.Mesh(new THREE.PlaneGeometry(1.55, 1), panelMat.clone()),
-        x: 2.45,
-        y: 1.45,
+        mesh: makePanel(1.58, 1.05, drawStatsPanel),
+        x: 2.35,
+        y: 1.35,
         z: -1.6,
         ry: -0.42,
       },
@@ -838,6 +1142,38 @@ function initHeroScene() {
       panel.mesh.rotation.y = panel.ry;
       world.add(panel.mesh);
     });
+
+    const softTexture = new THREE.CanvasTexture(drawParticleTexture());
+    const makeParticles = (count: number, size: number, opacity: number) => {
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      for (let i = 0; i < count; i += 1) {
+        positions[i * 3] = (Math.random() - 0.5) * 14;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 8;
+        positions[i * 3 + 2] = -2.5 - Math.random() * 4;
+        const blueShift = Math.random() * 0.35;
+        colors[i * 3] = 0.55 + blueShift;
+        colors[i * 3 + 1] = 0.75 + blueShift * 0.4;
+        colors[i * 3 + 2] = 1;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const material = new THREE.PointsMaterial({
+        size,
+        map: softTexture,
+        transparent: true,
+        opacity,
+        vertexColors: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      return points;
+    };
+    const starsNear = makeParticles(90, 0.035, 0.58);
+    const starsFar = makeParticles(130, 0.018, 0.36);
 
     scene.add(new THREE.AmbientLight(0x2c4470, 0.9));
     const key = new THREE.PointLight(0xffffff, 0.55);
@@ -864,14 +1200,14 @@ function initHeroScene() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       if (camera.aspect < 0.95) {
-        world.scale.setScalar(0.58);
-        world.position.set(0, -1.2, 0);
+        world.scale.setScalar(0.52);
+        world.position.set(0, -1.3, 0);
       } else if (camera.aspect < 1.5) {
-        world.scale.setScalar(0.82);
-        world.position.set(0.45, -0.85, 0);
+        world.scale.setScalar(0.7);
+        world.position.set(0.55, -0.9, 0);
       } else {
-        world.scale.setScalar(1.02);
-        world.position.set(1.55, 0, 0);
+        world.scale.setScalar(0.9);
+        world.position.set(2.25, 0, 0);
       }
     };
     const onMove = (event: MouseEvent) => {
@@ -894,6 +1230,9 @@ function initHeroScene() {
         panel.mesh.rotation.y = panel.ry + smx * 0.12;
         panel.mesh.rotation.x = -smy * 0.07;
       });
+      starsNear.rotation.y = t * 0.012;
+      starsNear.rotation.x = Math.sin(t * 0.15) * 0.025;
+      starsFar.rotation.y = -t * 0.008;
       camera.position.x = smx * 0.35;
       camera.position.y = -smy * 0.22;
       camera.lookAt(0, 0, 0);
@@ -940,45 +1279,205 @@ function drawCardTexture() {
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
   const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  gradient.addColorStop(0, "#1a4487");
-  gradient.addColorStop(0.5, "#0f2a5c");
-  gradient.addColorStop(1, "#081430");
+  gradient.addColorStop(0, "#2a74ff");
+  gradient.addColorStop(0.48, "#1d56c7");
+  gradient.addColorStop(1, "#102653");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(255,255,255,.09)";
+  ctx.beginPath();
+  ctx.moveTo(430, 0);
+  ctx.lineTo(630, 0);
+  ctx.lineTo(900, 646);
+  ctx.lineTo(720, 646);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(56,215,255,.2)";
+  drawRoundRect(ctx, 86, 88, 160, 160, 26);
+  ctx.fill();
+
   ctx.fillStyle = "rgba(255,255,255,.92)";
-  ctx.font = "700 54px Inter, Arial";
-  ctx.fillText("Alex Morgan", 300, 230);
+  ctx.font = "800 38px Inter, Arial";
+  ctx.fillText("card24", 458, 116);
+  ctx.fillStyle = "rgba(255,255,255,.92)";
+  ctx.font = "800 60px Inter, Arial";
+  ctx.fillText("Alex Morgan", 330, 240);
   ctx.fillStyle = "#a8c4ff";
-  ctx.font = "500 31px Inter, Arial";
-  ctx.fillText("Product Designer", 300, 285);
+  ctx.font = "600 32px Inter, Arial";
+  ctx.fillText("Product Designer", 330, 302);
   ctx.fillStyle = "#38d7ff";
   ctx.beginPath();
-  ctx.arc(198, 245, 82, 0, Math.PI * 2);
+  ctx.arc(196, 244, 92, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#fff";
-  ctx.font = "700 48px Inter, Arial";
+  ctx.font = "800 54px Inter, Arial";
   ctx.textAlign = "center";
   ctx.fillText("AM", 198, 262);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(232,240,255,.85)";
-  drawRoundRect(ctx, 134, 378, 340, 22, 11);
+  drawRoundRect(ctx, 134, 392, 340, 24, 12);
   ctx.fill();
   ctx.fillStyle = "rgba(232,240,255,.5)";
-  drawRoundRect(ctx, 134, 428, 250, 22, 11);
+  drawRoundRect(ctx, 134, 448, 250, 24, 12);
   ctx.fill();
   ctx.fillStyle = "rgba(190,215,255,.95)";
   ctx.font = "600 25px Inter, Arial";
   ctx.fillText("card24.co/alex", 134, 552);
   ctx.fillStyle = "#f4f8ff";
-  drawRoundRect(ctx, 690, 202, 230, 230, 22);
+  drawRoundRect(ctx, 696, 196, 238, 238, 24);
   ctx.fill();
   ctx.fillStyle = "#0d2145";
   qrCells.forEach((index) => {
     const x = index % 13;
     const y = Math.floor(index / 13);
-    ctx.fillRect(718 + x * 13.4, 230 + y * 13.4, 10, 10);
+    ctx.fillRect(726 + x * 13.8, 226 + y * 13.8, 10.4, 10.4);
   });
+  ctx.fillStyle = "rgba(190,215,255,.9)";
+  ctx.font = "700 20px Inter, Arial";
+  ctx.letterSpacing = "8px";
+  ctx.fillText("SCAN TO CONNECT", 696, 526);
   return canvas;
+}
+
+function drawFrameTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 646;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+  gradient.addColorStop(0, "rgba(56,215,255,0)");
+  gradient.addColorStop(0.18, "rgba(56,215,255,.95)");
+  gradient.addColorStop(0.55, "rgba(230,248,255,.9)");
+  gradient.addColorStop(0.9, "rgba(56,215,255,.9)");
+  gradient.addColorStop(1, "rgba(56,215,255,0)");
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = 24;
+  drawRoundRect(ctx, 24, 24, canvas.width - 48, canvas.height - 48, 82);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(150,230,255,.35)";
+  ctx.lineWidth = 54;
+  drawRoundRect(ctx, 18, 18, canvas.width - 36, canvas.height - 36, 90);
+  ctx.stroke();
+  return canvas;
+}
+
+function drawPanelTexture(
+  width: number,
+  height: number,
+  draw: (ctx: CanvasRenderingContext2D, width: number, height: number) => void,
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width);
+  canvas.height = Math.round(height);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  draw(ctx, canvas.width, canvas.height);
+  return canvas;
+}
+
+function drawWebPanel(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  ctx.fillStyle = "rgba(9,14,31,.86)";
+  drawRoundRect(ctx, 0, 0, width, height, 22);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(148,178,255,.28)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#ff5f57";
+  ctx.beginPath();
+  ctx.arc(24, 24, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#febc2e";
+  ctx.beginPath();
+  ctx.arc(42, 24, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#28c840";
+  ctx.beginPath();
+  ctx.arc(60, 24, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.08)";
+  drawRoundRect(ctx, 88, 14, width - 146, 20, 10);
+  ctx.fill();
+  ctx.fillStyle = "#38d7ff";
+  drawRoundRect(ctx, 28, 76, 270, 18, 9);
+  ctx.fill();
+  ctx.fillStyle = "rgba(170,190,225,.55)";
+  drawRoundRect(ctx, 28, 108, 210, 14, 7);
+  ctx.fill();
+  drawRoundRect(ctx, 28, 134, 250, 14, 7);
+  ctx.fill();
+  ctx.fillStyle = "rgba(47,107,255,.5)";
+  drawRoundRect(ctx, width - 170, 64, 112, 112, 14);
+  ctx.fill();
+  ctx.fillStyle = "#bfe9ff";
+  ctx.font = "700 24px Inter, Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("AM", width - 114, 132);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#54f0a4";
+  ctx.font = "700 14px Inter, Arial";
+  ctx.fillText("● Live", width - 70, 31);
+}
+
+function drawQrPanel(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  ctx.fillStyle = "rgba(9,14,31,.82)";
+  drawRoundRect(ctx, 0, 0, width, height, 22);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(148,178,255,.28)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#f4f8ff";
+  drawRoundRect(ctx, 54, 64, width - 108, width - 108, 16);
+  ctx.fill();
+  ctx.fillStyle = "#244c96";
+  const size = width - 142;
+  const cell = size / 13;
+  qrCells.forEach((index) => {
+    const x = index % 13;
+    const y = Math.floor(index / 13);
+    ctx.fillRect(71 + x * cell, 82 + y * cell, cell * 0.74, cell * 0.74);
+  });
+  ctx.fillStyle = "#9fdcff";
+  ctx.font = "700 14px Inter, Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("card24.co/alex", width / 2, height - 58);
+  ctx.strokeStyle = "rgba(56,215,255,.45)";
+  drawRoundRect(ctx, width / 2 - 56, height - 38, 112, 20, 10);
+  ctx.stroke();
+  ctx.fillText("Scan", width / 2, height - 22);
+  ctx.textAlign = "left";
+}
+
+function drawStatsPanel(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  ctx.fillStyle = "rgba(9,14,31,.78)";
+  drawRoundRect(ctx, 0, 0, width, height, 22);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(148,178,255,.28)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#e9f2ff";
+  ctx.font = "700 15px Inter, Arial";
+  ctx.fillText("Card activity - this week", 28, 44);
+  ctx.fillStyle = "#6aa2ff";
+  ctx.font = "800 32px Inter, Arial";
+  ctx.textAlign = "right";
+  ctx.fillText("+128%", width - 26, 50);
+  ctx.textAlign = "left";
+  const bars = [70, 116, 92, 150, 204, 188];
+  bars.forEach((bar, index) => {
+    const x = 44 + index * 52;
+    const grad = ctx.createLinearGradient(0, height - 58 - bar, 0, height - 58);
+    grad.addColorStop(0, "#38d7ff");
+    grad.addColorStop(1, "#2f6bff");
+    ctx.fillStyle = grad;
+    drawRoundRect(ctx, x, height - 58 - bar, 26, bar, 13);
+    ctx.fill();
+  });
+  ctx.fillStyle = "rgba(148,178,255,.45)";
+  ctx.font = "600 12px Inter, Arial";
+  ctx.fillText("views", 44, height - 24);
+  ctx.fillText("scans", 178, height - 24);
 }
 
 function drawGlowTexture(size: number) {
@@ -993,6 +1492,21 @@ function drawGlowTexture(size: number) {
   gradient.addColorStop(1, "rgba(64,124,255,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
+  return canvas;
+}
+
+function drawParticleTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.35, "rgba(155,205,255,.8)");
+  gradient.addColorStop(1, "rgba(155,205,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
   return canvas;
 }
 
@@ -1031,6 +1545,10 @@ function LandingStyles() {
 .editor-stage{position:relative;margin-top:54px}.editor-stage::before{content:'';position:absolute;inset:-50px -90px;background:radial-gradient(620px 360px at 50% 45%,rgba(47,107,255,.15),transparent 70%);pointer-events:none}.editor-window{position:relative;border-radius:16px;border:1px solid rgba(148,178,255,.16);background:#0a0f22;box-shadow:0 40px 100px rgba(2,8,28,.75);overflow:hidden}.editor-topbar{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(10,16,34,.7)}.editor-dots{display:flex;gap:7px}.editor-dots i{width:11px;height:11px;border-radius:50%}.editor-dots i:nth-child(1){background:#ff5f57}.editor-dots i:nth-child(2){background:#febc2e}.editor-dots i:nth-child(3){background:#28c840}.editor-tab{flex:1;display:flex;justify-content:center}.editor-tab span{background:rgba(148,178,255,.08);border:1px solid var(--line);padding:6px 16px;border-radius:8px;font-weight:500;font-size:.78rem;color:#a9bcdc}.editor-actions{display:flex;gap:8px}.editor-btn{font-weight:600;font-size:.78rem;padding:8px 16px;border-radius:9px;border:1px solid rgba(148,178,255,.25);background:rgba(148,178,255,.07);color:#dfe8ff;cursor:pointer}.editor-btn.primary{background:linear-gradient(135deg,#3576ff,#2456e6);border-color:transparent;box-shadow:0 4px 16px rgba(47,107,255,.4)}.editor-body{display:flex;height:540px}.editor-toolbar{width:58px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;border-right:1px solid var(--line)}.editor-tool{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:transparent;border:0;color:#8fa3c8;cursor:pointer;font-weight:700}.editor-tool:hover{background:rgba(148,178,255,.1);color:#dfe8ff}.editor-tool.active{background:rgba(56,215,255,.12);color:#38d7ff;box-shadow:inset 0 0 0 1.5px rgba(56,215,255,.45)}.editor-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:#0a0f22;background-image:radial-gradient(rgba(148,178,255,.13) 1px,transparent 1.6px),radial-gradient(420px 300px at 50% 42%,rgba(47,107,255,.12),transparent 70%);background-size:20px 20px,100% 100%}.editor-selection{--edr:18px;position:relative;padding:14px;border-radius:calc(var(--edr) + 14px);box-shadow:0 0 0 1.5px rgba(56,215,255,.9),0 0 26px rgba(56,215,255,.22);transition:border-radius .25s ease}.editor-selection .business-card{width:min(320px,68vw)}
 .editor-h{position:absolute;width:9px;height:9px;background:#fff;border:1.5px solid #38d7ff;border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,.4)}.h-tl{top:-5px;left:-5px}.h-tr{top:-5px;right:-5px}.h-bl{bottom:-5px;left:-5px}.h-br{bottom:-5px;right:-5px}.h-t{top:-5px;left:50%;transform:translateX(-50%)}.h-b{bottom:-5px;left:50%;transform:translateX(-50%)}.h-l{left:-5px;top:50%;transform:translateY(-50%)}.h-r{right:-5px;top:50%;transform:translateY(-50%)}.editor-label{position:absolute;top:-38px;left:0;background:#0c1428;border:1px solid rgba(56,215,255,.4);color:#bcd6ff;font-weight:600;font-size:.72rem;padding:5px 10px;border-radius:7px;white-space:nowrap}.editor-props{width:238px;border-left:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}.editor-prop-label{font-weight:700;font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;color:#7488b5;margin-bottom:9px}.editor-swatches{display:flex;gap:10px}.editor-swatch{width:26px;height:26px;border-radius:50%;background:var(--c);border:0;cursor:pointer;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}.editor-swatch.active{box-shadow:0 0 0 2px #0a0f22,0 0 0 4px var(--c)}.editor-pill{background:rgba(148,178,255,.07);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-weight:600;font-size:.8rem;color:#dfe8ff}.editor-range{appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}.editor-range::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#38d7ff,#2f6bff var(--p,75%),rgba(148,178,255,.16) var(--p,75%))}.editor-range::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #2f6bff;margin-top:-5px;box-shadow:0 2px 8px rgba(0,20,60,.5)}.editor-slider-row{display:flex;align-items:center;gap:10px}.editor-slider-val{font-weight:600;font-size:.74rem;color:#9fdcff;min-width:34px;text-align:right}.editor-status{display:flex;justify-content:space-between;padding:7px 16px;border-top:1px solid var(--line);font-weight:500;font-size:.72rem;color:#7488b5}.editor-status b{color:#2fe08a;font-weight:600}.editor-cursor{position:absolute;left:42%;top:42%;width:22px;height:22px;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));transition:left .8s cubic-bezier(.5,.1,.15,1),top .8s cubic-bezier(.5,.1,.15,1)}.editor-cursor.click{animation:curClick .35s ease}@keyframes curClick{40%{transform:scale(.7)}}.editor-toast{position:absolute;right:18px;bottom:44px;background:#0d1c38;border:1px solid rgba(56,215,255,.45);color:#d9e8ff;font-weight:600;font-size:.82rem;padding:10px 14px;border-radius:10px;opacity:0;transform:translateY(10px);transition:.35s;z-index:6;box-shadow:0 12px 30px rgba(2,10,40,.6)}.editor-toast.show{opacity:1;transform:none}
 .landing-cta{position:relative;padding:150px 0;text-align:center;overflow:hidden;background:radial-gradient(720px 440px at 50% 62%,rgba(47,107,255,.17),transparent 70%)}.landing-cta::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(148,178,255,.09) 1px,transparent 1.4px);background-size:26px 26px;mask-image:radial-gradient(ellipse 60% 55% at 50% 55%,#000 20%,transparent 75%)}.landing-cta .landing-wrap{position:relative}.landing-cta h2{font-size:clamp(2.2rem,4.6vw,3.4rem);line-height:1.1;font-weight:700}.landing-cta p{margin:18px auto 36px;max-width:540px;color:var(--muted);line-height:1.65}.landing-cta .note{margin-top:18px;font-size:.85rem;color:#7488b5}.landing-footer{border-top:1px solid var(--line);padding:38px 0}.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}.footer-brand{display:flex;align-items:center;gap:14px}.footer-tag{color:#7488b5;font-size:.85rem}.footer-links{display:flex;gap:24px;flex-wrap:wrap}.footer-links a{color:var(--muted);font-size:.9rem;transition:color .25s}.footer-links a:hover{color:#fff}.footer-copy{color:#5c6c92;font-size:.82rem}
+body:has(.card24-landing.theme-light){background:#f5f8ff}.theme-light{--bg:#f5f8ff;--panel:#ffffff;--txt:#111827;--muted:#55657f;--line:rgba(48,70,115,.16);background:#f5f8ff;color:#111827}.theme-light .hero-bg{background:radial-gradient(1100px 700px at 76% 18%,rgba(47,107,255,.2),transparent 62%),radial-gradient(800px 600px at 12% 85%,rgba(56,215,255,.13),transparent 60%),linear-gradient(180deg,#eef5ff 0%,#fbfdff 100%)}.theme-light .hero-grid{background-image:linear-gradient(rgba(47,85,150,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(47,85,150,.08) 1px,transparent 1px)}.theme-light .landing-nav.scrolled{background:rgba(255,255,255,.78)}.theme-light .mobile-menu,.theme-light .editor-window,.theme-light .feature-card{background:rgba(255,255,255,.9);box-shadow:0 24px 70px rgba(55,80,130,.14)}.theme-light .editor-canvas{background-color:#eef4ff}.theme-light .editor-props,.theme-light .editor-toolbar{background:rgba(255,255,255,.54)}.theme-light .landing-btn-ghost,.theme-light .editor-pill,.theme-light .editor-button-row button,.theme-light .editor-asset-grid button,.theme-light .editor-layer-list span,.theme-light .editor-contextbar,.theme-light .editor-pages button,.theme-light .theme-toggle{color:#1d2b48;background:rgba(47,107,255,.07);border-color:rgba(47,79,135,.18)}.theme-light .nav-links a,.theme-light .hero-hints,.theme-light .footer-tag,.theme-light .footer-copy{color:#64748b}.theme-light .scroll-cue{border-color:rgba(47,79,135,.32)}
+#hero3d{pointer-events:none}.hero-copy{z-index:4;max-width:560px;margin-left:-56px}.hero h1{max-width:570px}.hero-sub{max-width:520px}.theme-toggle{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:999px;border:1px solid rgba(148,178,255,.2);background:rgba(148,178,255,.07);color:#dce8ff;font-weight:700;font-size:.78rem;cursor:pointer}.theme-toggle-track{position:relative;width:34px;height:20px;border-radius:999px;background:rgba(148,178,255,.18);box-shadow:inset 0 0 0 1px rgba(148,178,255,.16)}.theme-toggle-track i{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#38d7ff;box-shadow:0 0 10px rgba(56,215,255,.75);transition:left .25s,background .25s}.theme-light .theme-toggle-track i{left:17px;background:#2f6bff}.theme-toggle.mobile{width:100%;justify-content:center;margin:6px 0 10px}
+.editor-tab{align-items:center;gap:12px}.editor-tab span{display:inline-flex;align-items:center}.editor-modes{display:flex;gap:4px;padding:3px;border-radius:10px;background:rgba(148,178,255,.08);border:1px solid var(--line)}.editor-modes button{height:25px;border:0;border-radius:7px;padding:0 10px;background:transparent;color:#8fa3c8;font-weight:700;font-size:.72rem}.editor-modes button.active{background:rgba(56,215,255,.16);color:#dff7ff}.editor-canvas-inner{position:relative;display:flex;min-height:100%;width:100%;align-items:center;justify-content:center;flex-direction:column;gap:22px;padding:48px 24px 28px}.editor-contextbar{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border:1px solid var(--line);border-radius:12px;background:rgba(8,13,29,.82);backdrop-filter:blur(14px);box-shadow:0 12px 28px rgba(0,0,0,.25);z-index:3}.editor-contextbar span{padding:6px 10px;border-radius:8px;color:#c8d7f3;font-weight:700;font-size:.72rem}.editor-contextbar span:first-child{background:rgba(56,215,255,.13);color:#9fdcff}.editor-pages{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.editor-pages button{display:inline-flex;align-items:center;gap:8px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(148,178,255,.07);color:#dfe8ff;font-weight:700;font-size:.78rem;padding:0 12px}.editor-pages button.active{border-color:rgba(56,215,255,.55);box-shadow:0 0 0 1px rgba(56,215,255,.24)}.editor-pages button span{width:32px;height:20px;border-radius:5px;background:linear-gradient(135deg,#2f6bff,#0e2148)}.editor-pages button.add{color:#9fdcff;border-style:dashed}.editor-button-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.editor-button-row.wide{grid-template-columns:repeat(3,1fr)}.editor-button-row button,.editor-asset-grid button{height:32px;border-radius:8px;border:1px solid var(--line);background:rgba(148,178,255,.07);color:#dfe8ff;font-weight:800;font-size:.75rem}.editor-button-row button.active{background:rgba(56,215,255,.13);color:#9fdcff;border-color:rgba(56,215,255,.4)}.editor-asset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.editor-layer-list{display:grid;gap:7px}.editor-layer-list span{border:1px solid var(--line);border-radius:8px;background:rgba(148,178,255,.07);color:#c9d8f5;font-weight:700;font-size:.75rem;padding:8px 10px}.editor-toggle-row{display:flex;justify-content:space-between;align-items:center;color:#b9c8ec;font-weight:700;font-size:.8rem;padding:4px 0}.editor-toggle{width:38px;height:22px;border-radius:12px;border:0;background:rgba(148,178,255,.18);position:relative;cursor:pointer}.editor-toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#8fa3c8;transition:left .25s,background .25s}.editor-toggle.on{background:linear-gradient(90deg,#2f6bff,#38d7ff)}.editor-toggle.on i{left:19px;background:#fff}.card-brand.off,.card-qr.off,.card-qr.off+.card-qr-cap{opacity:0}.editor-selection{--edr:24px}.editor-selection .business-card{width:min(360px,72vw)}
+@media(min-width:1400px){.hero-copy{margin-left:-84px}}
 @media(max-width:1150px),(max-aspect-ratio:79/50){.hero{align-items:flex-start}.hero-copy{max-width:660px;margin:0 auto;text-align:center;padding-top:clamp(96px,14vh,150px)}.hero-sub{margin:0 auto}.hero-ctas,.hero-hints{justify-content:center}body.no-webgl .hero-fallback{left:50%;right:auto;top:auto;bottom:5%;transform:translateX(-50%) rotate(-5deg)}}
 @media(max-width:1080px){.features-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:940px){.steps{grid-template-columns:1fr 1fr;gap:28px}.steps::before{display:none}.editor-body{height:470px}.editor-props{display:none}}@media(max-width:860px){.nav-links{display:none}.nav-burger{display:flex}}@media(max-width:620px){.features-grid,.steps{grid-template-columns:1fr}.editor-body{height:440px}.editor-toolbar{display:none}.editor-label{font-size:.62rem;top:-32px}.nav-actions .landing-btn-ghost{display:none}}@media(prefers-reduced-motion:reduce){[data-reveal]{transition:none;opacity:1;transform:none}.hero-copy>*{animation:none}}
 `}</style>
