@@ -139,6 +139,19 @@
   background-size: 32px 32px;
 }
 
+.editor-workspace-scroll,
+.editor-page-strip {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editor-workspace-scroll::-webkit-scrollbar,
+.editor-page-strip::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .card24-site-block > :is(section, nav, footer) {
   padding-top: var(--site-py) !important;
   padding-bottom: var(--site-py) !important;

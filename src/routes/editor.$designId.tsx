@@ -1109,6 +1109,7 @@ function Editor() {
         */}
         <div
           ref={canvasScrollRef}
+          className="editor-workspace-scroll"
           style={{
             flex: 1,
             minWidth: 0,
@@ -1149,7 +1150,7 @@ function Editor() {
                 }}
               />
             </div>
-            <div className="flex max-w-full items-stretch gap-2 overflow-x-auto rounded-xl border border-sky-300/10 bg-[#070b18]/90 p-2 shadow-[0_18px_50px_rgba(2,8,28,0.35)]">
+            <div className="editor-page-strip flex max-w-full items-stretch gap-2 overflow-x-auto rounded-xl border border-sky-300/10 bg-[#070b18]/90 p-2 shadow-[0_18px_50px_rgba(2,8,28,0.35)]">
               {doc.pages.map((p, i) => {
                 const label = i === 0 ? "Front" : i === 1 ? "Back" : p.name || `Page ${i + 1}`;
                 const pageDoc = { ...doc, pages: [{ ...p }] };
