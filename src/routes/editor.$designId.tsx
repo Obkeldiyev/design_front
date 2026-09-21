@@ -11,6 +11,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DesignAPI } from "@/lib/api/resources";
+import type { CanvasDoc } from "@/lib/api/types";
 import { useEditorStore } from "@/store/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,8 @@ import {
 import { toast } from "sonner";
 import { apiError, tokenStore } from "@/lib/api/client";
 import { CARD_TEMPLATES } from "@/lib/card-templates";
+import { CanvasDocPreview } from "@/components/editor/TemplatePreview";
+import { generateId } from "@/lib/uuid";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -171,8 +174,6 @@ function Editor() {
   const resetDoc = useEditorStore((s) => s.resetDoc);
   const activePageId = useEditorStore((s) => s.activePageId);
   const setActivePage = useEditorStore((s) => s.setActivePage);
-  const addPage = useEditorStore((s) => s.addPage);
-  const removePage = useEditorStore((s) => s.removePage);
   const zoom = useEditorStore((s) => s.zoom);
   const setZoom = useEditorStore((s) => s.setZoom);
   const saveStatus = useEditorStore((s) => s.saveStatus);
@@ -185,6 +186,8 @@ function Editor() {
   const historyIndexRef = useRef(-1);
   const isRestoringHistoryRef = useRef(false);
   const historyTimerRef = useRef<number | null>(null);
+  const pageUndoRef = useRef<CanvasDoc[]>([]);
+  const pageRedoRef = useRef<CanvasDoc[]>([]);
 
   // ── Data fetch ─────────────────────────────────────────────────────────
   const query = useQuery({
@@ -223,8 +226,11 @@ function Editor() {
       useEditorStore.setState({ zoom: parseFloat(fz.toFixed(2)) });
     }
 
-    const repairedDoc = query.data.data;
+    const repairedDoc = repairLegacyTemplateDoc(query.data.data);
     setDoc(repairedDoc);
+    if (repairedDoc !== query.data.data) {
+      setTimeout(() => useEditorStore.getState().markDirty(), 0);
+    }
   }, [query.data, setDoc]);
 
   // ── Active object tracking ───────────────────────────────────────────────
@@ -310,8 +316,48 @@ function Editor() {
     [canvasInstance, markDirty, updateHistoryState],
   );
 
-  const undo = useCallback(() => restoreHistory("undo"), [restoreHistory]);
-  const redo = useCallback(() => restoreHistory("redo"), [restoreHistory]);
+  const undo = useCallback(() => {
+    const previousDoc = pageUndoRef.current.pop();
+    if (previousDoc) {
+      if (doc) pageRedoRef.current.push(cloneDoc(doc));
+      const nextActive = previousDoc.pages.some((page) => page.id === activePageId)
+        ? activePageId
+        : (previousDoc.pages[0]?.id ?? null);
+      setDoc(previousDoc);
+      if (nextActive) setActivePage(nextActive);
+      markDirty();
+      setHistoryState((state) => ({
+        ...state,
+        canUndo: pageUndoRef.current.length > 0 || historyIndexRef.current > 0,
+        canRedo: true,
+      }));
+      setTimeout(resetHistory, 200);
+      return;
+    }
+    restoreHistory("undo");
+  }, [activePageId, doc, markDirty, resetHistory, restoreHistory, setActivePage, setDoc]);
+  const redo = useCallback(() => {
+    const nextDoc = pageRedoRef.current.pop();
+    if (nextDoc) {
+      if (doc) pageUndoRef.current.push(cloneDoc(doc));
+      const nextActive = nextDoc.pages.some((page) => page.id === activePageId)
+        ? activePageId
+        : (nextDoc.pages[0]?.id ?? null);
+      setDoc(nextDoc);
+      if (nextActive) setActivePage(nextActive);
+      markDirty();
+      setHistoryState((state) => ({
+        ...state,
+        canUndo: true,
+        canRedo:
+          pageRedoRef.current.length > 0 ||
+          (historyIndexRef.current >= 0 && historyIndexRef.current < historyRef.current.length - 1),
+      }));
+      setTimeout(resetHistory, 200);
+      return;
+    }
+    restoreHistory("redo");
+  }, [activePageId, doc, markDirty, resetHistory, restoreHistory, setActivePage, setDoc]);
 
   // Listen to canvas selection / modification events
   useEffect(() => {
@@ -587,17 +633,57 @@ function Editor() {
     };
   }, [zoom, doc?.canvas.width, doc?.canvas.height, activePageId]);
 
-  // ── Page switch — snapshot current fabric state first ───────────────────
-  const handlePageSwitch = (newId: string) => {
+  const snapshotCurrentDoc = useCallback(() => {
     const c = canvasRef.current;
-    if (!c || !doc || !activePageId) {
-      setActivePage(newId);
-      return;
-    }
+    if (!c || !doc || !activePageId) return doc;
     const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON(["id", "meta"]);
     const pages = doc.pages.map((p) => (p.id === activePageId ? { ...p, fabric: json } : p));
-    setDoc({ ...doc, pages });
+    return { ...doc, pages };
+  }, [activePageId, doc]);
+
+  const pushPageUndo = useCallback(
+    (snapshot: CanvasDoc) => {
+      pageUndoRef.current.push(cloneDoc(snapshot));
+      pageUndoRef.current = pageUndoRef.current.slice(-60);
+      pageRedoRef.current = [];
+      setHistoryState((state) => ({ ...state, canUndo: true, canRedo: false }));
+    },
+    [],
+  );
+
+  // ── Page switch — snapshot current fabric state first ───────────────────
+  const handlePageSwitch = (newId: string) => {
+    if (!doc || newId === activePageId) return;
+    const nextDoc = snapshotCurrentDoc();
+    setDoc(nextDoc);
     setActivePage(newId);
+  };
+
+  const handleAddPage = () => {
+    if (!doc) return;
+    const currentDoc = snapshotCurrentDoc();
+    pushPageUndo(currentDoc);
+    const newPage = {
+      id: generateId(),
+      name: currentDoc.pages.length === 0 ? "Front" : currentDoc.pages.length === 1 ? "Back" : `Page ${currentDoc.pages.length + 1}`,
+      fabric: { version: "7.0.0", objects: [] },
+    };
+    setDoc({ ...currentDoc, pages: [...currentDoc.pages, newPage] });
+    setActivePage(newPage.id);
+    markDirty();
+    setTimeout(resetHistory, 200);
+  };
+
+  const handleRemovePage = (pageId: string) => {
+    if (!doc || doc.pages.length <= 1) return;
+    const currentDoc = snapshotCurrentDoc();
+    pushPageUndo(currentDoc);
+    const pages = currentDoc.pages.filter((page) => page.id !== pageId);
+    const nextActive = activePageId === pageId ? (pages[0]?.id ?? null) : activePageId;
+    setDoc({ ...currentDoc, pages });
+    if (nextActive) setActivePage(nextActive);
+    markDirty();
+    setTimeout(resetHistory, 200);
   };
 
   // ── Image upload ─────────────────────────────────────────────────────────
@@ -964,24 +1050,28 @@ function Editor() {
                 }}
               />
             </div>
-            <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-xl border border-sky-300/10 bg-[#070b18]/90 p-2 shadow-[0_18px_50px_rgba(2,8,28,0.35)]">
+            <div className="flex max-w-full items-stretch gap-2 overflow-x-auto rounded-xl border border-sky-300/10 bg-[#070b18]/90 p-2 shadow-[0_18px_50px_rgba(2,8,28,0.35)]">
               {doc.pages.map((p, i) => {
                 const label = i === 0 ? "Front" : i === 1 ? "Back" : p.name || `Page ${i + 1}`;
+                const pageDoc = { ...doc, pages: [{ ...p }] };
                 return (
                   <div
                     key={p.id}
-                    className={`group flex min-w-28 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                    className={`group relative w-36 flex-shrink-0 rounded-lg border p-2 text-left text-xs transition ${
                       activePageId === p.id
-                        ? "border-primary bg-primary/15 text-white"
+                        ? "border-primary bg-primary/15 text-white shadow-lg shadow-primary/10"
                         : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-sky-300/40 hover:text-white"
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => handlePageSwitch(p.id)}
-                      className="min-w-0 flex-1 text-left"
+                      className="block w-full text-left"
                     >
-                      <span className="block font-semibold">{label}</span>
+                      <div className="mb-2 aspect-[7/4] overflow-hidden rounded-md border border-white/10 bg-white shadow-sm">
+                        <CanvasDocPreview doc={pageDoc as CanvasDoc} className="h-full w-full" />
+                      </div>
+                      <span className="block truncate font-semibold">{label}</span>
                       <span className="mt-0.5 block text-[10px] text-slate-500">
                         {doc.canvas.width} x {doc.canvas.height}
                       </span>
@@ -989,8 +1079,8 @@ function Editor() {
                     {doc.pages.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removePage(p.id)}
-                        className="rounded p-1 text-slate-500 opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100"
+                        onClick={() => handleRemovePage(p.id)}
+                        className="absolute right-1.5 top-1.5 rounded bg-[#070b18]/90 p-1 text-slate-400 opacity-0 shadow transition hover:bg-red-500/20 hover:text-red-200 group-hover:opacity-100"
                         aria-label={`Remove ${label}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -1001,8 +1091,8 @@ function Editor() {
               })}
               <button
                 type="button"
-                onClick={addPage}
-                className="flex min-w-28 items-center justify-center gap-2 rounded-lg border border-dashed border-sky-300/30 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-primary hover:bg-primary/10 hover:text-white"
+                onClick={handleAddPage}
+                className="flex w-36 flex-shrink-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-sky-300/30 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-primary hover:bg-primary/10 hover:text-white"
               >
                 <Plus className="h-4 w-4" />
                 Add page

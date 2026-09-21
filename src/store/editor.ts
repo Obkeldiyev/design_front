@@ -49,7 +49,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({
       doc,
       activePageId: isNewDesign ? (doc.pages[0]?.id ?? null) : get().activePageId,
-      saveStatus: "saved",
+      saveStatus: prev ? get().saveStatus : "saved",
       designKey: isNewDesign ? get().designKey + 1 : get().designKey,
     });
   },

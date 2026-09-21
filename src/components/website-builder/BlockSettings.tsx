@@ -201,7 +201,7 @@ function Section({
 }) {
   const [open, setOpen] = useState(
     defaultOpen ??
-      ["Quick Style", "Content", "Header", "Branding", "Style", "Stats"].includes(title),
+      ["Easy Edit"].includes(title),
   );
 
   return (
@@ -216,6 +216,120 @@ function Section({
       </button>
       {open && <div className="space-y-3 border-t border-border p-3">{children}</div>}
     </div>
+  );
+}
+
+function EasyEditSettings({
+  block,
+  theme,
+  onUpdate,
+}: {
+  block: Block;
+  theme: WebsiteTheme;
+  onUpdate: (c: any) => void;
+}) {
+  const c = block.content;
+  const upd = (p: any) => onUpdate({ ...c, ...p });
+  const hasTitle = [
+    "hero",
+    "features",
+    "testimonials",
+    "text",
+    "stats",
+    "cta",
+    "contact",
+    "gallery",
+    "team",
+    "pricing",
+    "video",
+  ].includes(block.type);
+  const subtitleKey = block.type === "text" ? "text" : "subtitle";
+  const subtitleLabel = block.type === "text" ? "Body text" : "Subtitle";
+  const hasSubtitle = hasTitle || block.type === "text";
+  const hasButton = ["hero", "cta", "contact"].includes(block.type);
+  const hasImage = ["hero", "navbar", "footer"].includes(block.type);
+
+  return (
+    <Section title="Easy Edit" defaultOpen>
+      <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+        Click text directly on the page to edit it. Use these controls for the common styling.
+      </div>
+      {block.type === "navbar" || block.type === "footer" ? (
+        <Field label="Logo / Brand">
+          <Input
+            value={c.logo || c.logoText || ""}
+            onChange={(e) =>
+              upd(block.type === "hero" ? { logoText: e.target.value } : { logo: e.target.value })
+            }
+            className="h-9 text-sm"
+          />
+        </Field>
+      ) : null}
+      {hasTitle && (
+        <Field label="Main title">
+          <Input
+            value={c.title || ""}
+            onChange={(e) => upd({ title: e.target.value })}
+            className="h-9 text-sm"
+          />
+        </Field>
+      )}
+      {hasSubtitle && (
+        <Field label={subtitleLabel}>
+          <textarea
+            value={c[subtitleKey] || ""}
+            onChange={(e) => upd({ [subtitleKey]: e.target.value })}
+            className="min-h-20 w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </Field>
+      )}
+      {hasButton && (
+        <Field label="Button text">
+          <Input
+            value={c.buttonText || ""}
+            onChange={(e) => upd({ buttonText: e.target.value })}
+            className="h-9 text-sm"
+          />
+        </Field>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <ColorField
+          label="Background"
+          value={c.backgroundColor || theme.backgroundColor || "#ffffff"}
+          onChange={(v) => upd({ backgroundColor: v })}
+        />
+        <ColorField
+          label="Text"
+          value={c.textColor || theme.textColor || "#111827"}
+          onChange={(v) => upd({ textColor: v })}
+        />
+      </div>
+      <ColorField
+        label="Accent / Button"
+        value={c.accentColor || c.buttonColor || theme.primaryColor || "#6366f1"}
+        onChange={(v) => upd({ accentColor: v, buttonColor: v })}
+      />
+      {hasImage && (
+        <>
+          <Field label={block.type === "hero" ? "Background image URL" : "Logo image URL"}>
+            <Input
+              value={block.type === "hero" ? c.backgroundImage || "" : c.logoUrl || ""}
+              onChange={(e) =>
+                upd(block.type === "hero" ? { backgroundImage: e.target.value } : { logoUrl: e.target.value })
+              }
+              className="h-9 text-sm"
+              placeholder="https://..."
+            />
+          </Field>
+          <UploadField
+            label={block.type === "hero" ? "Upload background" : "Upload logo"}
+            onUpload={(dataUrl) =>
+              upd(block.type === "hero" ? { backgroundImage: dataUrl } : { logoUrl: dataUrl })
+            }
+          />
+        </>
+      )}
+    </Section>
   );
 }
 
@@ -1684,6 +1798,7 @@ export function BlockSettings({ block, theme, onUpdate, onThemeUpdate }: BlockSe
   return (
     <div className="p-4 space-y-4 overflow-y-auto h-full">
       <p className="text-sm font-semibold capitalize">{block.type} Settings</p>
+      <EasyEditSettings block={block} theme={theme} onUpdate={upd} />
       <QuickStyleSettings block={block} theme={theme} onUpdate={upd} />
       {block.type === "navbar" && <NavbarSettings block={block} onUpdate={upd} />}
       {block.type === "hero" && <HeroSettings block={block} onUpdate={upd} />}
