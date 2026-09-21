@@ -166,6 +166,7 @@ function Editor() {
   const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
   const [objectVersion, setObjectVersion] = useState(0);
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
+  const [activePagePreview, setActivePagePreview] = useState("");
 
   // Store selectors
   const doc = useEditorStore((s) => s.doc);
@@ -188,6 +189,8 @@ function Editor() {
   const historyTimerRef = useRef<number | null>(null);
   const pageUndoRef = useRef<CanvasDoc[]>([]);
   const pageRedoRef = useRef<CanvasDoc[]>([]);
+  const pageSyncTimerRef = useRef<number | null>(null);
+  const previewTimerRef = useRef<number | null>(null);
 
   // ── Data fetch ─────────────────────────────────────────────────────────
   const query = useQuery({
@@ -258,6 +261,51 @@ function Editor() {
     ]);
     return JSON.stringify(json);
   }, [canvasInstance]);
+
+  const refreshActivePagePreview = useCallback(() => {
+    const c = canvasRef.current ?? canvasInstance;
+    if (!c) return;
+    try {
+      setActivePagePreview(
+        (c as unknown as { toDataURL: (options?: Record<string, unknown>) => string }).toDataURL({
+          format: "png",
+          multiplier: 0.18,
+          enableRetinaScaling: false,
+        }),
+      );
+    } catch {
+      setActivePagePreview("");
+    }
+  }, [canvasInstance]);
+
+  const schedulePreviewRefresh = useCallback(() => {
+    if (previewTimerRef.current) window.clearTimeout(previewTimerRef.current);
+    previewTimerRef.current = window.setTimeout(refreshActivePagePreview, 80);
+  }, [refreshActivePagePreview]);
+
+  const syncActivePageFromCanvas = useCallback(() => {
+    const c = canvasRef.current ?? canvasInstance;
+    const state = useEditorStore.getState();
+    if (!c || !state.doc || !state.activePageId) return;
+
+    const json = (c as unknown as { toJSON: (keys?: string[]) => unknown }).toJSON([
+      "id",
+      "meta",
+      "name",
+    ]);
+    const pages = state.doc.pages.map((page) =>
+      page.id === state.activePageId ? { ...page, fabric: json } : page,
+    );
+    state.setDoc({ ...state.doc, pages });
+  }, [canvasInstance]);
+
+  const scheduleActivePageSync = useCallback(() => {
+    if (pageSyncTimerRef.current) window.clearTimeout(pageSyncTimerRef.current);
+    pageSyncTimerRef.current = window.setTimeout(() => {
+      syncActivePageFromCanvas();
+      refreshActivePagePreview();
+    }, 120);
+  }, [refreshActivePagePreview, syncActivePageFromCanvas]);
 
   const pushHistory = useCallback(() => {
     if (isRestoringHistoryRef.current) return;
@@ -382,15 +430,34 @@ function Editor() {
     const c = canvasInstance;
     if (!c) return;
     const events = ["object:added", "object:removed", "object:modified", "text:changed"] as const;
-    const handler = () => scheduleHistoryPush();
+    const handler = () => {
+      scheduleHistoryPush();
+      scheduleActivePageSync();
+    };
     events.forEach((event) => c.on(event, handler));
-    const timer = window.setTimeout(resetHistory, 250);
+    const renderHandler = () => schedulePreviewRefresh();
+    c.on("after:render", renderHandler);
+    const timer = window.setTimeout(() => {
+      resetHistory();
+      scheduleActivePageSync();
+    }, 250);
     return () => {
       events.forEach((event) => c.off(event, handler));
+      c.off("after:render", renderHandler);
       window.clearTimeout(timer);
       if (historyTimerRef.current) window.clearTimeout(historyTimerRef.current);
+      if (pageSyncTimerRef.current) window.clearTimeout(pageSyncTimerRef.current);
+      if (previewTimerRef.current) window.clearTimeout(previewTimerRef.current);
     };
-  }, [canvasInstance, activePageId, designKey, resetHistory, scheduleHistoryPush]);
+  }, [
+    canvasInstance,
+    activePageId,
+    designKey,
+    resetHistory,
+    scheduleActivePageSync,
+    scheduleHistoryPush,
+    schedulePreviewRefresh,
+  ]);
 
   // Also refresh when selectedIds changes (e.g., reorder from layers panel)
   useEffect(() => {
@@ -412,6 +479,7 @@ function Editor() {
         p.id === activePageId ? { ...p, fabric: json } : p,
       );
       const updatedDoc = { ...doc, pages: updatedPages };
+      setDoc(updatedDoc);
       return DesignAPI.update(designId, { title, data: updatedDoc });
     },
     onSuccess: () => {
@@ -455,6 +523,7 @@ function Editor() {
         e.preventDefault();
         deleteSelected(c);
         markDirty();
+        scheduleActivePageSync();
         return;
       }
 
@@ -500,6 +569,7 @@ function Editor() {
           c.setActiveObject(cloned);
           c.requestRenderAll();
           markDirty();
+          scheduleActivePageSync();
           // Update clipboard offset for repeated pastes
           clipboardRef.current = cloned;
         });
@@ -511,6 +581,7 @@ function Editor() {
         e.preventDefault();
         duplicateSelected(c);
         markDirty();
+        scheduleActivePageSync();
         return;
       }
 
@@ -554,6 +625,7 @@ function Editor() {
         obj.setCoords();
         c.requestRenderAll();
         markDirty();
+        scheduleActivePageSync();
         return;
       }
 
@@ -561,12 +633,14 @@ function Editor() {
         e.preventDefault();
         sendBackward(c);
         markDirty();
+        scheduleActivePageSync();
         return;
       }
       if (e.key === "]") {
         e.preventDefault();
         bringForward(c);
         markDirty();
+        scheduleActivePageSync();
         return;
       }
 
@@ -599,7 +673,7 @@ function Editor() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, doc, markDirty, setZoom, canvasInstance, undo, redo]);
+  }, [zoom, doc, markDirty, scheduleActivePageSync, setZoom, canvasInstance, undo, redo]);
 
   useEffect(() => {
     const el = canvasScrollRef.current;
@@ -703,6 +777,7 @@ function Editor() {
         const url = base.replace(/\/$/, "") + data.url;
         addImageFromUrl(canvasRef.current, url);
         markDirty();
+        scheduleActivePageSync();
       }
     } catch {
       toast.error("Upload failed");
@@ -909,7 +984,10 @@ function Editor() {
                 label="Image"
                 onClick={() => {
                   const url = prompt("Image URL:");
-                  if (url && canvasRef.current) addImageFromUrl(canvasRef.current, url);
+                  if (url && canvasRef.current) {
+                    addImageFromUrl(canvasRef.current, url);
+                    scheduleActivePageSync();
+                  }
                 }}
               />
               <ToolBtn
@@ -963,22 +1041,42 @@ function Editor() {
               <ToolBtn
                 icon={Copy}
                 label="Duplicate"
-                onClick={() => canvasRef.current && duplicateSelected(canvasRef.current)}
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  duplicateSelected(canvasRef.current);
+                  markDirty();
+                  scheduleActivePageSync();
+                }}
               />
               <ToolBtn
                 icon={Trash2}
                 label="Delete"
-                onClick={() => canvasRef.current && deleteSelected(canvasRef.current)}
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  deleteSelected(canvasRef.current);
+                  markDirty();
+                  scheduleActivePageSync();
+                }}
               />
               <ToolBtn
                 icon={ChevronUp}
                 label="Forward"
-                onClick={() => canvasRef.current && bringForward(canvasRef.current)}
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  bringForward(canvasRef.current);
+                  markDirty();
+                  scheduleActivePageSync();
+                }}
               />
               <ToolBtn
                 icon={ChevronDown}
                 label="Back"
-                onClick={() => canvasRef.current && sendBackward(canvasRef.current)}
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  sendBackward(canvasRef.current);
+                  markDirty();
+                  scheduleActivePageSync();
+                }}
               />
             </div>
           </section>
@@ -1046,6 +1144,7 @@ function Editor() {
                 zoom={zoom}
                 onDirty={() => {
                   markDirty();
+                  scheduleActivePageSync();
                   refreshActiveObject();
                 }}
               />
@@ -1054,11 +1153,12 @@ function Editor() {
               {doc.pages.map((p, i) => {
                 const label = i === 0 ? "Front" : i === 1 ? "Back" : p.name || `Page ${i + 1}`;
                 const pageDoc = { ...doc, pages: [{ ...p }] };
+                const isActivePage = activePageId === p.id;
                 return (
                   <div
                     key={p.id}
                     className={`group relative w-36 flex-shrink-0 rounded-lg border p-2 text-left text-xs transition ${
-                      activePageId === p.id
+                      isActivePage
                         ? "border-primary bg-primary/15 text-white shadow-lg shadow-primary/10"
                         : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-sky-300/40 hover:text-white"
                     }`}
@@ -1069,7 +1169,16 @@ function Editor() {
                       className="block w-full text-left"
                     >
                       <div className="mb-2 aspect-[7/4] overflow-hidden rounded-md border border-white/10 bg-white shadow-sm">
-                        <CanvasDocPreview doc={pageDoc as CanvasDoc} className="h-full w-full" />
+                        {isActivePage && activePagePreview ? (
+                          <img
+                            src={activePagePreview}
+                            alt=""
+                            className="h-full w-full object-contain"
+                            draggable={false}
+                          />
+                        ) : (
+                          <CanvasDocPreview doc={pageDoc as CanvasDoc} className="h-full w-full" />
+                        )}
                       </div>
                       <span className="block truncate font-semibold">{label}</span>
                       <span className="mt-0.5 block text-[10px] text-slate-500">
@@ -1116,6 +1225,7 @@ function Editor() {
               object={activeObject}
               onDirty={() => {
                 markDirty();
+                scheduleActivePageSync();
                 refreshActiveObject();
               }}
             />
