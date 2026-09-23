@@ -98,6 +98,11 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       if (e.target) normalizeTextScale(e.target);
       markDirty();
     });
+    c.on("object:scaling", (e) => {
+      if (!e.target || !isTextObject(e.target)) return;
+      normalizeTextScale(e.target);
+      c.requestRenderAll();
+    });
     c.on("object:added", (e) => {
       if (e.target) sharpenObject(e.target);
       markDirty();
