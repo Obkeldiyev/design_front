@@ -168,7 +168,7 @@ function Editor() {
   const [title, setTitle] = useState("");
   const [qrData, setQrData] = useState("https://card24.uz");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>("instagram");
-  const [socialLayout, setSocialLayout] = useState<SocialLayout>("horizontal");
+  const socialLayout: SocialLayout = "horizontal";
   const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
   const [objectVersion, setObjectVersion] = useState(0);
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
@@ -1068,26 +1068,6 @@ function Editor() {
                     >
                       <path d={SOCIAL_PLATFORMS[platform].path} fill="currentColor" />
                     </svg>
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[
-                  ["horizontal", "Side"],
-                  ["logo-top", "Top"],
-                  ["text-top", "Bottom"],
-                ].map(([layout, label]) => (
-                  <button
-                    key={layout}
-                    type="button"
-                    onClick={() => setSocialLayout(layout as SocialLayout)}
-                    className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                      socialLayout === layout
-                        ? "border-primary bg-primary/20 text-white"
-                        : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
-                    }`}
-                  >
-                    {label}
                   </button>
                 ))}
               </div>
