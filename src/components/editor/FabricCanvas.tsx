@@ -14,10 +14,6 @@ const SNAP_SIZE = 8;
 
 type FabricWithId = fabric.FabricObject & { id?: string; isEditing?: boolean };
 
-function isTextObject(object: fabric.FabricObject) {
-  return ["i-text", "textbox", "text"].includes(String(object.type ?? "").toLowerCase());
-}
-
 function selectedIdsFromEvent(e: { selected?: fabric.FabricObject[] }) {
   return e.selected?.map((object) => (object as FabricWithId).id ?? object.get?.("id") ?? "") ?? [];
 }
@@ -29,21 +25,6 @@ function sharpenObject(object: fabric.FabricObject) {
   });
   const children = (object as unknown as { _objects?: fabric.FabricObject[] })._objects;
   if (Array.isArray(children)) children.forEach(sharpenObject);
-}
-
-function normalizeTextScale(object: fabric.FabricObject) {
-  if (!isTextObject(object)) return;
-  const text = object as fabric.FabricObject & { fontSize?: number; initDimensions?: () => void };
-  const sx = Number(object.scaleX ?? 1);
-  const sy = Number(object.scaleY ?? 1);
-  if (!Number.isFinite(sx) || !Number.isFinite(sy)) return;
-  if (Math.abs(sx - 1) < 0.001 && Math.abs(sy - 1) < 0.001) return;
-
-  const factor = Math.abs(sx - 1) >= Math.abs(sy - 1) ? sx : sy;
-  const nextFontSize = Math.max(1, Math.round(Number(text.fontSize ?? 16) * Math.abs(factor)));
-  text.set({ fontSize: nextFontSize, scaleX: 1, scaleY: 1 });
-  text.initDimensions?.();
-  text.setCoords();
 }
 
 function applyCanvasView(c: fabric.Canvas, width: number, height: number, zoom: number, bg: string) {
@@ -94,15 +75,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       padding: 2,
     };
     fabricRef.current = c;
-    c.on("object:modified", (e) => {
-      if (e.target) normalizeTextScale(e.target);
-      markDirty();
-    });
-    c.on("object:scaling", (e) => {
-      if (!e.target || !isTextObject(e.target)) return;
-      normalizeTextScale(e.target);
-      c.requestRenderAll();
-    });
+    c.on("object:modified", markDirty);
     c.on("object:added", (e) => {
       if (e.target) sharpenObject(e.target);
       markDirty();
