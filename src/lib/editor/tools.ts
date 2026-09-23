@@ -327,8 +327,9 @@ export function addSocial(
 ) {
   const { logo, text } = createSocialObjects(platform, username, layout);
   canvas.add(logo, text);
-  const selection = new fabric.ActiveSelection([logo, text], { canvas });
-  canvas.setActiveObject(selection);
+  canvas.setActiveObject(text);
+  text.enterEditing();
+  text.selectAll();
   canvas.requestRenderAll();
 }
 
