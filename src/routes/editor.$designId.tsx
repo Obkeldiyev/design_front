@@ -1490,9 +1490,24 @@ function ObjectInspector({
     if (Number.isFinite(v)) apply({ [key]: v });
   };
 
+  const applyTextFontSize = (fontSize: number) => {
+    object.set({ fontSize, scaleX: 1, scaleY: 1 });
+    anyObj.initDimensions?.();
+    object.setCoords();
+    canvas.requestRenderAll();
+    onDirty();
+  };
+
   const setVisualSize = (key: "width" | "height", raw: string) => {
     const v = Number(raw);
     if (!Number.isFinite(v) || v <= 0) return;
+    if (isText) {
+      const current = key === "width" ? visualW : visualH;
+      const factor = v / Math.max(1, current);
+      const fontSize = Math.max(1, Math.round(Number(anyObj.fontSize ?? 16) * factor));
+      applyTextFontSize(fontSize);
+      return;
+    }
     if (key === "width") apply({ scaleX: v / baseW });
     if (key === "height") apply({ scaleY: v / baseH });
   };
@@ -1683,7 +1698,10 @@ function ObjectInspector({
             <Input
               type="number"
               value={Number(anyObj.fontSize ?? 16)}
-              onChange={(e) => setNum("fontSize", e.target.value)}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (Number.isFinite(v) && v > 0) applyTextFontSize(v);
+              }}
             />
           </div>
           <div className="space-y-1">
