@@ -24,18 +24,22 @@ function text(
   fill: string,
   options: Record<string, unknown> = {},
 ) {
+  const textAlign = String(options.textAlign ?? "left");
+  const originX = textAlign === "center" ? "center" : textAlign === "right" ? "right" : "left";
+  const adjustedLeft =
+    textAlign === "center" ? left + width / 2 : textAlign === "right" ? left + width : left;
+
   return {
-    type: "textbox",
+    type: "i-text",
     version: "6.0.0",
     id,
-    left,
+    left: adjustedLeft,
     top,
-    width,
     text: value,
     fontSize,
     fontFamily: "Inter",
     fill,
-    originX: "left",
+    originX,
     originY: "top",
     splitByGrapheme: false,
     ...options,

@@ -27,6 +27,34 @@ function sharpenObject(object: fabric.FabricObject) {
   if (Array.isArray(children)) children.forEach(sharpenObject);
 }
 
+function normalizeTextJson(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(normalizeTextJson);
+
+  const object = { ...(value as Record<string, unknown>) };
+  if (object.type === "textbox") {
+    const width = Number(object.width ?? 0);
+    const textAlign = String(object.textAlign ?? "left");
+    const left = Number(object.left ?? 0);
+
+    object.type = "i-text";
+    delete object.width;
+
+    if (textAlign === "center" && Number.isFinite(width) && Number.isFinite(left)) {
+      object.left = left + width / 2;
+      object.originX = "center";
+    } else if (textAlign === "right" && Number.isFinite(width) && Number.isFinite(left)) {
+      object.left = left + width;
+      object.originX = "right";
+    } else {
+      object.originX = object.originX ?? "left";
+    }
+  }
+
+  if (Array.isArray(object.objects)) object.objects = object.objects.map(normalizeTextJson);
+  return object;
+}
+
 function applyCanvasView(c: fabric.Canvas, width: number, height: number, zoom: number, bg: string) {
   c.setDimensions({
     width: Math.max(1, Math.ceil(width * zoom)),
@@ -143,7 +171,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
         c.requestRenderAll();
         return;
       }
-      const loadJson = { ...json } as Record<string, unknown>;
+      const loadJson = normalizeTextJson(json) as Record<string, unknown>;
       delete loadJson.viewportTransform;
       const result = c.loadFromJSON(loadJson);
       const done = () => {
