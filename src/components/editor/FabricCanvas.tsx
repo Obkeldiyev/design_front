@@ -18,6 +18,15 @@ function selectedIdsFromEvent(e: { selected?: fabric.FabricObject[] }) {
   return e.selected?.map((object) => (object as FabricWithId).id ?? object.get?.("id") ?? "") ?? [];
 }
 
+function sharpenObject(object: fabric.FabricObject) {
+  object.set({
+    objectCaching: false,
+    noScaleCache: false,
+  });
+  const children = (object as unknown as { _objects?: fabric.FabricObject[] })._objects;
+  if (Array.isArray(children)) children.forEach(sharpenObject);
+}
+
 function applyCanvasView(c: fabric.Canvas, width: number, height: number, zoom: number, bg: string) {
   c.setDimensions({
     width: Math.max(1, Math.ceil(width * zoom)),
@@ -61,11 +70,16 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       cornerStrokeColor: "#ffffff",
       cornerStyle: "circle",
       transparentCorners: false,
+      objectCaching: false,
+      noScaleCache: false,
       padding: 2,
     };
     fabricRef.current = c;
     c.on("object:modified", markDirty);
-    c.on("object:added", markDirty);
+    c.on("object:added", (e) => {
+      if (e.target) sharpenObject(e.target);
+      markDirty();
+    });
     c.on("object:removed", markDirty);
     c.on("object:moving", (e) => {
       const object = e.target as FabricWithId | undefined;
@@ -133,6 +147,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       delete loadJson.viewportTransform;
       const result = c.loadFromJSON(loadJson);
       const done = () => {
+        c.getObjects().forEach(sharpenObject);
         applyCanvasView(c, w, h, zoom, bg);
         c.requestRenderAll();
       };

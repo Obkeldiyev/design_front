@@ -21,14 +21,19 @@ function nextId(prefix: string) {
   return `${prefix}-${Date.now()}-${counter}`;
 }
 
+function sharp<T extends fabric.FabricObject>(object: T): T {
+  object.set({ objectCaching: false, noScaleCache: false });
+  return object;
+}
+
 export function addText(canvas: fabric.Canvas) {
-  const t = new fabric.IText("Your text", {
+  const t = sharp(new fabric.IText("Your text", {
     left: 80,
     top: 80,
     fontFamily: "Inter",
     fontSize: 36,
     fill: "#111111",
-  });
+  }));
   (t as fabric.Object).set("id", nextId("text"));
   (t as fabric.Object).set("name", "Text");
   canvas.add(t);
@@ -37,7 +42,7 @@ export function addText(canvas: fabric.Canvas) {
 }
 
 export function addRect(canvas: fabric.Canvas) {
-  const r = new fabric.Rect({
+  const r = sharp(new fabric.Rect({
     left: 100,
     top: 100,
     width: 180,
@@ -45,7 +50,7 @@ export function addRect(canvas: fabric.Canvas) {
     fill: "#6b8afd",
     rx: 16,
     ry: 16,
-  });
+  }));
   (r as fabric.Object).set("id", nextId("rect"));
   (r as fabric.Object).set("name", "Rectangle");
   canvas.add(r);
@@ -54,12 +59,12 @@ export function addRect(canvas: fabric.Canvas) {
 }
 
 export function addCircle(canvas: fabric.Canvas) {
-  const c = new fabric.Circle({
+  const c = sharp(new fabric.Circle({
     left: 120,
     top: 120,
     radius: 60,
     fill: "#f59e0b",
-  });
+  }));
   (c as fabric.Object).set("id", nextId("circle"));
   (c as fabric.Object).set("name", "Circle");
   canvas.add(c);
@@ -68,13 +73,13 @@ export function addCircle(canvas: fabric.Canvas) {
 }
 
 export function addTriangle(canvas: fabric.Canvas) {
-  const t = new fabric.Triangle({
+  const t = sharp(new fabric.Triangle({
     left: 140,
     top: 140,
     width: 120,
     height: 120,
     fill: "#10b981",
-  });
+  }));
   (t as fabric.Object).set("id", nextId("tri"));
   (t as fabric.Object).set("name", "Triangle");
   canvas.add(t);
@@ -83,13 +88,13 @@ export function addTriangle(canvas: fabric.Canvas) {
 }
 
 export function addEllipse(canvas: fabric.Canvas) {
-  const e = new fabric.Ellipse({
+  const e = sharp(new fabric.Ellipse({
     left: 120,
     top: 120,
     rx: 90,
     ry: 60,
     fill: "#f97316",
-  });
+  }));
   (e as fabric.Object).set("id", nextId("ellipse"));
   (e as fabric.Object).set("name", "Ellipse");
   canvas.add(e);
@@ -98,7 +103,7 @@ export function addEllipse(canvas: fabric.Canvas) {
 }
 
 export function addRoundedRect(canvas: fabric.Canvas) {
-  const r = new fabric.Rect({
+  const r = sharp(new fabric.Rect({
     left: 120,
     top: 120,
     width: 220,
@@ -106,7 +111,7 @@ export function addRoundedRect(canvas: fabric.Canvas) {
     fill: "#8b5cf6",
     rx: 24,
     ry: 24,
-  });
+  }));
   (r as fabric.Object).set("id", nextId("rounded-rect"));
   (r as fabric.Object).set("name", "Rounded rectangle");
   canvas.add(r);
@@ -115,7 +120,7 @@ export function addRoundedRect(canvas: fabric.Canvas) {
 }
 
 export function addStar(canvas: fabric.Canvas) {
-  const s = new fabric.Polygon(
+  const s = sharp(new fabric.Polygon(
     [
       { x: 0, y: -60 },
       { x: 18, y: -18 },
@@ -133,7 +138,7 @@ export function addStar(canvas: fabric.Canvas) {
       top: 140,
       fill: "#fb7185",
     },
-  );
+  ));
   (s as fabric.Object).set("id", nextId("star"));
   (s as fabric.Object).set("name", "Star");
   canvas.add(s);
@@ -142,10 +147,10 @@ export function addStar(canvas: fabric.Canvas) {
 }
 
 export function addLine(canvas: fabric.Canvas) {
-  const l = new fabric.Line([50, 100, 350, 100], {
+  const l = sharp(new fabric.Line([50, 100, 350, 100], {
     stroke: "#111111",
     strokeWidth: 3,
-  });
+  }));
   (l as fabric.Object).set("id", nextId("line"));
   (l as fabric.Object).set("name", "Line");
   canvas.add(l);
@@ -155,6 +160,7 @@ export function addLine(canvas: fabric.Canvas) {
 
 export async function addImageFromUrl(canvas: fabric.Canvas, url: string) {
   const img = await fabric.FabricImage.fromURL(url, { crossOrigin: "anonymous" });
+  sharp(img);
   img.set({ left: 80, top: 80 });
   const max = 320;
   const scale = Math.min(max / (img.width ?? max), max / (img.height ?? max), 1);
@@ -173,6 +179,7 @@ export async function addImageFromFile(canvas: fabric.Canvas, file: File) {
       try {
         const dataUrl = e.target?.result as string;
         const img = await fabric.FabricImage.fromURL(dataUrl);
+        sharp(img);
         img.set({ left: 80, top: 80 });
         const max = 320;
         const scale = Math.min(max / (img.width ?? max), max / (img.height ?? max), 1);
@@ -200,6 +207,7 @@ export async function addQR(canvas: fabric.Canvas, data: string) {
     color: { dark: "#000000", light: "#ffffff" },
   });
   const img = await fabric.FabricImage.fromURL(dataUrl);
+  sharp(img);
   img.set({ left: 100, top: 100 });
   (img as fabric.Object).set("id", nextId("qr"));
   (img as fabric.Object).set("name", "QR code");
@@ -218,7 +226,7 @@ function normalizedSocialText(platform: SocialPlatform, username: string) {
 function makeSocialLogo(platform: SocialPlatform, socialId: string) {
   const config = SOCIAL_PLATFORMS[platform];
   const iconSize = 44;
-  const bg = new fabric.Rect({
+  const bg = sharp(new fabric.Rect({
     width: iconSize,
     height: iconSize,
     rx: platform === "instagram" ? 13 : 22,
@@ -226,25 +234,36 @@ function makeSocialLogo(platform: SocialPlatform, socialId: string) {
     fill: config.color,
     originX: "left",
     originY: "top",
-  });
+  }));
   bg.set("name", `${config.label} logo`);
 
   const marks: fabric.FabricObject[] = [bg];
   if (platform === "instagram") {
     marks.push(
-      new fabric.Circle({
+      sharp(new fabric.Rect({
+        left: 10,
+        top: 10,
+        width: 24,
+        height: 24,
+        rx: 7,
+        ry: 7,
+        fill: "",
+        stroke: "#ffffff",
+        strokeWidth: 3,
+      })),
+      sharp(new fabric.Circle({
         left: 13,
         top: 13,
         radius: 9,
         fill: "",
         stroke: "#ffffff",
         strokeWidth: 3,
-      }),
-      new fabric.Circle({ left: 29, top: 10, radius: 3, fill: "#ffffff" }),
+      })),
+      sharp(new fabric.Circle({ left: 29, top: 10, radius: 3, fill: "#ffffff" })),
     );
   } else if (platform === "telegram") {
     marks.push(
-      new fabric.Polygon(
+      sharp(new fabric.Polygon(
         [
           { x: 10, y: 22 },
           { x: 34, y: 11 },
@@ -254,36 +273,36 @@ function makeSocialLogo(platform: SocialPlatform, socialId: string) {
           { x: 18, y: 25 },
         ],
         { fill: "#ffffff" },
-      ),
+      )),
     );
   } else if (platform === "whatsapp") {
     marks.push(
-      new fabric.Circle({
+      sharp(new fabric.Circle({
         left: 9,
         top: 8,
         radius: 13,
         fill: "",
         stroke: "#ffffff",
         strokeWidth: 3,
-      }),
-      new fabric.Polygon(
+      })),
+      sharp(new fabric.Polygon(
         [
           { x: 14, y: 32 },
           { x: 18, y: 28 },
           { x: 23, y: 34 },
         ],
         { fill: "#ffffff" },
-      ),
-      new fabric.Path("M18 16 C20 22 23 25 29 27", {
+      )),
+      sharp(new fabric.Path("M18 16 C20 22 23 25 29 27", {
         stroke: "#ffffff",
         strokeWidth: 4,
         fill: "",
         strokeLineCap: "round",
-      }),
+      })),
     );
   } else if (platform === "facebook") {
     marks.push(
-      new fabric.Text("f", {
+      sharp(new fabric.Text("f", {
         left: 23,
         top: 22,
         fontFamily: "Arial",
@@ -292,27 +311,27 @@ function makeSocialLogo(platform: SocialPlatform, socialId: string) {
         fill: "#ffffff",
         originX: "center",
         originY: "center",
-      }),
+      })),
     );
   } else {
     marks.push(
-      new fabric.Line([14, 13, 31, 31], {
+      sharp(new fabric.Line([14, 13, 31, 31], {
         stroke: "#ffffff",
         strokeWidth: 4,
         strokeLineCap: "round",
-      }),
-      new fabric.Line([31, 13, 14, 31], {
+      })),
+      sharp(new fabric.Line([31, 13, 14, 31], {
         stroke: "#ffffff",
         strokeWidth: 4,
         strokeLineCap: "round",
-      }),
+      })),
     );
   }
 
-  const logo = new fabric.Group(marks, {
+  const logo = sharp(new fabric.Group(marks, {
     left: 100,
     top: 100,
-  });
+  }));
   logo.set("id", nextId("social-logo"));
   logo.set("name", `${config.label} logo`);
   logo.set("meta", { social: true, socialId, platform, role: "logo" });
@@ -325,7 +344,7 @@ function createSocialObjects(platform: SocialPlatform, username: string, layout:
   const iconSize = 44;
   const gap = 12;
   const logo = makeSocialLogo(platform, socialId);
-  const text = new fabric.IText(handle, {
+  const text = sharp(new fabric.IText(handle, {
     left: 156,
     top: 122,
     fontFamily: "Inter",
@@ -334,7 +353,7 @@ function createSocialObjects(platform: SocialPlatform, username: string, layout:
     fill: "#111111",
     originX: "left",
     originY: "center",
-  });
+  }));
   text.set("id", nextId("social-text"));
   text.set("name", `${SOCIAL_PLATFORMS[platform].label} username`);
   text.set("meta", { social: true, socialId, platform, role: "text", layout });
@@ -362,11 +381,11 @@ export function createSocialGroup(
   const { logo, text, handle } = createSocialObjects(platform, username, layout);
   logo.set({ left: 0, top: 0 });
   text.set({ left: 56, top: 22 });
-  const group = new fabric.Group([logo, text], {
+  const group = sharp(new fabric.Group([logo, text], {
     left: 100,
     top: 100,
     ...options,
-  });
+  }));
   group.set("id", nextId("social"));
   group.set("name", `${SOCIAL_PLATFORMS[platform].label} social`);
   group.set("meta", { social: true, platform, username: handle, layout });

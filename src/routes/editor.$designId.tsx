@@ -60,7 +60,6 @@ import {
   exportSVG,
   sendBackward,
   SOCIAL_PLATFORMS,
-  updateSocialGroup,
   type SocialLayout,
   type SocialPlatform,
 } from "@/lib/editor/tools";
@@ -1473,50 +1472,6 @@ function ObjectInspector({
             : objectType}
         </div>
       </div>
-
-      {isSocialGroup && (
-        <div className="space-y-3 rounded-lg border border-sky-300/10 bg-white/[0.03] p-3">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Username</label>
-            <Input
-              value={String(meta.username ?? "")}
-              onChange={(e) => {
-                updateSocialGroup(
-                  canvas,
-                  object,
-                  e.target.value,
-                  (meta.layout ?? "horizontal") as SocialLayout,
-                );
-                onDirty();
-              }}
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-1.5">
-            {[
-              ["horizontal", "Side"],
-              ["logo-top", "Top"],
-              ["text-top", "Down"],
-            ].map(([layout, label]) => (
-              <button
-                key={layout}
-                type="button"
-                onClick={() => {
-                  updateSocialGroup(canvas, object, String(meta.username ?? ""), layout as SocialLayout);
-                  onDirty();
-                }}
-                className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                  meta.layout === layout
-                    ? "border-primary bg-primary/20 text-white"
-                    : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Text content */}
       {isText && (
