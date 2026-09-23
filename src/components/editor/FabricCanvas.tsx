@@ -7,7 +7,7 @@ import * as fabric from "fabric";
 import { useEditorStore } from "@/store/editor";
 
 if (!(fabric.FabricObject.customProperties as string[]).includes("id")) {
-  (fabric.FabricObject.customProperties as string[]).push("id", "name");
+  (fabric.FabricObject.customProperties as string[]).push("id", "name", "meta");
 }
 
 const SNAP_SIZE = 8;
@@ -16,6 +16,15 @@ type FabricWithId = fabric.FabricObject & { id?: string; isEditing?: boolean };
 
 function selectedIdsFromEvent(e: { selected?: fabric.FabricObject[] }) {
   return e.selected?.map((object) => (object as FabricWithId).id ?? object.get?.("id") ?? "") ?? [];
+}
+
+function applyCanvasView(c: fabric.Canvas, width: number, height: number, zoom: number, bg: string) {
+  c.setDimensions({
+    width: Math.max(1, Math.ceil(width * zoom)),
+    height: Math.max(1, Math.ceil(height * zoom)),
+  });
+  c.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+  setBg(c, bg);
 }
 
 export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) => void }) {
@@ -85,11 +94,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
   useEffect(() => {
     const c = fabricRef.current;
     if (!c || canvasWidth == null || canvasHeight == null) return;
-    c.setDimensions({ width: canvasWidth, height: canvasHeight });
-    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    setBg(c, canvasBackground || "");
+    applyCanvasView(c, canvasWidth, canvasHeight, zoom, canvasBackground || "");
     c.requestRenderAll();
-  }, [canvasWidth, canvasHeight, canvasBackground]);
+  }, [canvasWidth, canvasHeight, canvasBackground, zoom]);
 
   // Clear on reset
   useEffect(() => {
@@ -97,8 +104,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const c = fabricRef.current;
     if (!c) return;
     c.clear();
-    c.setDimensions({ width: 1050, height: 600 });
-    c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      c.setDimensions({ width: 1050, height: 600 });
+      c.setViewportTransform([1, 0, 0, 1, 0, 0]);
     c.requestRenderAll();
   }, [doc]);
 
@@ -114,9 +121,9 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
     const h = doc.canvas.height;
     const load = () => {
       c.setDimensions({ width: w, height: h });
-      c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      applyCanvasView(c, w, h, zoom, bg);
       c.clear();
-      setBg(c, bg);
+      applyCanvasView(c, w, h, zoom, bg);
       const objects = (json?.objects as unknown[]) ?? [];
       if (!Array.isArray(objects) || objects.length === 0) {
         c.requestRenderAll();
@@ -126,8 +133,7 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
       delete loadJson.viewportTransform;
       const result = c.loadFromJSON(loadJson);
       const done = () => {
-        setBg(c, bg);
-        c.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        applyCanvasView(c, w, h, zoom, bg);
         c.requestRenderAll();
       };
       if (result && typeof (result as Promise<unknown>).then === "function") {
@@ -174,10 +180,8 @@ export function FabricCanvas({ onReady }: { onReady?: (canvas: fabric.Canvas) =>
           position: "absolute",
           top: 0,
           left: 0,
-          width: nativeW,
-          height: nativeH,
-          transformOrigin: "top left",
-          transform: `scale(${zoom})`,
+          width: scaledW,
+          height: scaledH,
           backfaceVisibility: "hidden",
           lineHeight: 0,
         }}

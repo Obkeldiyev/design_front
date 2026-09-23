@@ -47,6 +47,7 @@ import {
   addQR,
   addRect,
   addRoundedRect,
+  addSocial,
   addText,
   addTriangle,
   bringForward,
@@ -58,6 +59,10 @@ import {
   exportPNG,
   exportSVG,
   sendBackward,
+  SOCIAL_PLATFORMS,
+  updateSocialGroup,
+  type SocialLayout,
+  type SocialPlatform,
 } from "@/lib/editor/tools";
 import { toast } from "sonner";
 import { apiError, tokenStore } from "@/lib/api/client";
@@ -163,6 +168,9 @@ function Editor() {
 
   const [title, setTitle] = useState("");
   const [qrData, setQrData] = useState("https://card24.uz");
+  const [socialUsername, setSocialUsername] = useState("card24");
+  const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>("instagram");
+  const [socialLayout, setSocialLayout] = useState<SocialLayout>("horizontal");
   const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
   const [objectVersion, setObjectVersion] = useState(0);
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
@@ -811,7 +819,9 @@ function Editor() {
     }
 
     if (format === "svg") {
-      const blob = new Blob([exportSVG(c)], { type: "image/svg+xml" });
+      const blob = new Blob([exportSVG(c, doc?.canvas.width, doc?.canvas.height)], {
+        type: "image/svg+xml",
+      });
       downloadDataUrl(URL.createObjectURL(blob), `${title || "design"}.svg`);
       return;
     }
@@ -1028,6 +1038,70 @@ function Editor() {
                 onClick={() => canvasRef.current && addQR(canvasRef.current, qrData)}
               >
                 <QrCode className="mr-1 h-4 w-4" /> Insert QR
+              </Button>
+            </div>
+          </section>
+
+          {/* Social media */}
+          <section>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Social media
+            </p>
+            <div className="space-y-2">
+              <Input
+                value={socialUsername}
+                onChange={(e) => setSocialUsername(e.target.value)}
+                placeholder="username"
+                className="h-8 text-sm"
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                {(Object.keys(SOCIAL_PLATFORMS) as SocialPlatform[]).map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => setSocialPlatform(platform)}
+                    className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                      socialPlatform === platform
+                        ? "border-primary bg-primary/20 text-white"
+                        : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
+                    }`}
+                  >
+                    {SOCIAL_PLATFORMS[platform].label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  ["horizontal", "Side"],
+                  ["logo-top", "Top"],
+                  ["text-top", "Bottom"],
+                ].map(([layout, label]) => (
+                  <button
+                    key={layout}
+                    type="button"
+                    onClick={() => setSocialLayout(layout as SocialLayout)}
+                    className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                      socialLayout === layout
+                        ? "border-primary bg-primary/20 text-white"
+                        : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  addSocial(canvasRef.current, socialPlatform, socialUsername, socialLayout);
+                  markDirty();
+                  scheduleActivePageSync();
+                }}
+              >
+                Insert social
               </Button>
             </div>
           </section>
@@ -1355,6 +1429,13 @@ function ObjectInspector({
 
   const anyObj = object as any;
   const objectType = String(object.type ?? "object").toLowerCase();
+  const meta = (object.get("meta") ?? {}) as {
+    social?: boolean;
+    username?: string;
+    layout?: SocialLayout;
+    platform?: SocialPlatform;
+  };
+  const isSocialGroup = objectType === "group" && meta.social;
   const isText = ["i-text", "textbox", "text"].includes(objectType);
   const canFill = !["image", "group", "activeSelection"].includes(objectType);
   const canStroke = !["image", "activeSelection"].includes(objectType);
@@ -1394,9 +1475,55 @@ function ObjectInspector({
           Element
         </p>
         <div className="mt-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-medium text-slate-200">
-          {objectType}
+          {isSocialGroup
+            ? `${SOCIAL_PLATFORMS[meta.platform ?? "instagram"].label} social`
+            : objectType}
         </div>
       </div>
+
+      {isSocialGroup && (
+        <div className="space-y-3 rounded-lg border border-sky-300/10 bg-white/[0.03] p-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Username</label>
+            <Input
+              value={String(meta.username ?? "")}
+              onChange={(e) => {
+                updateSocialGroup(
+                  canvas,
+                  object,
+                  e.target.value,
+                  (meta.layout ?? "horizontal") as SocialLayout,
+                );
+                onDirty();
+              }}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              ["horizontal", "Side"],
+              ["logo-top", "Top"],
+              ["text-top", "Down"],
+            ].map(([layout, label]) => (
+              <button
+                key={layout}
+                type="button"
+                onClick={() => {
+                  updateSocialGroup(canvas, object, String(meta.username ?? ""), layout as SocialLayout);
+                  onDirty();
+                }}
+                className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                  meta.layout === layout
+                    ? "border-primary bg-primary/20 text-white"
+                    : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Text content */}
       {isText && (

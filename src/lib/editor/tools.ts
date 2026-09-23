@@ -1,6 +1,20 @@
 import * as fabric from "fabric";
 import QRCode from "qrcode";
 
+export type SocialPlatform = "instagram" | "telegram" | "whatsapp" | "facebook" | "x";
+export type SocialLayout = "horizontal" | "logo-top" | "text-top";
+
+export const SOCIAL_PLATFORMS: Record<
+  SocialPlatform,
+  { label: string; glyph: string; color: string; textPrefix: string }
+> = {
+  instagram: { label: "Instagram", glyph: "IG", color: "#e1306c", textPrefix: "@" },
+  telegram: { label: "Telegram", glyph: "TG", color: "#229ed9", textPrefix: "@" },
+  whatsapp: { label: "WhatsApp", glyph: "WA", color: "#25d366", textPrefix: "+" },
+  facebook: { label: "Facebook", glyph: "f", color: "#1877f2", textPrefix: "@" },
+  x: { label: "X", glyph: "X", color: "#111111", textPrefix: "@" },
+};
+
 let counter = 0;
 function nextId(prefix: string) {
   counter += 1;
@@ -195,6 +209,122 @@ export async function addQR(canvas: fabric.Canvas, data: string) {
   canvas.requestRenderAll();
 }
 
+function normalizedSocialText(platform: SocialPlatform, username: string) {
+  const value = username.trim() || "username";
+  if (/^(https?:\/\/|@|\+|t\.me\/|wa\.me\/)/i.test(value)) return value;
+  return `${SOCIAL_PLATFORMS[platform].textPrefix}${value}`;
+}
+
+function createSocialGroupObjects(
+  platform: SocialPlatform,
+  username: string,
+  layout: SocialLayout,
+) {
+  const config = SOCIAL_PLATFORMS[platform];
+  const handle = normalizedSocialText(platform, username);
+  const iconSize = 44;
+  const gap = 12;
+  const text = new fabric.Text(handle, {
+    fontFamily: "Inter",
+    fontSize: 24,
+    fontWeight: "700",
+    fill: "#111111",
+    originX: "left",
+    originY: "center",
+  });
+  text.set("name", "Social username");
+
+  const bg = new fabric.Rect({
+    width: iconSize,
+    height: iconSize,
+    rx: platform === "instagram" ? 13 : 22,
+    ry: platform === "instagram" ? 13 : 22,
+    fill: config.color,
+    originX: "center",
+    originY: "center",
+  });
+  bg.set("name", `${config.label} logo`);
+
+  const glyph = new fabric.Text(config.glyph, {
+    fontFamily: "Inter",
+    fontSize: platform === "facebook" ? 30 : 16,
+    fontWeight: "900",
+    fill: "#ffffff",
+    originX: "center",
+    originY: "center",
+  });
+  glyph.set("name", `${config.label} mark`);
+
+  const textWidth = Math.max(80, text.width ?? 80);
+  if (layout === "horizontal") {
+    bg.set({ left: 0, top: 0 });
+    glyph.set({ left: 0, top: 0 });
+    text.set({ left: iconSize / 2 + gap, top: 0 });
+  } else {
+    const centerX = Math.max(iconSize, textWidth) / 2;
+    const iconY = layout === "logo-top" ? 0 : 38;
+    const textY = layout === "logo-top" ? 42 : -6;
+    bg.set({ left: centerX, top: iconY });
+    glyph.set({ left: centerX, top: iconY });
+    text.set({ left: centerX - textWidth / 2, top: textY, originY: "top" });
+  }
+  return { bg, glyph, text, handle };
+}
+
+export function createSocialGroup(
+  platform: SocialPlatform,
+  username: string,
+  layout: SocialLayout,
+  options: fabric.GroupProps = {},
+) {
+  const { bg, glyph, text, handle } = createSocialGroupObjects(platform, username, layout);
+  const group = new fabric.Group([bg, glyph, text], {
+    left: 100,
+    top: 100,
+    ...options,
+  });
+  group.set("id", nextId("social"));
+  group.set("name", `${SOCIAL_PLATFORMS[platform].label} social`);
+  group.set("meta", { social: true, platform, username: handle, layout });
+  return group;
+}
+
+export function addSocial(
+  canvas: fabric.Canvas,
+  platform: SocialPlatform,
+  username: string,
+  layout: SocialLayout,
+) {
+  const group = createSocialGroup(platform, username, layout);
+  canvas.add(group);
+  canvas.setActiveObject(group);
+  canvas.requestRenderAll();
+}
+
+export function updateSocialGroup(
+  canvas: fabric.Canvas,
+  group: fabric.FabricObject,
+  username: string,
+  layout: SocialLayout,
+) {
+  const meta = (group.get("meta") ?? {}) as { platform?: SocialPlatform };
+  const platform = meta.platform ?? "instagram";
+  const replacement = createSocialGroup(platform, username, layout, {
+    left: group.left,
+    top: group.top,
+    angle: group.angle,
+    scaleX: group.scaleX,
+    scaleY: group.scaleY,
+    opacity: group.opacity,
+  });
+  replacement.set("id", group.get("id") || nextId("social"));
+  canvas.remove(group);
+  canvas.add(replacement);
+  canvas.setActiveObject(replacement);
+  canvas.requestRenderAll();
+  return replacement;
+}
+
 export function deleteSelected(canvas: fabric.Canvas) {
   const objs = canvas.getActiveObjects();
   objs.forEach((o) => canvas.remove(o));
@@ -230,21 +360,39 @@ export function duplicateSelected(canvas: fabric.Canvas) {
   });
 }
 
+function withNativeView<T>(canvas: fabric.Canvas, width: number, height: number, render: () => T): T {
+  const previousWidth = canvas.getWidth();
+  const previousHeight = canvas.getHeight();
+  const previousViewport = canvas.viewportTransform ? [...canvas.viewportTransform] : undefined;
+  try {
+    canvas.setDimensions({ width, height });
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    canvas.requestRenderAll();
+    return render();
+  } finally {
+    canvas.setDimensions({ width: previousWidth, height: previousHeight });
+    if (previousViewport) canvas.setViewportTransform(previousViewport);
+    canvas.requestRenderAll();
+  }
+}
+
 export function exportPNG(
   canvas: fabric.Canvas,
   multiplier = 2,
   width = canvas.getWidth(),
   height = canvas.getHeight(),
 ): string {
-  return canvas.toDataURL({
-    format: "png",
-    multiplier,
-    quality: 1,
-    left: 0,
-    top: 0,
-    width,
-    height,
-  });
+  return withNativeView(canvas, width, height, () =>
+    canvas.toDataURL({
+      format: "png",
+      multiplier,
+      quality: 1,
+      left: 0,
+      top: 0,
+      width,
+      height,
+    }),
+  );
 }
 
 export function exportJPG(
@@ -253,19 +401,25 @@ export function exportJPG(
   width = canvas.getWidth(),
   height = canvas.getHeight(),
 ): string {
-  return canvas.toDataURL({
-    format: "jpeg",
-    multiplier,
-    quality: 0.95,
-    left: 0,
-    top: 0,
-    width,
-    height,
-  });
+  return withNativeView(canvas, width, height, () =>
+    canvas.toDataURL({
+      format: "jpeg",
+      multiplier,
+      quality: 0.95,
+      left: 0,
+      top: 0,
+      width,
+      height,
+    }),
+  );
 }
 
-export function exportSVG(canvas: fabric.Canvas): string {
-  return canvas.toSVG();
+export function exportSVG(
+  canvas: fabric.Canvas,
+  width = canvas.getWidth(),
+  height = canvas.getHeight(),
+): string {
+  return withNativeView(canvas, width, height, () => canvas.toSVG());
 }
 
 export function downloadDataUrl(dataUrl: string, filename: string) {
@@ -310,7 +464,7 @@ export async function exportPDF(
 
   // Ensure custom props are registered in this dynamic import context
   if (!(FabricObject.customProperties as string[]).includes("id")) {
-    (FabricObject.customProperties as string[]).push("id", "name");
+    (FabricObject.customProperties as string[]).push("id", "name", "meta");
   }
 
   const el = document.createElement("canvas");
