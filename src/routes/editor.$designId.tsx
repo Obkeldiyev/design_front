@@ -168,7 +168,6 @@ function Editor() {
 
   const [title, setTitle] = useState("");
   const [qrData, setQrData] = useState("https://card24.uz");
-  const [socialUsername, setSocialUsername] = useState("card24");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>("instagram");
   const [socialLayout, setSocialLayout] = useState<SocialLayout>("horizontal");
   const [activeObject, setActiveObject] = useState<fabricTypes.FabricObject | null>(null);
@@ -1048,12 +1047,6 @@ function Editor() {
               Social media
             </p>
             <div className="space-y-2">
-              <Input
-                value={socialUsername}
-                onChange={(e) => setSocialUsername(e.target.value)}
-                placeholder="username"
-                className="h-8 text-sm"
-              />
               <div className="grid grid-cols-2 gap-1.5">
                 {(Object.keys(SOCIAL_PLATFORMS) as SocialPlatform[]).map((platform) => (
                   <button
@@ -1096,7 +1089,7 @@ function Editor() {
                 className="w-full"
                 onClick={() => {
                   if (!canvasRef.current) return;
-                  addSocial(canvasRef.current, socialPlatform, socialUsername, socialLayout);
+                  addSocial(canvasRef.current, socialPlatform, "username", socialLayout);
                   markDirty();
                   scheduleActivePageSync();
                 }}

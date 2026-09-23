@@ -6,13 +6,13 @@ export type SocialLayout = "horizontal" | "logo-top" | "text-top";
 
 export const SOCIAL_PLATFORMS: Record<
   SocialPlatform,
-  { label: string; glyph: string; color: string; textPrefix: string }
+  { label: string; color: string; textPrefix: string }
 > = {
-  instagram: { label: "Instagram", glyph: "IG", color: "#e1306c", textPrefix: "@" },
-  telegram: { label: "Telegram", glyph: "TG", color: "#229ed9", textPrefix: "@" },
-  whatsapp: { label: "WhatsApp", glyph: "WA", color: "#25d366", textPrefix: "+" },
-  facebook: { label: "Facebook", glyph: "f", color: "#1877f2", textPrefix: "@" },
-  x: { label: "X", glyph: "X", color: "#111111", textPrefix: "@" },
+  instagram: { label: "Instagram", color: "#e1306c", textPrefix: "@" },
+  telegram: { label: "Telegram", color: "#229ed9", textPrefix: "@" },
+  whatsapp: { label: "WhatsApp", color: "#25d366", textPrefix: "+" },
+  facebook: { label: "Facebook", color: "#1877f2", textPrefix: "@" },
+  x: { label: "X", color: "#111111", textPrefix: "@" },
 };
 
 let counter = 0;
@@ -215,16 +215,119 @@ function normalizedSocialText(platform: SocialPlatform, username: string) {
   return `${SOCIAL_PLATFORMS[platform].textPrefix}${value}`;
 }
 
-function createSocialGroupObjects(
-  platform: SocialPlatform,
-  username: string,
-  layout: SocialLayout,
-) {
+function makeSocialLogo(platform: SocialPlatform, socialId: string) {
   const config = SOCIAL_PLATFORMS[platform];
+  const iconSize = 44;
+  const bg = new fabric.Rect({
+    width: iconSize,
+    height: iconSize,
+    rx: platform === "instagram" ? 13 : 22,
+    ry: platform === "instagram" ? 13 : 22,
+    fill: config.color,
+    originX: "left",
+    originY: "top",
+  });
+  bg.set("name", `${config.label} logo`);
+
+  const marks: fabric.FabricObject[] = [bg];
+  if (platform === "instagram") {
+    marks.push(
+      new fabric.Circle({
+        left: 13,
+        top: 13,
+        radius: 9,
+        fill: "",
+        stroke: "#ffffff",
+        strokeWidth: 3,
+      }),
+      new fabric.Circle({ left: 29, top: 10, radius: 3, fill: "#ffffff" }),
+    );
+  } else if (platform === "telegram") {
+    marks.push(
+      new fabric.Polygon(
+        [
+          { x: 10, y: 22 },
+          { x: 34, y: 11 },
+          { x: 28, y: 34 },
+          { x: 21, y: 27 },
+          { x: 17, y: 31 },
+          { x: 18, y: 25 },
+        ],
+        { fill: "#ffffff" },
+      ),
+    );
+  } else if (platform === "whatsapp") {
+    marks.push(
+      new fabric.Circle({
+        left: 9,
+        top: 8,
+        radius: 13,
+        fill: "",
+        stroke: "#ffffff",
+        strokeWidth: 3,
+      }),
+      new fabric.Polygon(
+        [
+          { x: 14, y: 32 },
+          { x: 18, y: 28 },
+          { x: 23, y: 34 },
+        ],
+        { fill: "#ffffff" },
+      ),
+      new fabric.Path("M18 16 C20 22 23 25 29 27", {
+        stroke: "#ffffff",
+        strokeWidth: 4,
+        fill: "",
+        strokeLineCap: "round",
+      }),
+    );
+  } else if (platform === "facebook") {
+    marks.push(
+      new fabric.Text("f", {
+        left: 23,
+        top: 22,
+        fontFamily: "Arial",
+        fontSize: 34,
+        fontWeight: "900",
+        fill: "#ffffff",
+        originX: "center",
+        originY: "center",
+      }),
+    );
+  } else {
+    marks.push(
+      new fabric.Line([14, 13, 31, 31], {
+        stroke: "#ffffff",
+        strokeWidth: 4,
+        strokeLineCap: "round",
+      }),
+      new fabric.Line([31, 13, 14, 31], {
+        stroke: "#ffffff",
+        strokeWidth: 4,
+        strokeLineCap: "round",
+      }),
+    );
+  }
+
+  const logo = new fabric.Group(marks, {
+    left: 100,
+    top: 100,
+  });
+  logo.set("id", nextId("social-logo"));
+  logo.set("name", `${config.label} logo`);
+  logo.set("meta", { social: true, socialId, platform, role: "logo" });
+  return logo;
+}
+
+function createSocialObjects(platform: SocialPlatform, username: string, layout: SocialLayout) {
+  const socialId = nextId("social");
   const handle = normalizedSocialText(platform, username);
   const iconSize = 44;
   const gap = 12;
-  const text = new fabric.Text(handle, {
+  const logo = makeSocialLogo(platform, socialId);
+  const text = new fabric.IText(handle, {
+    left: 156,
+    top: 122,
     fontFamily: "Inter",
     fontSize: 24,
     fontWeight: "700",
@@ -232,43 +335,22 @@ function createSocialGroupObjects(
     originX: "left",
     originY: "center",
   });
-  text.set("name", "Social username");
-
-  const bg = new fabric.Rect({
-    width: iconSize,
-    height: iconSize,
-    rx: platform === "instagram" ? 13 : 22,
-    ry: platform === "instagram" ? 13 : 22,
-    fill: config.color,
-    originX: "center",
-    originY: "center",
-  });
-  bg.set("name", `${config.label} logo`);
-
-  const glyph = new fabric.Text(config.glyph, {
-    fontFamily: "Inter",
-    fontSize: platform === "facebook" ? 30 : 16,
-    fontWeight: "900",
-    fill: "#ffffff",
-    originX: "center",
-    originY: "center",
-  });
-  glyph.set("name", `${config.label} mark`);
+  text.set("id", nextId("social-text"));
+  text.set("name", `${SOCIAL_PLATFORMS[platform].label} username`);
+  text.set("meta", { social: true, socialId, platform, role: "text", layout });
 
   const textWidth = Math.max(80, text.width ?? 80);
   if (layout === "horizontal") {
-    bg.set({ left: 0, top: 0 });
-    glyph.set({ left: 0, top: 0 });
-    text.set({ left: iconSize / 2 + gap, top: 0 });
+    logo.set({ left: 100, top: 100 });
+    text.set({ left: 100 + iconSize + gap, top: 100 + iconSize / 2, originY: "center" });
   } else {
     const centerX = Math.max(iconSize, textWidth) / 2;
-    const iconY = layout === "logo-top" ? 0 : 38;
-    const textY = layout === "logo-top" ? 42 : -6;
-    bg.set({ left: centerX, top: iconY });
-    glyph.set({ left: centerX, top: iconY });
-    text.set({ left: centerX - textWidth / 2, top: textY, originY: "top" });
+    const logoY = layout === "logo-top" ? 100 : 146;
+    const textY = layout === "logo-top" ? 154 : 100;
+    logo.set({ left: 100 + centerX - iconSize / 2, top: logoY });
+    text.set({ left: 100 + centerX - textWidth / 2, top: textY, originY: "top" });
   }
-  return { bg, glyph, text, handle };
+  return { logo, text, handle, socialId };
 }
 
 export function createSocialGroup(
@@ -277,8 +359,10 @@ export function createSocialGroup(
   layout: SocialLayout,
   options: fabric.GroupProps = {},
 ) {
-  const { bg, glyph, text, handle } = createSocialGroupObjects(platform, username, layout);
-  const group = new fabric.Group([bg, glyph, text], {
+  const { logo, text, handle } = createSocialObjects(platform, username, layout);
+  logo.set({ left: 0, top: 0 });
+  text.set({ left: 56, top: 22 });
+  const group = new fabric.Group([logo, text], {
     left: 100,
     top: 100,
     ...options,
@@ -295,9 +379,10 @@ export function addSocial(
   username: string,
   layout: SocialLayout,
 ) {
-  const group = createSocialGroup(platform, username, layout);
-  canvas.add(group);
-  canvas.setActiveObject(group);
+  const { logo, text } = createSocialObjects(platform, username, layout);
+  canvas.add(logo, text);
+  const selection = new fabric.ActiveSelection([logo, text], { canvas });
+  canvas.setActiveObject(selection);
   canvas.requestRenderAll();
 }
 
