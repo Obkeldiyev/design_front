@@ -743,8 +743,8 @@ function EditorPreview() {
             </div>
           </div>
           <div className="editor-prop">
-            <div className="editor-prop-label">Typography</div>
-            <div className="editor-pill">Inter · SemiBold</div>
+            <div className="editor-prop-label">Selected text</div>
+            <div className="editor-field">Alex Morgan</div>
             <div className="editor-button-row">
               <button className="active" type="button">
                 B
@@ -752,6 +752,17 @@ function EditorPreview() {
               <button type="button">I</button>
               <button type="button">Aa</button>
               <button type="button">16</button>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">QR destination</div>
+            <div className="editor-field">card24.co/alex</div>
+            <div className="editor-button-row wide">
+              <button className="active" type="button">
+                Link
+              </button>
+              <button type="button">vCard</button>
+              <button type="button">Site</button>
             </div>
           </div>
           <div className="editor-prop">
@@ -770,6 +781,15 @@ function EditorPreview() {
               <span className="editor-slider-val" id="edVal">
                 24px
               </span>
+            </div>
+          </div>
+          <div className="editor-prop">
+            <div className="editor-prop-label">Transform</div>
+            <div className="editor-transform-grid">
+              <span>X 128</span>
+              <span>Y 84</span>
+              <span>W 340</span>
+              <span>H 214</span>
             </div>
           </div>
           <div className="editor-prop">
@@ -819,6 +839,12 @@ function EditorPreview() {
                 type="button"
                 aria-label="Toggle logo"
               >
+                <i />
+              </button>
+            </div>
+            <div className="editor-toggle-row">
+              <span>Guides</span>
+              <button className="editor-toggle on" type="button" aria-label="Toggle guides">
                 <i />
               </button>
             </div>
@@ -1045,24 +1071,6 @@ function initHeroScene() {
     edge.position.z = 0.015;
     card.add(edge);
 
-    const qrMesh = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshStandardMaterial({ color: 0x0d2145, roughness: 0.45, metalness: 0.2 }),
-      qrCells.size,
-    );
-    const dummy = new THREE.Object3D();
-    let qrIndex = 0;
-    qrCells.forEach((cell) => {
-      const x = cell % 13;
-      const y = Math.floor(cell / 13);
-      dummy.position.set(0.99 + x * 0.045, 0.28 - y * 0.045, 0.13);
-      dummy.scale.set(0.035, 0.035, 0.018);
-      dummy.updateMatrix();
-      qrMesh.setMatrixAt(qrIndex, dummy.matrix);
-      qrIndex += 1;
-    });
-    card.add(qrMesh);
-
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: new THREE.CanvasTexture(drawGlowTexture(256)),
@@ -1203,11 +1211,11 @@ function initHeroScene() {
         world.scale.setScalar(0.52);
         world.position.set(0, -1.3, 0);
       } else if (camera.aspect < 1.5) {
-        world.scale.setScalar(0.7);
-        world.position.set(0.55, -0.9, 0);
+        world.scale.setScalar(0.62);
+        world.position.set(1.0, -0.9, 0);
       } else {
-        world.scale.setScalar(0.9);
-        world.position.set(2.25, 0, 0);
+        world.scale.setScalar(0.78);
+        world.position.set(2.65, 0, 0);
       }
     };
     const onMove = (event: MouseEvent) => {
@@ -1548,8 +1556,9 @@ function LandingStyles() {
 body:has(.card24-landing.theme-light){background:#f5f8ff}.theme-light{--bg:#f5f8ff;--panel:#ffffff;--txt:#111827;--muted:#55657f;--line:rgba(48,70,115,.16);background:#f5f8ff;color:#111827}.theme-light .hero-bg{background:radial-gradient(1100px 700px at 76% 18%,rgba(47,107,255,.2),transparent 62%),radial-gradient(800px 600px at 12% 85%,rgba(56,215,255,.13),transparent 60%),linear-gradient(180deg,#eef5ff 0%,#fbfdff 100%)}.theme-light .hero-grid{background-image:linear-gradient(rgba(47,85,150,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(47,85,150,.08) 1px,transparent 1px)}.theme-light .landing-nav.scrolled{background:rgba(255,255,255,.78)}.theme-light .mobile-menu,.theme-light .editor-window,.theme-light .feature-card{background:rgba(255,255,255,.9);box-shadow:0 24px 70px rgba(55,80,130,.14)}.theme-light .editor-canvas{background-color:#eef4ff}.theme-light .editor-props,.theme-light .editor-toolbar{background:rgba(255,255,255,.54)}.theme-light .landing-btn-ghost,.theme-light .editor-pill,.theme-light .editor-button-row button,.theme-light .editor-asset-grid button,.theme-light .editor-layer-list span,.theme-light .editor-contextbar,.theme-light .editor-pages button,.theme-light .theme-toggle{color:#1d2b48;background:rgba(47,107,255,.07);border-color:rgba(47,79,135,.18)}.theme-light .nav-links a,.theme-light .hero-hints,.theme-light .footer-tag,.theme-light .footer-copy{color:#64748b}.theme-light .scroll-cue{border-color:rgba(47,79,135,.32)}
 #hero3d{pointer-events:none}.hero-copy{z-index:4;max-width:560px;margin-left:-56px}.hero h1{max-width:570px}.hero-sub{max-width:520px}.theme-toggle{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:999px;border:1px solid rgba(148,178,255,.2);background:rgba(148,178,255,.07);color:#dce8ff;font-weight:700;font-size:.78rem;cursor:pointer}.theme-toggle-track{position:relative;width:34px;height:20px;border-radius:999px;background:rgba(148,178,255,.18);box-shadow:inset 0 0 0 1px rgba(148,178,255,.16)}.theme-toggle-track i{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#38d7ff;box-shadow:0 0 10px rgba(56,215,255,.75);transition:left .25s,background .25s}.theme-light .theme-toggle-track i{left:17px;background:#2f6bff}.theme-toggle.mobile{width:100%;justify-content:center;margin:6px 0 10px}
 .editor-tab{align-items:center;gap:12px}.editor-tab span{display:inline-flex;align-items:center}.editor-modes{display:flex;gap:4px;padding:3px;border-radius:10px;background:rgba(148,178,255,.08);border:1px solid var(--line)}.editor-modes button{height:25px;border:0;border-radius:7px;padding:0 10px;background:transparent;color:#8fa3c8;font-weight:700;font-size:.72rem}.editor-modes button.active{background:rgba(56,215,255,.16);color:#dff7ff}.editor-canvas-inner{position:relative;display:flex;min-height:100%;width:100%;align-items:center;justify-content:center;flex-direction:column;gap:22px;padding:48px 24px 28px}.editor-contextbar{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border:1px solid var(--line);border-radius:12px;background:rgba(8,13,29,.82);backdrop-filter:blur(14px);box-shadow:0 12px 28px rgba(0,0,0,.25);z-index:3}.editor-contextbar span{padding:6px 10px;border-radius:8px;color:#c8d7f3;font-weight:700;font-size:.72rem}.editor-contextbar span:first-child{background:rgba(56,215,255,.13);color:#9fdcff}.editor-pages{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.editor-pages button{display:inline-flex;align-items:center;gap:8px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(148,178,255,.07);color:#dfe8ff;font-weight:700;font-size:.78rem;padding:0 12px}.editor-pages button.active{border-color:rgba(56,215,255,.55);box-shadow:0 0 0 1px rgba(56,215,255,.24)}.editor-pages button span{width:32px;height:20px;border-radius:5px;background:linear-gradient(135deg,#2f6bff,#0e2148)}.editor-pages button.add{color:#9fdcff;border-style:dashed}.editor-button-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.editor-button-row.wide{grid-template-columns:repeat(3,1fr)}.editor-button-row button,.editor-asset-grid button{height:32px;border-radius:8px;border:1px solid var(--line);background:rgba(148,178,255,.07);color:#dfe8ff;font-weight:800;font-size:.75rem}.editor-button-row button.active{background:rgba(56,215,255,.13);color:#9fdcff;border-color:rgba(56,215,255,.4)}.editor-asset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.editor-layer-list{display:grid;gap:7px}.editor-layer-list span{border:1px solid var(--line);border-radius:8px;background:rgba(148,178,255,.07);color:#c9d8f5;font-weight:700;font-size:.75rem;padding:8px 10px}.editor-toggle-row{display:flex;justify-content:space-between;align-items:center;color:#b9c8ec;font-weight:700;font-size:.8rem;padding:4px 0}.editor-toggle{width:38px;height:22px;border-radius:12px;border:0;background:rgba(148,178,255,.18);position:relative;cursor:pointer}.editor-toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#8fa3c8;transition:left .25s,background .25s}.editor-toggle.on{background:linear-gradient(90deg,#2f6bff,#38d7ff)}.editor-toggle.on i{left:19px;background:#fff}.card-brand.off,.card-qr.off,.card-qr.off+.card-qr-cap{opacity:0}.editor-selection{--edr:24px}.editor-selection .business-card{width:min(360px,72vw)}
-@media(min-width:1400px){.hero-copy{margin-left:-84px}}
-@media(max-width:1150px),(max-aspect-ratio:79/50){.hero{align-items:flex-start}.hero-copy{max-width:660px;margin:0 auto;text-align:center;padding-top:clamp(96px,14vh,150px)}.hero-sub{margin:0 auto}.hero-ctas,.hero-hints{justify-content:center}body.no-webgl .hero-fallback{left:50%;right:auto;top:auto;bottom:5%;transform:translateX(-50%) rotate(-5deg)}}
+.hero .landing-wrap{position:relative;z-index:3;width:100%;display:grid;grid-template-columns:minmax(420px,520px) minmax(420px,1fr);align-items:center;padding-top:72px}.hero-copy{grid-column:1;max-width:520px!important;margin-left:0!important}.hero h1{max-width:520px;font-size:clamp(2.75rem,4.8vw,4.05rem)}.hero-sub{max-width:500px}#hero3d{clip-path:polygon(38% 0,100% 0,100% 100%,34% 100%)}.card-qr{right:20px;width:82px;height:82px;padding:8px;gap:1px;border:1px solid rgba(255,255,255,.85);box-shadow:0 10px 24px rgba(2,10,40,.42),inset 0 0 0 4px rgba(255,255,255,.72)}.card-qr i{border-radius:1.5px}.card-qr-cap{right:16px;width:90px;text-align:center;top:calc(50% + 51px);color:rgba(205,226,255,.9)}.editor-body{height:580px}.editor-props{width:260px;gap:10px;padding:14px;scrollbar-width:none;-ms-overflow-style:none}.editor-props::-webkit-scrollbar{display:none}.editor-prop-label{margin-bottom:7px}.editor-field{border:1px solid var(--line);border-radius:9px;background:rgba(148,178,255,.07);color:#dfe8ff;font-weight:800;font-size:.78rem;padding:8px 10px}.editor-transform-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.editor-transform-grid span{border:1px solid var(--line);border-radius:8px;background:rgba(148,178,255,.07);color:#cfe0ff;font-weight:800;font-size:.72rem;padding:7px 8px}.theme-light .editor-field,.theme-light .editor-transform-grid span{color:#1d2b48;background:rgba(47,107,255,.07);border-color:rgba(47,79,135,.18)}
+@media(min-width:1400px){.hero-copy{margin-left:0!important}}
+@media(max-width:1150px),(max-aspect-ratio:79/50){.hero{align-items:flex-start}.hero .landing-wrap{display:block;padding-top:clamp(96px,14vh,150px)}.hero-copy{max-width:660px!important;margin:0 auto!important;text-align:center}.hero-sub{margin:0 auto}.hero-ctas,.hero-hints{justify-content:center}#hero3d{clip-path:none;opacity:.34}body.no-webgl .hero-fallback{left:50%;right:auto;top:auto;bottom:5%;transform:translateX(-50%) rotate(-5deg)}}
 @media(max-width:1080px){.features-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:940px){.steps{grid-template-columns:1fr 1fr;gap:28px}.steps::before{display:none}.editor-body{height:470px}.editor-props{display:none}}@media(max-width:860px){.nav-links{display:none}.nav-burger{display:flex}}@media(max-width:620px){.features-grid,.steps{grid-template-columns:1fr}.editor-body{height:440px}.editor-toolbar{display:none}.editor-label{font-size:.62rem;top:-32px}.nav-actions .landing-btn-ghost{display:none}}@media(prefers-reduced-motion:reduce){[data-reveal]{transition:none;opacity:1;transform:none}.hero-copy>*{animation:none}}
 `}</style>
   );
