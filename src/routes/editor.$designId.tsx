@@ -1046,19 +1046,28 @@ function Editor() {
               Social media
             </p>
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-5 gap-1.5">
                 {(Object.keys(SOCIAL_PLATFORMS) as SocialPlatform[]).map((platform) => (
                   <button
                     key={platform}
                     type="button"
+                    title={SOCIAL_PLATFORMS[platform].label}
+                    aria-label={SOCIAL_PLATFORMS[platform].label}
                     onClick={() => setSocialPlatform(platform)}
-                    className={`rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                    className={`flex h-9 items-center justify-center rounded-md border transition ${
                       socialPlatform === platform
                         ? "border-primary bg-primary/20 text-white"
                         : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-primary/50"
                     }`}
                   >
-                    {SOCIAL_PLATFORMS[platform].label}
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      aria-hidden="true"
+                      style={{ color: SOCIAL_PLATFORMS[platform].color }}
+                    >
+                      <path d={SOCIAL_PLATFORMS[platform].path} fill="currentColor" />
+                    </svg>
                   </button>
                 ))}
               </div>
@@ -1411,7 +1420,7 @@ function ObjectInspector({
   object: fabricTypes.FabricObject | null;
   onDirty: () => void;
 }) {
-  if (!canvas || !object || object.type === "activeSelection") {
+  if (!canvas || !object) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400">
         Select one element to edit its properties.
@@ -1421,6 +1430,58 @@ function ObjectInspector({
 
   const anyObj = object as any;
   const objectType = String(object.type ?? "object").toLowerCase();
+  const safeHex = (v: unknown, fallback: string) =>
+    typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+
+  if (objectType === "activeselection") {
+    const selectedObjects = (anyObj.getObjects?.() ?? []) as fabricTypes.FabricObject[];
+    const fillableObjects = selectedObjects.filter((selected) => {
+      const type = String(selected.type ?? "object").toLowerCase();
+      return !["image", "group", "activeselection"].includes(type);
+    });
+    const firstFill = fillableObjects.find((selected) => typeof selected.get("fill") === "string")?.get(
+      "fill",
+    );
+    const applySelectionFill = (fill: string) => {
+      fillableObjects.forEach((selected) => {
+        selected.set({ fill });
+        selected.setCoords();
+      });
+      canvas.requestRenderAll();
+      onDirty();
+    };
+
+    return (
+      <div className="space-y-3 border-b border-white/10 pb-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Selection
+          </p>
+          <div className="mt-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-medium text-slate-200">
+            {selectedObjects.length} elements selected
+          </div>
+        </div>
+        {fillableObjects.length > 0 && (
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Fill</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={safeHex(firstFill, "#ffffff")}
+                onChange={(e) => applySelectionFill(e.target.value)}
+                className="h-9 w-9 cursor-pointer rounded border border-white/10 bg-white/5 p-0.5"
+              />
+              <Input
+                value={safeHex(firstFill, "#ffffff")}
+                onChange={(e) => applySelectionFill(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const meta = (object.get("meta") ?? {}) as {
     social?: boolean;
     username?: string;
@@ -1436,9 +1497,6 @@ function ObjectInspector({
   const visualW = Math.round(baseW * Number(object.scaleX ?? 1));
   const visualH = Math.round(baseH * Number(object.scaleY ?? 1));
   const maxRadius = Math.max(0, Math.round(Math.min(visualW, visualH) / 2));
-
-  const safeHex = (v: unknown, fallback: string) =>
-    typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
 
   const apply = (props: Record<string, unknown>) => {
     object.set(props);
